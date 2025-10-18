@@ -1,8 +1,6 @@
-// Button.jsx
 import React from "react";
 
 const Button = ({ children, type = "button", onClick, fullWidth = false, variant = "primary" }) => {
-  // You can define different variants for styling
   const baseStyles = "py-3 px-6 rounded-md font-semibold transition-all duration-200";
   const variants = {
     primary: "bg-blue-600 text-white hover:bg-blue-700",

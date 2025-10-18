@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import FormLayout from "../components/Layout/FormLayout";
-import Input from "../components/Input/Input"; // Import the Input component
+import Input from "../components/Input/Input"; 
 import emailIcon from "../assets/email.png";
 import lockIcon from "../assets/lock.png";
 import eyeOpen from "../assets/eye.png";
@@ -43,7 +43,7 @@ const LoginPage = () => {
       </h2>
 
       <form onSubmit={handleSubmit}>
-        {/* Email Input */}
+       
         <div className="mb-8">
         <Input
           type="email"
@@ -113,7 +113,7 @@ const LoginPage = () => {
           type="submit"
           className="w-full bg-blue-600 text-white py-3 rounded-md font-semibold hover:bg-blue-700 transition-all duration-200 mt-8"
         >
-          Login
+          Proceed
         </button>
 
         {/* Sign Up Link */}

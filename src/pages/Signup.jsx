@@ -4,57 +4,86 @@ import FormLayout from "../components/Layout/FormLayout";
 import Input from "../components/Input/Input";
 import Button from "../components/Button/Button";
 
-import userIcon from "../assets/user.png";
 import emailIcon from "../assets/email.png";
 import lockIcon from "../assets/lock.png";
 
 const Signup = () => {
   const [formData, setFormData] = useState({
-    username: "",
     email: "",
     password: "",
     confirmPassword: "",
-    role: "",
   });
 
+  const [errors, setErrors] = useState({});
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
-  const [errors, setErrors] = useState({});
 
-  // Handle input change
-  const handleChange = (e) =>
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+  
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-  // Validate form before submit
-  const validate = () => {
-    const newErrors = {};
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData({ ...formData, [name]: value });
 
-    if (!formData.username) newErrors.username = "Username is required";
-    if (!formData.email) newErrors.email = "Email is required";
-    else if (!emailRegex.test(formData.email))
-      newErrors.email = "Invalid email format";
 
-    if (!formData.password) newErrors.password = "Password is required";
-    else if (formData.password.length < 8)
-      newErrors.password = "Must be at least 8 characters";
+    if (name === "email") {
+      if (!value) {
+        setErrors((prev) => ({ ...prev, email: "Email is required" }));
+      } else if (!value.includes("@")) {
+        setErrors((prev) => ({ ...prev, email: "'@' is missing in the email" }));
+      } else if (!emailRegex.test(value)) {
+        setErrors((prev) => ({ ...prev, email: "Invalid email format" }));
+      } else {
+        setErrors((prev) => ({ ...prev, email: "" }));
+      }
+    }
 
-    if (formData.password !== formData.confirmPassword)
-      newErrors.confirmPassword = "Passwords do not match";
+    if (name === "password") {
+      if (!value) {
+        setErrors((prev) => ({ ...prev, password: "Password is required" }));
+      } else if (value.length < 8) {
+        setErrors((prev) => ({
+          ...prev,
+          password: "Password must be at least 8 characters",
+        }));
+      } else {
+        setErrors((prev) => ({ ...prev, password: "" }));
+      }
+    }
 
-    if (!formData.role) newErrors.role = "Select a role";
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+    if (name === "confirmPassword") {
+      if (!value) {
+        setErrors((prev) => ({
+          ...prev,
+          confirmPassword: "Confirm Password is required",
+        }));
+      } else if (value !== formData.password) {
+        setErrors((prev) => ({
+          ...prev,
+          confirmPassword: "Passwords do not match",
+        }));
+      } else {
+        setErrors((prev) => ({ ...prev, confirmPassword: "" }));
+      }
+    }
   };
 
-  // Submit form
+ 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (validate()) {
-      alert("Signup Successful!");
-      console.log("Form data:", formData);
+
+    if (Object.values(errors).some((error) => error)) {
+      alert("Please fix the errors before submitting.");
+      return;
     }
+
+    if (!formData.email || !formData.password || !formData.confirmPassword) {
+      alert("Please fill in all fields.");
+      return;
+    }
+
+    alert("Signup Successful!");
+    console.log("Form data:", formData);
   };
 
   return (
@@ -67,7 +96,7 @@ const Signup = () => {
         onSubmit={handleSubmit}
         className="space-y-4 w-full max-w-md mx-auto px-4 sm:px-8"
       >
-        {/* Email */}
+        
         <Input
           label="Email"
           type="email"
@@ -79,7 +108,7 @@ const Signup = () => {
           error={errors.email}
         />
 
-        {/* Password */}
+        
         <Input
           label="Password"
           type="password"
@@ -94,7 +123,6 @@ const Signup = () => {
           error={errors.password}
         />
 
-        {/* Confirm Password */}
         <Input
           label="Confirm Password"
           type="password"
@@ -109,41 +137,7 @@ const Signup = () => {
           error={errors.confirmPassword}
         />
 
-        {/* Role Selection */}
-        {/* <div className="mt-4">
-          <label className="block text-gray-700 font-medium mb-2">
-            Choose role:
-          </label>
-          <div className="flex gap-6">
-            <label className="flex items-center space-x-2">
-              <input
-                type="radio"
-                name="role"
-                value="Doctor"
-                checked={formData.role === "Doctor"}
-                onChange={handleChange}
-                className="accent-blue-600"
-              />
-              <span className="text-gray-800">Doctor</span>
-            </label>
-            <label className="flex items-center space-x-2">
-              <input
-                type="radio"
-                name="role"
-                value="Patient"
-                checked={formData.role === "Patient"}
-                onChange={handleChange}
-                className="accent-blue-600"
-              />
-              <span className="text-gray-800">Patient</span>
-            </label>
-          </div>
-          {errors.role && (
-            <p className="text-red-500 text-sm mt-1">{errors.role}</p>
-          )}
-        </div> */}
-
-        {/* Submit Button */}
+       
         <div className="mt-8">
           <Button type="submit" fullWidth>
             Sign Up
@@ -151,7 +145,7 @@ const Signup = () => {
         </div>
       </form>
 
-      {/* Login link */}
+    
       <p className="text-center text-gray-600 text-sm mt-8">
         Already have an account?{" "}
         <Link to="/" className="text-blue-600 hover:underline font-medium">

@@ -1,4 +1,3 @@
-// Input.jsx
 import React from "react";
 import eyeOpen from "../../assets/eye.png";
 import eyeClose from "../../assets/eyeclose.png";
@@ -18,7 +17,6 @@ const Input = ({
 }) => {
   return (
     <div className="mb-5 w-full">
-      {/* Label (Heading) */}
       {label && (
         <label
           htmlFor={name}
@@ -28,7 +26,6 @@ const Input = ({
         </label>
       )}
 
-      {/* Input Box */}
       <div className="relative">
         {icon && (
           <img
@@ -58,7 +55,6 @@ const Input = ({
           }`}
         />
 
-        {/* Eye toggle for password fields */}
         {showPasswordToggle && (
           <img
             src={showPassword ? eyeOpen : eyeClose}
@@ -69,7 +65,7 @@ const Input = ({
         )}
       </div>
 
-      {/* Error message */}
+  
       {error && <p className="text-red-500 text-sm mt-1 ml-1">{error}</p>}
     </div>
   );
