@@ -1,114 +1,98 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import FormLayout from "../components/Layout/FormLayout";
-import Input from "../components/Input/Input"; 
-import emailIcon from "../assets/email.png";
-import lockIcon from "../assets/lock.png";
-import eyeOpen from "../assets/eye.png";
-import eyeClose from "../assets/eyeclose.png";
+import Input from "../components/Input/Input";
 
-const LoginPage = () => {
-  const [formData, setFormData] = useState({ email: "", password: "" });
+const VerifyOtp = () => {
+  const [formData, setFormData] = useState({ otp: "" });
   const [errors, setErrors] = useState({});
-  const [showPassword, setShowPassword] = useState(false);
+  const [timer, setTimer] = useState(180); // Timer in seconds
 
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  // Start the countdown timer
+  useEffect(() => {
+    if (timer > 0) {
+      const interval = setInterval(() => {
+        setTimer((prev) => prev - 1);
+      }, 1000);
+      return () => clearInterval(interval); // Cleanup interval on unmount
+    }
+  }, [timer]);
 
-  const validate = () => {
-    const newErrors = {};
-    const email = formData.email.trim();
-
-    if (!email) newErrors.email = "Email is required";
-    else if (!emailRegex.test(email)) newErrors.email = "Invalid email address";
-
-    if (!formData.password) newErrors.password = "Password is required";
-    else if (formData.password.length < 8)
-      newErrors.password = "Password must be at least 8 characters";
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+  // Convert timer to minutes and seconds
+  const formatTime = (time) => {
+    const minutes = Math.floor(time / 60);
+    const seconds = time % 60;
+    return `${minutes}:${seconds < 10 ? `0${seconds}` : seconds}`;
   };
 
+  // Handle OTP input change
+  const handleChange = (e) => {
+    const { value } = e.target;
+    setFormData({ otp: value });
+
+    // Validate OTP
+    if (!value) {
+      setErrors({ otp: "OTP is required" });
+    } else if (value.length !== 6) {
+      setErrors({ otp: "OTP must be 6 digits" });
+    } else {
+      setErrors({ otp: "" });
+    }
+  };
+
+  // Handle form submission
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (validate()) {
-      alert("Login successful!");
-      console.log(formData);
+    if (!formData.otp || formData.otp.length !== 6) {
+      setErrors({ otp: "Please enter a valid 6-digit OTP" });
+      return;
     }
+    alert("OTP Verified Successfully!");
+    console.log("OTP:", formData.otp);
+  };
+
+  
+  const handleResendOtp = () => {
+    setTimer(180); 
+    alert("OTP has been resent!");
   };
 
   return (
     <FormLayout>
       <h2 className="text-3xl font-semibold text-center mb-8 text-gray-800">
-        Verify Otp
+        Verify OTP
       </h2>
 
-      <form onSubmit={handleSubmit}>
-       
-        <div className="mb-8">
-        <Input
-          type="email"
-          label="Email"
-          value={formData.email}
-          onChange={(e) => {
-            const email = e.target.value.trim();
-            setFormData({ ...formData, email: e.target.value });
+      <form onSubmit={handleSubmit} className="space-y-4 w-full max-w-md mx-auto px-4 sm:px-8">
 
-            if (!email) {
-              setErrors((prev) => ({ ...prev, email: "Email is required" }));
-            } else if (!emailRegex.test(email)) {
-              setErrors((prev) => ({ ...prev, email: "Invalid email address" }));
-            } else {
-              setErrors((prev) => ({ ...prev, email: "" }));
-            }
-          }}
-          placeholder="Enter your email"
-          icon={emailIcon}
-          error={errors.email}
-        />
+        <div className="relative">
+          <Input
+            type="text"
+            label="OTP"
+            name="otp"
+            placeholder="Enter your OTP"
+            value={formData.otp}
+            onChange={handleChange}
+            error={errors.otp}
+          />
+
+          <p className="absolute left-0 -bottom-6 text-sm text-black">
+        <span className="font-medium ml-1">{formatTime(timer)}</span>min
+          </p>
         </div>
 
-        {/* Password Input */}
-        {/* <Input
-          type="password"
-          label="Password"
-          value={formData.password}
-          onChange={(e) => {
-            const value = e.target.value;
-            setFormData({ ...formData, password: value });
 
-            if (!value) {
-              setErrors((prev) => ({
-                ...prev,
-                password: "Password is required",
-              }));
-            } else if (value.length < 8) {
-              setErrors((prev) => ({
-                ...prev,
-                password: "Password must be at least 8 characters",
-              }));
-            } else {
-              setErrors((prev) => ({ ...prev, password: "" }));
-            }
-          }}
-          placeholder="Enter your password"
-          icon={lockIcon}
-          showPasswordToggle={true}
-          showPassword={showPassword}
-          onTogglePassword={() => setShowPassword(!showPassword)}
-          error={errors.password}
-        /> */}
+        {timer === 0 && (
+          <div className="text-right mb-6">
+            <button
+              type="button"
+              onClick={handleResendOtp}
+              className="text-sm text-blue-600 hover:underline font-medium"
+            >
+              Resend OTP
+            </button>
+          </div>
+        )}
 
-        {/* Forgot Password Link */}
-        <div className="text-right mb-6">
-          <a
-            href="/VerifyOtp"
-            className="text-sm text-blue-600 hover:underline font-medium"
-          >
-            Resend OTP
-          </a>
-        </div>
-
-        {/* Submit Button */}
         <button
           type="submit"
           className="w-full bg-blue-600 text-white py-3 rounded-md font-semibold hover:bg-blue-700 transition-all duration-200 mt-8"
@@ -116,7 +100,6 @@ const LoginPage = () => {
           Proceed
         </button>
 
-        {/* Sign Up Link */}
         <p className="text-center text-gray-600 text-sm mt-12">
           Don’t have an account?{" "}
           <a href="/signup" className="text-blue-600 hover:underline font-medium">
@@ -128,4 +111,4 @@ const LoginPage = () => {
   );
 };
 
-export default LoginPage;
+export default VerifyOtp;

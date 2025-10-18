@@ -127,7 +127,7 @@ const LoginPage = () => {
         
         <div className="text-right mb-6">
           <a
-            href="/VerifyOtp"
+            href="/EmailOtp"
             className="text-sm text-blue-600 hover:underline font-medium"
           >
             Forgot Password?

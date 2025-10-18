@@ -48,7 +48,7 @@ const Input = ({
           value={value}
           onChange={onChange}
           placeholder={placeholder}
-          className={`w-full border rounded-md p-3 pl-10 pr-10 focus:outline-none focus:ring-2 text-gray-900 placeholder-gray-500 ${
+          className={`w-full border rounded-md p-3 pl-10 pr-10 focus:outline-none focus:ring-2 text-black placeholder-gray-500 ${
             error
               ? "border-red-500 ring-red-400"
               : "border-gray-300 focus:ring-blue-400"

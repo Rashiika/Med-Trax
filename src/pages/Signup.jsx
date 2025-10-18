@@ -6,8 +6,12 @@ import Button from "../components/Button/Button";
 
 import emailIcon from "../assets/email.png";
 import lockIcon from "../assets/lock.png";
+import { useDispatch } from "react-redux";
 
-const Signup = () => {
+const Signup = ({role}) => {
+
+  const dispatch = useDispatch();
+
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -140,7 +144,7 @@ const Signup = () => {
        
         <div className="mt-8">
           <Button type="submit" fullWidth>
-            Sign Up
+            Proceed
           </Button>
         </div>
       </form>
@@ -148,7 +152,7 @@ const Signup = () => {
     
       <p className="text-center text-gray-600 text-sm mt-8">
         Already have an account?{" "}
-        <Link to="/" className="text-blue-600 hover:underline font-medium">
+        <Link to="/login" className="text-blue-600 hover:underline font-medium">
           Login
         </Link>
       </p>
