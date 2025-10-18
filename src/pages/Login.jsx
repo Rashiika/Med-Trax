@@ -48,14 +48,12 @@ const LoginPage = () => {
       className="w-full h-screen flex flex-col items-center justify-center bg-white"
       style={{ fontFamily: "Poppins, sans-serif" }}
     >
-      {/* Logo */}
+
       <div className="mb-25">
         <img src={logo} alt="Logo" className="w-45 h-20" />
       </div>
 
-      {/* Main Container */}
       <div className="flex flex-row w-full max-w-6xl h-140 items-center justify-between px-8 gap-x-30">
-        {/* Left side - Illustration */}
         <div className="flex-1 flex justify-center">
           <img
             src={hospitalImg}
@@ -64,7 +62,7 @@ const LoginPage = () => {
           />
         </div>
 
-        {/* Right side - Form */}
+       
         <div className="flex-1 flex justify-center mb-2">
           <form
             onSubmit={handleSubmit}
@@ -74,8 +72,8 @@ const LoginPage = () => {
               Secure Login
             </h2>
 
-            {/* Email */}
-            <div className="mb-6">
+            
+            <div className="mb-6 relative">
               <label className="block text-gray-700 mb-2">Email</label>
               <div className="relative">
                <img
@@ -89,7 +87,7 @@ const LoginPage = () => {
                 placeholder="Enter your email"
                 value={formData.email}
                  onChange={(e) => {
-                    // ✅ wrap multiple statements in {}
+                    
                     const email = e.target.value.trim();
 
                     setFormData({ ...formData, email: e.target.value });
@@ -99,19 +97,20 @@ const LoginPage = () => {
                     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
                       setErrors(prev => ({ ...prev, email: "Invalid email address" }));
                     } else {
-                      setErrors(prev => ({ ...prev, email: "" })); // clear error if valid
+                      setErrors(prev => ({ ...prev, email: "" }));
                     }
                   }}
                 className={`w-full border border-gray-400 rounded-md p-3 pl-10 focus:outline-none focus:ring-2 
                    ${errors.email ? 'border-red-500 ring-red-400' : 'border-gray-400 focus:ring-blue-400'}`}
               />
               </div>
-              {errors.email && (
-                <p className="text-red-500 text-sm mt-1">{errors.email}</p>
+             {errors.email && (
+                <p className="absolute text-red-500 text-sm mt-1">{errors.email}</p>
               )}
+
+
             </div>
 
-            {/* Password */}
             <div className="mb-6 relative">
               <label className="block text-gray-700 mb-2">Password</label>
               <div className="relative">
@@ -125,25 +124,36 @@ const LoginPage = () => {
                 name="password"
                 placeholder="Enter your password"
                 value={formData.password}
-                onChange={(e) =>
-                  
-                  setFormData({ ...formData, password: e.target.value })
-                }
-                className="w-full border border-gray-400 rounded-md p-3 pl-10 pr-10 focus:outline-none focus:ring-2 focus:ring-blue-300"
-              />
-              <img
-                src={showPassword ? eyeOpen : eyeClose}
-                alt="toggle"
-                className="absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 cursor-pointer opacity-50"
-                onClick={() => setShowPassword(!showPassword)}
-              />
-              </div>
-              {errors.password && (
-                <p className="text-red-500 text-sm mt-1">{errors.password}</p>
-              )}
-            </div>
+                onChange={(e) =>{
+                    const value = e.target.value;
+                    setFormData({ ...formData, password: value }); 
+                    if (!value)
+                      setErrors(prev => ({ ...prev, password: "Password is required" }));
+                    else if (value.length < 8)
+                      setErrors(prev => ({
+                        ...prev,
+                        password: "Password must be at least 8 characters"
+                      }));
+                    else setErrors(prev => ({ ...prev, password: "" }));
+                    }}            
+                      className={`w-full border border-gray-400 rounded-md p-3 pl-10 pr-10 focus:outline-none focus:ring-2 ${
+                        errors.password
+                          ? "border-red-500 ring-red-400"
+                          : "border-gray-400 focus:ring-blue-400"
+                      }`}
+                    />
+                    <img
+                      src={showPassword ? eyeOpen : eyeClose}
+                      alt="toggle"
+                      className="absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 cursor-pointer opacity-50"
+                      onClick={() => setShowPassword(!showPassword)}
+                    />
+                    </div>
+                    {errors.password && (
+                      <p className="absolute text-red-500 text-sm mt-1">{errors.password}</p>
+                    )}
+                  </div>
 
-            {/* Forgot Password */}
             <div className="text-right mb-6">
               <a
                 href="#"
@@ -153,7 +163,7 @@ const LoginPage = () => {
               </a>
             </div>
 
-            {/* Login Button */}
+           
             <button
               type="submit"
               className="w-full bg-blue-600 text-white py-3 rounded-md font-semibold hover:bg-blue-700 transition-all duration-200 mt-8"
@@ -161,7 +171,7 @@ const LoginPage = () => {
               Login
             </button>
 
-            {/* Sign Up */}
+            
             <p className="text-center text-gray-600 text-sm mt-12">
               Don’t have an account?{" "}
               <a href="#" className="text-blue-600 hover:underline font-medium">
