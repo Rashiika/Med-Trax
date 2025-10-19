@@ -4,6 +4,7 @@ import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import EmailOtp from "./pages/EmailOtp";
 import VerifyOtp from "./pages/VerifyOtp";
+import ResetPassword from "./pages/ResetPassword";
 import Home from "./pages/Home";
 
 function App() {
@@ -16,6 +17,7 @@ function App() {
         <Route path="/signup" element={<Signup />} />
         <Route path="/emailOtp" element={<EmailOtp />} />
         <Route path="/verifyOtp" element={<VerifyOtp />} />
+        <Route path="/resetPassword" element={<ResetPassword />} />
       </Routes>
     </Router>
   );

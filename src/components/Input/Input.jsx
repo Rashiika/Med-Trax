@@ -14,6 +14,8 @@ const Input = ({
   onTogglePassword,
   error,
   name,
+  onFocus,
+  onBlur,
 }) => {
   return (
     <div className="mb-5 w-full">
@@ -47,6 +49,8 @@ const Input = ({
           }
           value={value}
           onChange={onChange}
+          onFocus={onFocus} 
+          onBlur={onBlur} 
           placeholder={placeholder}
           className={`w-full border rounded-md p-3 pl-10 pr-10 focus:outline-none focus:ring-2 text-black placeholder-gray-500 ${
             error
