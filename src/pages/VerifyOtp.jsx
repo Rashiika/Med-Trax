@@ -1,35 +1,40 @@
 import React, { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
 import FormLayout from "../components/Layout/FormLayout";
 import Input from "../components/Input/Input";
+import { useDispatch } from "react-redux";
+import { verifyOtp } from "../redux/features/authSlice";
 
 const VerifyOtp = () => {
+
+  const dispatch = useDispatch();
+
   const [formData, setFormData] = useState({ otp: "" });
   const [errors, setErrors] = useState({});
-  const [timer, setTimer] = useState(180); // Timer in seconds
+  const [timer, setTimer] = useState(180); 
 
-  // Start the countdown timer
   useEffect(() => {
     if (timer > 0) {
       const interval = setInterval(() => {
         setTimer((prev) => prev - 1);
       }, 1000);
-      return () => clearInterval(interval); // Cleanup interval on unmount
+      return () => clearInterval(interval);
     }
   }, [timer]);
 
-  // Convert timer to minutes and seconds
+ 
   const formatTime = (time) => {
     const minutes = Math.floor(time / 60);
     const seconds = time % 60;
     return `${minutes}:${seconds < 10 ? `0${seconds}` : seconds}`;
   };
 
-  // Handle OTP input change
+ 
   const handleChange = (e) => {
     const { value } = e.target;
     setFormData({ otp: value });
 
-    // Validate OTP
+   
     if (!value) {
       setErrors({ otp: "OTP is required" });
     } else if (value.length !== 6) {
@@ -39,7 +44,6 @@ const VerifyOtp = () => {
     }
   };
 
-  // Handle form submission
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!formData.otp || formData.otp.length !== 6) {
@@ -48,6 +52,8 @@ const VerifyOtp = () => {
     }
     alert("OTP Verified Successfully!");
     console.log("OTP:", formData.otp);
+
+    dispatch(verifyOtp({otpData: formData}))
   };
 
   
@@ -80,31 +86,28 @@ const VerifyOtp = () => {
           </p>
         </div>
 
-
-        {timer === 0 && (
           <div className="text-right mb-6">
             <button
               type="button"
               onClick={handleResendOtp}
-              className="text-sm text-blue-600 hover:underline font-medium"
+              className="text-sm text-blue-600 hover:underline font-medium opacity-70 cursor-pointer"
             >
               Resend OTP
             </button>
           </div>
-        )}
 
         <button
           type="submit"
-          className="w-full bg-blue-600 text-white py-3 rounded-md font-semibold hover:bg-blue-700 transition-all duration-200 mt-8"
+          className="w-full bg-blue-600 text-white py-3 rounded-md font-semibold hover:bg-blue-700 transition-all duration-200 mt-8 cursor-pointer"
         >
           Proceed
         </button>
 
         <p className="text-center text-gray-600 text-sm mt-12">
           Don’t have an account?{" "}
-          <a href="/signup" className="text-blue-600 hover:underline font-medium">
+          <Link to="/signup" className="text-blue-600 hover:underline font-medium">
             Sign Up
-          </a>
+          </Link>
         </p>
       </form>
     </FormLayout>
