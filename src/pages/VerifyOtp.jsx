@@ -1,13 +1,15 @@
 import React, { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import FormLayout from "../components/Layout/FormLayout";
 import Input from "../components/Input/Input";
 import { useDispatch } from "react-redux";
-import { verifyOtp } from "../redux/features/authSlice";
+import { resendSignupOtp, verifyOtp } from "../redux/features/authSlice";
 
 const VerifyOtp = () => {
 
   const dispatch = useDispatch();
+  const location = useLocation();
+  const email = location.state?.email || "";
 
   const [formData, setFormData] = useState({ otp: "" });
   const [errors, setErrors] = useState({});
@@ -57,9 +59,33 @@ const VerifyOtp = () => {
   };
 
   
-  const handleResendOtp = () => {
-    setTimer(180); 
-    alert("OTP has been resent!");
+  const handleResendOtp = async (e) => { 
+    e.preventDefault();
+    
+    if (timer > 0) {
+      alert("Please wait for the timer to expire before resending.");
+      return;
+    }
+
+    if (!email) {
+      alert("Cannot resend OTP. Email address is missing. Please go back to Signup.");
+      return;
+    }
+    
+    setResending(true);
+    try {
+      await resendSignupOtp({ email }); 
+      
+      setTimer(180); 
+      alert("A new OTP has been sent!");
+      
+    } catch (error) {
+      const errorMessage = error.response?.data?.detail || "Failed to resend OTP. Please try again.";
+      alert(errorMessage);
+      console.error("Resend error:", error);
+    } finally {
+      setResending(false);
+    }
   };
 
   return (

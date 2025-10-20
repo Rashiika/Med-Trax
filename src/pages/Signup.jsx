@@ -7,12 +7,11 @@ import userIcon from "../assets/user.png";
 import emailIcon from "../assets/email.png";
 import lockIcon from "../assets/lock.png";
 import { useDispatch, useSelector } from "react-redux";
-import { registerUser } from "../redux/features/authSlice"; // Assuming this is the correct path
+import { registerUser } from "../redux/features/authSlice";
 
 const Signup = () => {
   const dispatch = useDispatch();
-  // Ensure 'role' is read correctly from your separate roleSlice
-  const role = useSelector((state) => state.role.selectedRole); 
+  const role = useSelector((state) => state.role.selectedRole);
   const navigate = useNavigate();
 
   const [formData, setFormData] = useState({
@@ -20,164 +19,96 @@ const Signup = () => {
     email: "",
     password: "",
     confirmPassword: "",
-    // ✅ Keep the role here so it is included in the final payload
-    role: role, 
+    role: role,
   });
 
   const [errors, setErrors] = useState({});
-  const [loading, setLoading] = useState(false); // 💡 Added loading state
+  const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
+  const [passwordFocused, setPasswordFocused] = useState(false);
 
-  // --- Validation and Change Handlers (Mostly correct, but needs cleanup) ---
+  const uppercaseRegex = /[A-Z]/;
+  const numberRegex = /[0-9]/;
+  const specialCharRegex = /[!@#$%^&*(),.?":{}|<>]/;
 
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  const checkPasswordRules = (password) => ({
+    hasUppercase: uppercaseRegex.test(password),
+    hasLength: password.length >= 8,
+    hasNumber: numberRegex.test(password),
+    hasSpecialChar: specialCharRegex.test(password),
+  });
 
-  const validate = (name, value, currentFormData) => {
-    let newErrors = { ...errors };
-
-    // --- Username Validation ---
-    if (name === "username") {
-      newErrors.username = !value ? "Username is required" : "";
-    }
-
-    // --- Email Validation ---
-    if (name === "email") {
-      if (!value) {
-        newErrors.email = "Email is required";
-      } else if (!emailRegex.test(value)) {
-        newErrors.email = "Invalid email format";
-      } else {
-        newErrors.email = "";
-      }
-    }
-
-    // --- Password Validation ---
-    if (name === "password") {
-      if (!value) {
-        newErrors.password = "Password is required";
-      } else if (value.length < 8) {
-        newErrors.password = "Password must be at least 8 characters";
-      } else {
-        newErrors.password = "";
-      }
-      // Re-check confirmPassword when password changes
-      if (currentFormData.confirmPassword && currentFormData.confirmPassword !== value) {
-        newErrors.confirmPassword = "Passwords do not match";
-      } else if (currentFormData.confirmPassword) {
-        newErrors.confirmPassword = "";
-      }
-    }
-
-    // --- Confirm Password Validation ---
-    if (name === "confirmPassword") {
-      if (!value) {
-        newErrors.confirmPassword = "Confirm Password is required";
-      } else if (value !== currentFormData.password) {
-        newErrors.confirmPassword = "Passwords do not match";
-      } else {
-        newErrors.confirmPassword = "";
-      }
-    }
-    
-    return newErrors;
-  };
+  const [passwordRules, setPasswordRules] = useState({
+    hasUppercase: false,
+    hasLength: false,
+    hasNumber: false,
+    hasSpecialChar: false,
+  });
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    
-    const updatedFormData = { ...formData, [name]: value };
-    setFormData(updatedFormData);
+    setFormData({ ...formData, [name]: value });
 
-    // Run validation only for the field that changed
-    const newErrors = validate(name, value, updatedFormData);
-    setErrors(newErrors);
-  };
+    if (name === "password") {
+      setPasswordRules(checkPasswordRules(value));
 
-  // --- Submission Handler with Corrections ---
-  
-  // 💡 Helper function to validate all fields before submit
-  const validateAll = () => {
-    let allErrors = {};
-    Object.keys(formData).forEach(key => {
-        // Pass the key, value, and full formData for cross-field checks (like confirmPassword)
-        const fieldErrors = validate(key, formData[key], formData);
-        if (fieldErrors[key]) {
-            allErrors[key] = fieldErrors[key];
-        }
-    });
-    
-    // Add check for role selection
-    if (!formData.role) {
-        allErrors.role = "Please select a role (Doctor/Patient) before signing up.";
+      if (!value) {
+        setErrors((prev) => ({ ...prev, password: "Password is required" }));
+      } else if (value.length < 8) {
+        setErrors((prev) => ({
+          ...prev,
+          // password: "Password must be at least 8 characters",
+        }));
+      } else {
+        setErrors((prev) => ({ ...prev, password: "" }));
+      }
     }
 
-    setErrors(allErrors);
-    return Object.keys(allErrors).length === 0;
+    if (name === "confirmPassword") {
+      if (!value) {
+        setErrors((prev) => ({
+          ...prev,
+          confirmPassword: "Confirm Password is required",
+        }));
+      } else if (value !== formData.password) {
+        setErrors((prev) => ({
+          ...prev,
+          confirmPassword: "Passwords do not match",
+        }));
+      } else {
+        setErrors((prev) => ({ ...prev, confirmPassword: "" }));
+      }
+    }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!validateAll()) {
-      console.log("Validation failed:", errors);
+    if (!formData.username || !formData.email || !formData.password || !formData.confirmPassword) {
+      alert("Please fill in all fields.");
       return;
     }
-    const { confirmPassword, ...baseData } = formData;
-    
-    const payload = { formData: baseData };
-    
-    console.log("Dispatching Signup data:", payload.formData);
 
-    setLoading(true);
-
-    try {
-        const response = await registerUser(payload);
-        
-      
-        if (response && response.status === 201) { 
-             alert("Registration successful! Verifying OTP...");
-             navigate("/verifyOtp");
-        } else {
-             // Handle non-error, but failed responses if the API doesn't throw on logic errors
-             alert("Registration failed. Please check the server response.");
-             console.error("API returned unsuccessful status:", response);
-        }
-
-    } catch (error) {
-        // 5. Handle network or API errors (since registerUser throws the error)
-        console.error("Registration error:", error);
-        // Display specific error message from the backend if available
-        const errorMessage = error.response?.data?.email?.[0] || // Django/DRF common format
-                             error.response?.data?.username?.[0] ||
-                             error.response?.data?.detail ||
-                             "Registration failed. Please try again.";
-        alert(errorMessage);
-    } finally {
-        setLoading(false);
+    if (formData.password !== formData.confirmPassword) {
+      alert("Passwords do not match.");
+      return;
     }
+
+    alert("Signup successful!");
+    console.log(formData);
   };
-
-
-  // ... (Rest of the component rendering)
 
   return (
     <FormLayout>
       <h2 className="text-3xl font-semibold text-center mb-8 text-gray-900">
-        Sign Up
+        Proceed
       </h2>
 
       <form
         onSubmit={handleSubmit}
         className="space-y-4 w-full max-w-md mx-auto px-4 sm:px-8"
       >
-        {/* Role Missing Warning */}
-        {!role && (
-            <p className="text-red-500 text-sm text-center font-medium mb-4 p-2 border border-red-200 rounded-md bg-red-50">
-                Please select your role (Doctor or Patient) before signing up.
-            </p>
-        )}
-
         <Input
           label="Username"
           type="text"
@@ -188,7 +119,7 @@ const Signup = () => {
           icon={userIcon}
           error={errors.username}
         />
-        
+
         <Input
           label="Email"
           type="email"
@@ -200,10 +131,10 @@ const Signup = () => {
           error={errors.email}
         />
 
-        
+        {/* Password Input */}
         <Input
           label="Password"
-          type={showPassword ? "text" : "password"} // 💡 Use local state for input type
+          type={showPassword ? "text" : "password"}
           name="password"
           placeholder="Enter your password"
           value={formData.password}
@@ -213,11 +144,63 @@ const Signup = () => {
           showPassword={showPassword}
           onTogglePassword={() => setShowPassword(!showPassword)}
           error={errors.password}
+          onFocus={() => setPasswordFocused(true)} 
+          onBlur={() => setPasswordFocused(false)}
         />
+
+        {/* Password Specification Lines */}
+        {(passwordFocused || formData.password) && (
+          <div className="text-sm mt-2 space-y-1">
+            <p
+              className={`${
+                passwordRules.hasUppercase
+                  ? "text-green-600"
+                  : formData.password
+                  ? "text-red-500"
+                  : "text-blue-500"
+              }`}
+            >
+              • An uppercase character
+            </p>
+            <p
+              className={`${
+                passwordRules.hasLength
+                  ? "text-green-600"
+                  : formData.password
+                  ? "text-red-500"
+                  : "text-blue-500"
+              }`}
+            >
+              • At least 8 characters
+            </p>
+            <p
+              className={`${
+                passwordRules.hasNumber
+                  ? "text-green-600"
+                  : formData.password
+                  ? "text-red-500"
+                  : "text-blue-500"
+              }`}
+            >
+              • At least a number
+            </p>
+            <p
+              className={`${
+                passwordRules.hasSpecialChar
+                  ? "text-green-600"
+                  : formData.password
+                  ? "text-red-500"
+                  : "text-blue-500"
+              }`}
+            >
+              • At least one special symbol
+            </p>
+          </div>
+        )}
 
         <Input
           label="Confirm Password"
-          type={showConfirm ? "text" : "password"} // 💡 Use local state for input type
+          type={showConfirm ? "text" : "password"}
           name="confirmPassword"
           placeholder="Confirm your password"
           value={formData.confirmPassword}
@@ -229,19 +212,13 @@ const Signup = () => {
           error={errors.confirmPassword}
         />
 
-        
         <div className="mt-8">
-          <Button 
-            type="submit" 
-            fullWidth 
-            disabled={loading || Object.values(errors).some(e => e) || !formData.username || !formData.email || !formData.password || !formData.confirmPassword || !role}
-          >
-            {loading ? "Signing Up..." : "Proceed"}
+          <Button type="submit" fullWidth>
+            Sign Up
           </Button>
         </div>
       </form>
 
-    
       <p className="text-center text-gray-600 text-sm mt-8">
         Already have an account?{" "}
         <Link to="/login" className="text-blue-600 hover:underline font-medium">

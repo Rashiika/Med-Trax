@@ -121,6 +121,17 @@ export const resendPasswordResetOtp = async ({ email }) => {
   }
 };
 
+export const resendSignupOtp = async ({ email }) => {
+  try {
+    const response = await axios.post(`${API_BASE_URL}/resend-signup-otp/`, { email });
+    console.log(response.data);
+    return response.data;
+  } catch (error) {
+    console.log("Resend signup OTP error:", error);
+    throw error; 
+  }
+}
+
 /* ----------------------------- 🔹 Slice ----------------------------- */
 const authSlice = createSlice({
   name: "auth",
