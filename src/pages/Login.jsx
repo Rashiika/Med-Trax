@@ -1,17 +1,12 @@
 import React, { useState } from "react";
-import { Link } from "react-router-dom";
 import FormLayout from "../components/Layout/FormLayout";
 import Input from "../components/Input/Input"; 
 import emailIcon from "../assets/email.png";
 import lockIcon from "../assets/lock.png";
 import eyeOpen from "../assets/eye.png";
 import eyeClose from "../assets/eyeclose.png";
-import { useDispatch } from "react-redux";
-import { loginUser } from "../redux/features/authSlice";
 
 const LoginPage = () => {
-
-  const dispatch = useDispatch();
   const [formData, setFormData] = useState({ email: "", password: "" });
   const [errors, setErrors] = useState({});
   const [showPassword, setShowPassword] = useState(false);
@@ -61,8 +56,6 @@ const LoginPage = () => {
     }
     alert("Login successful!");
     console.log(formData);
-
-    dispatch(loginUser({ credentials: formData }));
   };
 
   return (
@@ -133,12 +126,12 @@ const LoginPage = () => {
 
         
         <div className="text-right mb-6">
-          <Link
-            to="/EmailOtp"
+          <a
+            href="/VerifyOtp"
             className="text-sm text-blue-600 hover:underline font-medium"
           >
             Forgot Password?
-          </Link>
+          </a>
         </div>
 
         
@@ -151,9 +144,9 @@ const LoginPage = () => {
 
         <p className="text-center text-gray-600 text-sm mt-12">
           Don’t have an account?{" "}
-          <Link to="/signup" className="text-blue-600 hover:underline font-medium">
+          <a href="/signup" className="text-blue-600 hover:underline font-medium">
             Sign Up
-          </Link>
+          </a>
         </p>
       </form>
     </FormLayout>
