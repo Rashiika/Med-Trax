@@ -15,10 +15,9 @@ const Signup = () => {
   const navigate = useNavigate();
 
   const [formData, setFormData] = useState({
-    username: "",
     email: "",
-    password: "",
-    confirmPassword: "",
+    password1: "",
+    password2: "",
     role: role,
   });
 
@@ -54,30 +53,30 @@ const Signup = () => {
       setPasswordRules(checkPasswordRules(value));
 
       if (!value) {
-        setErrors((prev) => ({ ...prev, password: "Password is required" }));
+        setErrors((prev) => ({ ...prev, password1: "Password is required" }));
       } else if (value.length < 8) {
         setErrors((prev) => ({
           ...prev,
           // password: "Password must be at least 8 characters",
         }));
       } else {
-        setErrors((prev) => ({ ...prev, password: "" }));
+        setErrors((prev) => ({ ...prev, password1: "" }));
       }
     }
 
-    if (name === "confirmPassword") {
+    if (name === "password2") {
       if (!value) {
         setErrors((prev) => ({
           ...prev,
-          confirmPassword: "Confirm Password is required",
+          password2: "Confirm Password is required",
         }));
-      } else if (value !== formData.password) {
+      } else if (value !== formData.password1) {
         setErrors((prev) => ({
           ...prev,
-          confirmPassword: "Passwords do not match",
+          password2: "Passwords do not match",
         }));
       } else {
-        setErrors((prev) => ({ ...prev, confirmPassword: "" }));
+        setErrors((prev) => ({ ...prev, password2: "" }));
       }
     }
   };
@@ -85,19 +84,29 @@ const Signup = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!formData.username || !formData.email || !formData.password || !formData.confirmPassword) {
+    if (!formData.email || !formData.password1 || !formData.password2) {
       alert("Please fill in all fields.");
       return;
     }
-
-    if (formData.password !== formData.confirmPassword) {
+    if (formData.password1 !== formData.password2) {
       alert("Passwords do not match.");
       return;
     }
+    setLoading(true); 
+    try {
+      const userData = await dispatch(registerUser(formData)).unwrap();
+      
+      console.log('Registration data:', userData);
+      alert("Signup successful!");
+      navigate('/verifyOtp', { state: { email: formData.email } });
 
-    alert("Signup successful!");
-    console.log(formData);
-  };
+    } catch (error) {
+      console.error("Registration failed:", error);
+      alert(`Signup failed: ${error.message || 'An unknown error occurred'}`);
+    } finally {
+      setLoading(false);
+    }
+};
 
   return (
     <FormLayout>
@@ -109,17 +118,6 @@ const Signup = () => {
         onSubmit={handleSubmit}
         className="space-y-4 w-full max-w-md mx-auto px-4 sm:px-8"
       >
-        <Input
-          label="Username"
-          type="text"
-          name="username"
-          placeholder="Enter your username"
-          value={formData.username}
-          onChange={handleChange}
-          icon={userIcon}
-          error={errors.username}
-        />
-
         <Input
           label="Email"
           type="email"
@@ -135,9 +133,9 @@ const Signup = () => {
         <Input
           label="Password"
           type={showPassword ? "text" : "password"}
-          name="password"
+          name="password1"
           placeholder="Enter your password"
-          value={formData.password}
+          value={formData.password1}
           onChange={handleChange}
           icon={lockIcon}
           showPasswordToggle
@@ -149,13 +147,13 @@ const Signup = () => {
         />
 
         {/* Password Specification Lines */}
-        {(passwordFocused || formData.password) && (
+        {(passwordFocused || formData.password1) && (
           <div className="text-sm mt-2 space-y-1">
             <p
               className={`${
                 passwordRules.hasUppercase
                   ? "text-green-600"
-                  : formData.password
+                  : formData.password1
                   ? "text-red-500"
                   : "text-blue-500"
               }`}
@@ -166,18 +164,18 @@ const Signup = () => {
               className={`${
                 passwordRules.hasLength
                   ? "text-green-600"
-                  : formData.password
+                  : formData.password1
                   ? "text-red-500"
                   : "text-blue-500"
               }`}
             >
-              • At least 8 characters
+              • At least 8 characters 
             </p>
             <p
               className={`${
                 passwordRules.hasNumber
                   ? "text-green-600"
-                  : formData.password
+                  : formData.password1
                   ? "text-red-500"
                   : "text-blue-500"
               }`}
@@ -188,7 +186,7 @@ const Signup = () => {
               className={`${
                 passwordRules.hasSpecialChar
                   ? "text-green-600"
-                  : formData.password
+                  : formData.password1
                   ? "text-red-500"
                   : "text-blue-500"
               }`}
@@ -201,9 +199,9 @@ const Signup = () => {
         <Input
           label="Confirm Password"
           type={showConfirm ? "text" : "password"}
-          name="confirmPassword"
+          name="password2"
           placeholder="Confirm your password"
-          value={formData.confirmPassword}
+          value={formData.password2}
           onChange={handleChange}
           icon={lockIcon}
           showPasswordToggle

@@ -4,10 +4,10 @@ import FormLayout from "../components/Layout/FormLayout";
 import Input from "../components/Input/Input";
 import Button from "../components/Button/Button"; // Assuming you need this
 import { useDispatch } from "react-redux";
+import { resendPasswordResetOtp, verifyPasswordResetOtp } from "../redux/features/authSlice";
 // Import THUNKS from the Redux slice file
-import { resendSignupOtp, verifyOtp } from "../redux/features/authSlice";
 
-const VerifyOtp = () => {
+const VerifyPasswordResetOtp = () => {
   const dispatch = useDispatch();
   const location = useLocation();
   const navigate = useNavigate(); // Initialize navigate
@@ -66,9 +66,9 @@ const VerifyOtp = () => {
 
     try {
       // 🎯 FIX 4: Dispatch the thunk and use unwrap() to handle the result
-      await dispatch(verifyOtp(formData)).unwrap();
+      await dispatch(verifyPasswordResetOtp(formData)).unwrap();
       alert("OTP Verified Successfully! Redirecting to patient dashboard...");
-      navigate("/patient");
+      navigate("/resetPassword");
     } catch (error) {
       console.error("OTP verification failed:", error);
       // Display user-friendly error from the backend/thunk
@@ -97,7 +97,7 @@ const VerifyOtp = () => {
     }
     setResending(true);
     try {
-      await dispatch(resendSignupOtp({ email: formData.email })).unwrap();
+      await dispatch(resendPasswordResetOtp({ email: formData.email })).unwrap();
       setTimer(180);
       alert("A new OTP has been sent!");
     } catch (error) {
@@ -135,12 +135,11 @@ const VerifyOtp = () => {
             error={errors.otp}
           />
           <p className="absolute left-0 -bottom-6 text-sm text-gray-600">
-             Resend available in:{" "}
+            Resend available in:{" "}
             <span className="font-medium ml-1 text-black">
               {formatTime(timer)}
             </span>
           </p>
-
         </div>
         <div className="text-right mb-6">
           <button
@@ -179,5 +178,4 @@ const VerifyOtp = () => {
     </FormLayout>
   );
 };
-
-export default VerifyOtp;
+export default VerifyPasswordResetOtp;

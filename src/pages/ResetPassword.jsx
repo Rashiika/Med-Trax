@@ -1,18 +1,28 @@
 import React, { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import FormLayout from "../components/Layout/FormLayout";
 import Input from "../components/Input/Input";
 import lockIcon from "../assets/lock.png";
+import { useDispatch } from "react-redux";
+import { resetPassword } from "../redux/features/authSlice";
 
 const ResetPassword = () => {
+
+  const dispatch = useDispatch();
+  const location = useLocation();
+  const navigate = useNavigate(); // Initialize navigate
+  const initialEmail = location.state?.email || "copisej192@elygifts.com"; // 🎯 FIX 1: Initialise formData with the email and otp
+
   const [formData, setFormData] = useState({
-    password: "",
-    confirmPassword: "",
+    email: initialEmail,
+    new_password: "",
+    confirm_password: "",
   });
   const [errors, setErrors] = useState({});
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [passwordFocused, setPasswordFocused] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   const uppercaseRegex = /[A-Z]/;
   const numberRegex = /[0-9]/;
@@ -40,45 +50,44 @@ const ResetPassword = () => {
       setPasswordRules(checkPasswordRules(value));
 
       if (!value) {
-        setErrors((prev) => ({ ...prev, password: "Password is required" }));
+        setErrors((prev) => ({ ...prev, new_password: "Password is required" }));
       } else {
-        setErrors((prev) => ({ ...prev, password: "" }));
+        setErrors((prev) => ({ ...prev, new_password: "" }));
       }
     }
 
-    if (name === "confirmPassword") {
+    if (name === "confirm_password") {
       if (!value) {
         setErrors((prev) => ({
           ...prev,
-          confirmPassword: "Confirm Password is required",
+          confirm_password: "Confirm Password is required",
         }));
-      } else if (value !== formData.password) {
+      } else if (value !== formData.new_password) {
         setErrors((prev) => ({
           ...prev,
-          confirmPassword: "Passwords do not match",
+          confirm_password: "Passwords do not match",
         }));
       } else {
-        setErrors((prev) => ({ ...prev, confirmPassword: "" }));
+        setErrors((prev) => ({ ...prev, confirm_password: "" }));
       }
     }
   };
+const handleSubmit = async (e) => {
+  e.preventDefault();
+  console.log(formData);
+  if (!formData.new_password || !formData.confirm_password) return;
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-
-    if (Object.values(errors).some((error) => error)) {
-      alert("Please fix the errors before submitting.");
-      return;
-    }
-
-    if (!formData.password || !formData.confirmPassword) {
-      alert("Please fill in all fields.");
-      return;
-    }
-
+  setLoading(true);
+  try {
+    await dispatch(resetPassword({ data: formData })).unwrap();
     alert("Password reset successful!");
-    console.log(formData);
-  };
+    navigate("/login");
+  } catch (err) {
+    alert("Reset failed. Please try again.");
+  } finally {
+    setLoading(false);
+  }
+};
 
   return (
     <FormLayout>
@@ -93,8 +102,8 @@ const ResetPassword = () => {
         <Input
           type="password"
           label="Password"
-          name="password"
-          value={formData.password}
+          name="new_password"
+          value={formData.new_password}
           onChange={handleChange}
           placeholder="Enter your password"
           icon={lockIcon}
@@ -106,13 +115,13 @@ const ResetPassword = () => {
           onBlur={() => setPasswordFocused(false)}
         />
 
-        {(passwordFocused || formData.password) && (
+        {(passwordFocused || formData.new_password) && (
           <div className="text-sm mt-2 space-y-1">
             <p
               className={`${
                 passwordRules.hasUppercase
                   ? "text-green-600"
-                  : formData.password
+                  : formData.new_password
                   ? "text-red-500"
                   : "text-blue-500"
               }`}
@@ -123,7 +132,7 @@ const ResetPassword = () => {
               className={`${
                 passwordRules.hasLength
                   ? "text-green-600"
-                  : formData.password
+                  : formData.new_password
                   ? "text-red-500"
                   : "text-blue-500"
               }`}
@@ -134,7 +143,7 @@ const ResetPassword = () => {
               className={`${
                 passwordRules.hasNumber
                   ? "text-green-600"
-                  : formData.password
+                  : formData.new_password
                   ? "text-red-500"
                   : "text-blue-500"
               }`}
@@ -145,7 +154,7 @@ const ResetPassword = () => {
               className={`${
                 passwordRules.hasSpecialChar
                   ? "text-green-600"
-                  : formData.password
+                  : formData.new_password
                   ? "text-red-500"
                   : "text-blue-500"
               }`}
@@ -158,15 +167,15 @@ const ResetPassword = () => {
         <Input
           label="Confirm Password"
           type="password"
-          name="confirmPassword"
+          name="confirm_password"
           placeholder="Confirm your password"
-          value={formData.confirmPassword}
+          value={formData.confirm_password}
           onChange={handleChange}
           icon={lockIcon}
           showPasswordToggle
           showPassword={showConfirm}
           onTogglePassword={() => setShowConfirm(!showConfirm)}
-          error={errors.confirmPassword}
+          error={errors.confirm_password}
         />
 
         <button
