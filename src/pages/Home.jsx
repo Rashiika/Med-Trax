@@ -1,19 +1,33 @@
-import React, { useState } from "react";
-import logo from "../assets/logo.png";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { useDispatch } from "react-redux";
-import { setRole } from "../redux/features/roleSlice";
+import { useDispatch, useSelector } from "react-redux";
+import { selectRole, clearRole } from "../redux/features/roleSlice";
+import logo from "../assets/logo.png";
 
 const Home = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const [selectedRole, setSelectedRole] = useState("");
+  const { isLoading, error } = useSelector((state) => state.role);
 
-  const handleRoleSelect = (role) => {
-    if(role){
-      setSelectedRole(role);
-      dispatch(setRole(selectedRole));
-      navigate("/signup");
+  useEffect(() => {
+    dispatch(clearRole());
+  }, [dispatch]);
+
+  const handleRoleSelect = async (role) => {
+    setSelectedRole(role);
+  };
+
+  const handleNext = async () => {
+    if (!selectedRole) return;
+
+    try {
+      const result = await dispatch(selectRole(selectedRole)).unwrap();
+      if (result.success) {
+        navigate("/signup");
+      }
+    } catch (err) {
+      console.error("Role selection failed:", err);
     }
   };
 
@@ -36,14 +50,20 @@ const Home = () => {
         </p>
       </div>
 
+      {error && (
+        <div className="mb-6 px-4 py-3 bg-red-50 border border-red-300 rounded-lg text-red-700 text-sm">
+          {error}
+        </div>
+      )}
+
       <div className="flex flex-col sm:flex-row gap-8 sm:gap-16 mb-10">
         <div
-          onClick={() => setSelectedRole("doctor")}
+          onClick={() => handleRoleSelect("doctor")}
           className={`cursor-pointer border-[1px] rounded-xl p-6 sm:p-8 flex flex-col items-center justify-center w-44 sm:w-48 
           transition-all duration-300 relative ${
             selectedRole === "doctor"
               ? "border-[#20AA14] bg-green-50 shadow-lg"
-              : "border-gray-300"
+              : "border-gray-300 hover:border-gray-400"
           }`}
         >
           <svg
@@ -67,12 +87,12 @@ const Home = () => {
         </div>
 
         <div
-          onClick={() => setSelectedRole("patient")}
+          onClick={() => handleRoleSelect("patient")}
           className={`cursor-pointer border-[1px] rounded-xl p-6 sm:p-8 flex flex-col items-center justify-center w-44 sm:w-48 
           transition-all duration-300 relative ${
             selectedRole === "patient"
               ? "border-[#20AA14] bg-green-50 shadow-lg"
-              : "border-gray-300"
+              : "border-gray-300 hover:border-gray-400"
           }`}
         >
           <svg
@@ -111,13 +131,13 @@ const Home = () => {
       </div>
 
       <button
-        onClick={handleRoleSelect}
-        disabled={!selectedRole}
+        onClick={handleNext}
+        disabled={!selectedRole || isLoading}
         className={`px-8 py-2 sm:px-10 sm:py-3 rounded-lg text-base sm:text-lg bg-blue-600 hover:bg-blue-700 cursor-pointer text-white font-semibold shadow-md transition-all duration-300 ${
-          !selectedRole && "opacity-50 cursor-not-allowed"
+          (!selectedRole || isLoading) && "opacity-50 cursor-not-allowed"
         }`}
       >
-        Next
+        {isLoading ? "Loading..." : "Next"}
       </button>
     </div>
   );

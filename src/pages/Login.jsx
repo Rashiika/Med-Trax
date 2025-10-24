@@ -1,156 +1,203 @@
-import React, { useState } from "react";
-import FormLayout from "../components/Layout/FormLayout";
-import Input from "../components/Input/Input"; 
-import emailIcon from "../assets/email.png";
-import lockIcon from "../assets/lock.png";
-import eyeOpen from "../assets/eye.png";
-import eyeClose from "../assets/eyeclose.png";
+import React, { useState, useEffect } from "react";
+import { useNavigate, Link } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
+import { loginUser, resetAuthState } from "../redux/features/authSlice";
+import doctorImage from "../assets/hospital.png";
+import logo from "../assets/logo.png";
+import { selectRole } from "../redux/features/roleSlice";
 
-const LoginPage = () => {
+
+const Login = () => {
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
+
+  const { isLoading, error, isAuthenticated, user } = useSelector((state) => state.auth);
+  const { selectedRole } = useSelector((state) => state.role);
+
   const [formData, setFormData] = useState({ email: "", password: "" });
-  const [errors, setErrors] = useState({});
-  const [showPassword, setShowPassword] = useState(false);
+  const [validationErrors, setValidationErrors] = useState({});
+  const [showCompleteProfileButton, setShowCompleteProfileButton] = useState(false);
 
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  useEffect(() => {
+    if (isAuthenticated && user) {
+      const profileCompleted = user.profile_completed ?? false;
+
+      if (!profileCompleted) {
+        setShowCompleteProfileButton(true);
+      } else {
+        const dashboardRoute = user.role === "doctor" ? "/doctor-dashboard" : "/patient-dashboard";
+        navigate(dashboardRoute, { replace: true });
+      }
+    }
+  }, [isAuthenticated, user, navigate]);
+
+
+  useEffect(() => {
+    dispatch(resetAuthState());
+    setShowCompleteProfileButton(false);
+  }, [dispatch]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData({ ...formData, [name]: value });
+    setFormData((prev) => ({ ...prev, [name]: value }));
+    if (validationErrors[name]) setValidationErrors((prev) => ({ ...prev, [name]: "" }));
+  };
 
-    
-    if (name === "email") {
-      if (!value) {
-        setErrors((prev) => ({ ...prev, email: "Email is required" }));
-      } else if (!value.includes("@")) {
-        setErrors((prev) => ({ ...prev, email: "'@' is missing in the email" }));
-      } else if (!emailRegex.test(value)) {
-        setErrors((prev) => ({ ...prev, email: "Invalid email address" }));
-      } else {
-        setErrors((prev) => ({ ...prev, email: "" }));
+  const validateForm = () => {
+    const errors = {};
+    if (!formData.email.trim()) errors.email = "Email is required";
+    if (!formData.password.trim()) errors.password = "Password is required";
+    setValidationErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!validateForm()) return;
+
+    setShowCompleteProfileButton(false);
+
+    try {
+      if (!selectedRole) {
+        navigate("/", { replace: true });
+        return;
       }
-    }
 
-    if (name === "password") {
-      if (!value) {
-        setErrors((prev) => ({ ...prev, password: "Password is required" }));
-      } else if (value.length < 8) {
-        setErrors((prev) => ({
-          ...prev,
-          password: "Password must be at least 8 characters",
-        }));
-      } else {
-        setErrors((prev) => ({ ...prev, password: "" }));
+      await dispatch(selectRole(selectedRole)).unwrap();
+      
+      const result = await dispatch(loginUser(formData)).unwrap();
+      
+      if (result.user && !result.user.profile_completed) {
+        setShowCompleteProfileButton(true);
+      }
+    } catch (err) {
+      console.error("Login failed:", err);
+
+      const errorMsg = (err?.message || err?.error || "").toLowerCase();
+      const isProfileIncomplete = 
+        errorMsg.includes("profile incomplete") ||
+        errorMsg.includes("complete your profile");
+
+      if (isProfileIncomplete) {
+        setShowCompleteProfileButton(true);
       }
     }
   };
 
- const handleSubmit = (e) => {
-    e.preventDefault();
-    if (Object.values(errors).some((error) => error)) {
-      alert("Please fix the errors before submitting.");
-      return;
+  const handleGoToProfileCompletion = () => {
+    const roleToUse = user?.role;
+    if (roleToUse === "doctor") {
+      navigate("/complete-doctor-profile");
+    } else if (roleToUse === "patient") {
+      navigate("/complete-patient-profile");
+    } else {
+      navigate("/");
     }
-    if (!formData.email || !formData.password) {
-      alert("Please fill in all fields.");
-      return;
-    }
-    alert("Login successful!");
-    console.log(formData);
   };
 
   return (
-    <FormLayout>
-      <h2 className="text-3xl font-semibold text-center mb-8 text-gray-800">
-        Secure Login
-      </h2>
+    <div className="flex min-h-screen bg-white">
+      <div className="hidden lg:flex w-1/2 items-center justify-center bg-gray-100">
+        <img src={doctorImage} alt="Doctors" className="object-cover w-full h-full" />
+      </div>
 
-      <form onSubmit={handleSubmit} 
-      className="space-y-4 w-full max-w-md mx-auto px-4 sm:px-8">
+      <div className="w-full lg:w-1/2 flex items-center justify-center p-8">
+        <div className="max-w-md w-full">
+          <div className="flex flex-col items-center mb-8">
+            <img src={logo} alt="Med-Trax" className="w-16 h-16 mb-3" />
+            <h1 className="text-2xl font-semibold text-gray-800">Secure Login</h1>
+          </div>
 
-       
-        <div className="mb-5">
-        <Input
-          type="email"
-          label="Email"
-          value={formData.email}
-          onChange={(e) => {
-            const email = e.target.value.trim();
-            setFormData({ ...formData, email: e.target.value });
+          {error && (
+            <div className="mb-5 p-3 bg-red-50 border-l-4 border-red-500 rounded-md text-sm text-red-700">
+              <p>{error}</p>
+            </div>
+          )}
 
-            if (!email) {
-              setErrors((prev) => ({ ...prev, email: "Email is required" }));
-            } else if (!email.includes("@")) {
-              setErrors((prev) => ({ ...prev, email: "'@' is missing in the email" }));
-            } else if (!emailRegex.test(email)) {
-              setErrors((prev) => ({ ...prev, email: "Invalid email address" }));
-            } else {
-              setErrors((prev) => ({ ...prev, email: "" }));
-            }
-          }}
-          placeholder="Enter your email"
-          icon={emailIcon}
-          error={errors.email}
-        />
+          {showCompleteProfileButton && (
+            <div className="mb-5">
+              <button
+                onClick={handleGoToProfileCompletion}
+                className="w-full bg-green-600 text-white px-5 py-2.5 rounded-md hover:bg-green-700 transition font-semibold"
+              >
+                Complete Profile
+              </button>
+            </div>
+          )}
+
+          <form onSubmit={handleSubmit} className="space-y-5">
+            <div>
+              <label className="block text-sm text-gray-700 mb-1">Email</label>
+              <input
+                type="email"
+                name="email"
+                value={formData.email}
+                onChange={handleChange}
+                placeholder="Enter your email"
+                className={`w-full border rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                  validationErrors.email ? "border-red-500" : "border-gray-300"
+                }`}
+              />
+              {validationErrors.email && (
+                <p className="text-sm text-red-600 mt-1">{validationErrors.email}</p>
+              )}
+            </div>
+
+            <div>
+              <label className="block text-sm text-gray-700 mb-1">Password</label>
+              <input
+                type="password"
+                name="password"
+                value={formData.password}
+                onChange={handleChange}
+                placeholder="Enter password"
+                className={`w-full border rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                  validationErrors.password ? "border-red-500" : "border-gray-300"
+                }`}
+              />
+              {validationErrors.password && (
+                <p className="text-sm text-red-600 mt-1">{validationErrors.password}</p>
+              )}
+            </div>
+
+            <div className="flex justify-end">
+              <p
+                onClick={() => navigate("/email-otp")}
+                className="text-sm text-blue-600 hover:underline cursor-pointer"
+              >
+                Forgot Password?
+              </p>
+            </div>
+
+            <button
+              type="submit"
+              disabled={isLoading}
+              className={`w-full py-2.5 bg-blue-600 text-white font-semibold rounded-md hover:bg-blue-700 transition ${
+                isLoading ? "opacity-70 cursor-not-allowed" : ""
+              }`}
+            >
+              {isLoading ? "Logging in..." : "Login"}
+            </button>
+          </form>
+
+          <div className="text-center mt-6 text-sm space-y-3">
+            <p className="text-gray-600">
+              Don't have an account?{" "}
+              <Link to="/signup" className="text-blue-600 hover:text-blue-800 font-medium">
+                Sign Up
+              </Link>
+            </p>
+            <button
+              onClick={() => navigate("/")}
+              className="text-gray-600 hover:text-gray-800 font-medium"
+            >
+              Go back to Role
+            </button>
+          </div>
         </div>
-
-       
-        <Input
-          type="password"
-          label="Password"
-          value={formData.password}
-          onChange={(e) => {
-            const value = e.target.value;
-            setFormData({ ...formData, password: value });
-
-            if (!value) {
-              setErrors((prev) => ({
-                ...prev,
-                password: "Password is required",
-              }));
-            } else if (value.length < 8) {
-              setErrors((prev) => ({
-                ...prev,
-                password: "Password must be at least 8 characters",
-              }));
-            } else {
-              setErrors((prev) => ({ ...prev, password: "" }));
-            }
-          }}
-          placeholder="Enter your password"
-          icon={lockIcon}
-          showPasswordToggle={true}
-          showPassword={showPassword}
-          onTogglePassword={() => setShowPassword(!showPassword)}
-          error={errors.password}
-        />
-
-        
-        <div className="text-right mb-6">
-          <a
-            href="/VerifyOtp"
-            className="text-sm text-blue-600 hover:underline font-medium"
-          >
-            Forgot Password?
-          </a>
-        </div>
-
-        
-        <button
-          type="submit"
-          className="w-full bg-blue-600 text-white py-3 rounded-md font-semibold hover:bg-blue-700 transition-all duration-200 mt-8"
-        >
-          Login
-        </button>
-
-        <p className="text-center text-gray-600 text-sm mt-12">
-          Don’t have an account?{" "}
-          <a href="/signup" className="text-blue-600 hover:underline font-medium">
-            Sign Up
-          </a>
-        </p>
-      </form>
-    </FormLayout>
+      </div>
+    </div>
   );
 };
 
-export default LoginPage;
+export default Login;

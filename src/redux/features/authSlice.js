@@ -1,189 +1,171 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import axios from "axios";
+import axiosInstance from "../../api/axiosConfig";
 
-const API_BASE_URL = "http://13.49.67.184/api";
-
-/* ----------------------------- 1️⃣ Registration ----------------------------- */
-
-export const registerUser = async ({ formData }) => {
+const getUserFromStorage = () => {
   try {
-    console.log(formData);
-    const data = await axios.post(`${API_BASE_URL}/signup/`, formData);
-    console.log(data);
-    return data;
+    const user = localStorage.getItem("user");
+    return user ? JSON.parse(user) : null;
   } catch (error) {
-    console.log("Registration error:", error);
-    throw error;
+    console.error("Error parsing user from localStorage:", error);
+    return null;
   }
 };
 
-/* ----------------------------- 2️⃣ OTP Verification ----------------------------- */
-export const verifyOtp = async ({ otpData }) => {
-  try {
-    const data = await axios.post(`${API_BASE_URL}/verify-signup-otp/`, otpData);
-    return data;
-  } catch (error) {
-    console.log("OTP verification error:", error);
-    throw error;
-  }
+const getTokenFromStorage = () => {
+  return localStorage.getItem("access_token") || null;
 };
 
-export const completeProfile = createAsyncThunk(
-  "auth/completeProfile",
-  async ({ formData, role }, { rejectWithValue }) => {
-    try {
-      
-      if (!role) {
-        return rejectWithValue("User role is missing. Please select a role.");
-      }
+const initialState = {
+  user: getUserFromStorage(),
+  token: getTokenFromStorage(),
+  isAuthenticated: !!getTokenFromStorage(),
+  isLoading: false,
+  error: null,
+  refresh_token: localStorage.getItem("refresh_token") || null, 
+};
 
-      const endpoint =
-        role === "doctor"
-          ? `${API_BASE_URL}/complete-doctor-profile/`
-          : `${API_BASE_URL}/complete-patient-profile/`;
-
-      const response = await axios.post(endpoint, formData);
-      return { ...response.data, role };
-    } catch (error) {
-      return rejectWithValue(error.response?.data || "Profile completion failed");
-    }
-  }
-);
-
-/* ----------------------------- 4️⃣ Login ----------------------------- */
 export const loginUser = createAsyncThunk(
-  "auth/loginUser",
-  async ({ credentials, role }, { rejectWithValue }) => {
+  "auth/login",
+  async (credentials, { rejectWithValue }) => {
     try {
-
-      if (!role) {
-        return rejectWithValue("User role is missing. Please select a role.");
-      }
+      const response = await axiosInstance.post("/login/", credentials); 
       
-      const endpoint =
-        role === "doctor"
-          ? `${API_BASE_URL}/doctor-login/`
-          : `${API_BASE_URL}/patient-login/`;
+      if (response.data.access && response.data.user) {
+        const { access, refresh, user } = response.data;
+        
+        localStorage.setItem("access_token", access);
+        if (refresh) {
+             localStorage.setItem("refresh_token", refresh);
+        }
+        localStorage.setItem("user", JSON.stringify(user));
 
-      const response = await axios.post(endpoint, credentials);
-      console.log(response);
-      return { ...response.data, role };
+        return { user, access, refresh };
+      } else {
+        console.error("Login response missing token or user data:", response.data);
+        return rejectWithValue("Login failed: Invalid server response.");
+      }
     } catch (error) {
-      console.log(error);
-      return rejectWithValue(error.response?.data || "Login failed");
+      console.error("Login API error:", error.response?.data || error.message);
+      const errorMsg = 
+        error.response?.data?.detail || 
+        error.response?.data?.error || 
+        error.response?.data?.message ||
+        "Login failed. Please try again.";
+      return rejectWithValue(errorMsg);
     }
   }
 );
 
-/* ----------------------------- 5️⃣ Forgot Password ----------------------------- */
-export const forgotPassword = async ({ email }) => {
-  try {
-    const response = await axios.post(`${API_BASE_URL}/forgot-password/`, { email });
-    console.log(response.data);
-    return response.data;
-  } catch (error) {
-    console.log("Forgot password error:", error);
-    throw error;
+export const logoutUser = createAsyncThunk(
+  "auth/logout",
+  async (_, { rejectWithValue }) => {
+    try {
+      localStorage.removeItem("access_token");
+      localStorage.removeItem("refresh_token");
+      localStorage.removeItem("user");
+      localStorage.removeItem("selected_role");
+      sessionStorage.clear();
+      
+      try {
+        await axiosInstance.post("/logout/"); 
+      } catch (err) {
+        console.log("Backend logout may not be available or token expired:", err);
+      }
+      
+      return null;
+    } catch (error) {
+      return rejectWithValue("Logout failed during cleanup");
+    }
   }
-};
+);
 
-/* ----------------------------- 6️⃣ Reset Password ----------------------------- */
-export const resetPassword = async ({ data }) => {
-  try {
-    const response = await axios.post(`${API_BASE_URL}/reset-password/`, data);
-    console.log(response.data);
+export const verifyOtp = async ({ otpData }) => {
+    const response = await axiosInstance.post(`/verify-signup-otp/`, otpData); 
     return response.data;
-  } catch (error) {
-    console.log("Reset password error:", error);
-    throw error; 
-  }
-};
-
-export const verifyPasswordResetOtp = async ({ otpData }) => {
-  try {
-    const response = await axios.post(`${API_BASE_URL}/verify-reset-otp/`, otpData);
-    console.log(response.data);
-    return response.data;
-  } catch (error) {
-    console.log("Verify reset OTP error:", error);
-    throw error;
-  }
-};
-
-export const resendPasswordResetOtp = async ({ email }) => {
-  try {
-    const response = await axios.post(`${API_BASE_URL}/resend-reset-otp/`, { email });
-    console.log(response.data);
-    return response.data;
-  } catch (error) {
-    console.log("Resend reset OTP error:", error);
-    throw error; 
-  }
 };
 
 export const resendSignupOtp = async ({ email }) => {
-  try {
-    const response = await axios.post(`${API_BASE_URL}/resend-signup-otp/`, { email });
-    console.log(response.data);
-    return response.data;
-  } catch (error) {
-    console.log("Resend signup OTP error:", error);
-    throw error; 
-  }
-}
+    const response = await axiosInstance.post("/resend-signup-otp/", { email });
+    return response.data; 
+};
 
-/* ----------------------------- 🔹 Slice ----------------------------- */
+export const forgotPassword = async ({ email }) => {
+    const response = await axiosInstance.post("/forgot-password/", { email });
+    return response.data;
+};
+
+export const verifyPasswordResetOtp = async ({ otpData }) => {
+    const response = await axiosInstance.post(`/verify-password-reset-otp/`, otpData);
+    return response.data;
+};
+
+export const resetPassword = async ({ data }) => {
+    const response = await axiosInstance.post(`/reset-password/`, data);
+    return response.data;
+};
+
 const authSlice = createSlice({
   name: "auth",
-  initialState: {
-    user: null,
-    loading: false,
-    error: null,
-    message: "",
-  },
+  initialState,
   reducers: {
-    logout: (state) => {
-      state.user = null;
-      localStorage.removeItem("token");
-      localStorage.removeItem("role"); 
+    resetAuthState: (state) => {
+      state.error = null;
+      state.isLoading = false;
+    },
+    updateUserAfterProfileCompletion: (state, action) => { 
+      if (state.user) {
+        state.user = { ...state.user, ...action.payload };
+        localStorage.setItem("user", JSON.stringify(state.user));
+      }
+    },
+    clearAuthError: (state) => {
+      state.error = null;
     },
   },
   extraReducers: (builder) => {
     builder
-      .addMatcher(
-        (action) => action.type.startsWith("auth/") && action.type.endsWith("/pending"),
-        (state) => {
-          state.loading = true;
-          state.error = null;
-          state.message = "";
-        }
-      )
-      .addMatcher(
-        (action) => action.type.startsWith("auth/") && action.type.endsWith("/fulfilled"),
-        (state, action) => {
-          state.loading = false;
-          state.message = action.payload?.message || "Success";
-
-          if (action.payload?.role) {
-            localStorage.setItem("role", action.payload.role);
-          }
-          
-          if (action.payload?.token) {
-            localStorage.setItem("token", action.payload.token);
-          }
-          
-          state.user = action.payload?.user || action.payload; 
-        }
-      )
-      .addMatcher(
-        (action) => action.type.startsWith("auth/") && action.type.endsWith("/rejected"),
-        (state, action) => {
-          state.loading = false;
-          state.error = action.payload?.detail || action.payload?.message || action.payload || "Something went wrong";
-        }
-      );
+      .addCase(loginUser.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(loginUser.fulfilled, (state, action) => {
+        state.isLoading = false;
+        state.isAuthenticated = true;
+        state.user = action.payload.user; 
+        state.token = action.payload.access;
+        state.refresh_token = action.payload.refresh;
+        state.error = null;
+      })
+      .addCase(loginUser.rejected, (state, action) => {
+        state.isLoading = false;
+        state.isAuthenticated = false;
+        state.user = null;
+        state.token = null;
+        state.refresh_token = null;
+        state.error = action.payload;
+      })
+      .addCase(logoutUser.pending, (state) => {
+        state.isLoading = true;
+      })
+      .addCase(logoutUser.fulfilled, (state) => {
+        state.isLoading = false;
+        state.isAuthenticated = false;
+        state.user = null;
+        state.token = null;
+        state.refresh_token = null;
+        state.error = null;
+      })
+      .addCase(logoutUser.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = action.payload;
+      });
   },
 });
 
-export const { logout } = authSlice.actions; 
+export const { 
+    resetAuthState, 
+    clearAuthError, 
+    updateUserAfterProfileCompletion 
+} = authSlice.actions;
+
 export default authSlice.reducer;
