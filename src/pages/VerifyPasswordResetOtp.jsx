@@ -1,25 +1,26 @@
 import React, { useState, useEffect } from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom"; 
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import FormLayout from "../components/Layout/FormLayout";
 import Input from "../components/Input/Input";
 import Button from "../components/Button/Button";
 import { useDispatch } from "react-redux";
-import { resendPasswordResetOtp, verifyPasswordResetOtp } from "../redux/features/authSlice";
-
+import {
+  resendPasswordResetOtp,
+  verifyPasswordResetOtp,
+} from "../redux/features/authSlice";
 
 const VerifyPasswordResetOtp = () => {
   const dispatch = useDispatch();
   const location = useLocation();
-  const navigate = useNavigate(); 
-  const initialEmail = location.state?.email || "copisej192@elygifts.com"; 
+  const navigate = useNavigate();
+  const initialEmail = location.state?.email || "copisej192@elygifts.com";
   const [formData, setFormData] = useState({ email: initialEmail, otp: "" });
   const [errors, setErrors] = useState({});
-  const [timer, setTimer] = useState(180); 
+  const [timer, setTimer] = useState(180);
   const [isResending, setResending] = useState(false);
-  const [isLoading, setLoading] = useState(false); 
+  const [isLoading, setLoading] = useState(false);
 
   useEffect(() => {
-    
     if (!initialEmail) {
       alert("Email is missing. Please sign up again.");
       navigate("/signup");
@@ -40,7 +41,7 @@ const VerifyPasswordResetOtp = () => {
   };
 
   const handleChange = (e) => {
-    const { value } = e.target; 
+    const { value } = e.target;
     setFormData((prev) => ({ ...prev, otp: value }));
 
     if (!value) {
@@ -60,15 +61,14 @@ const VerifyPasswordResetOtp = () => {
     }
 
     setLoading(true);
-    
+
     try {
-      
       await dispatch(verifyPasswordResetOtp(formData)).unwrap();
       alert("OTP Verified Successfully! Redirecting to patient dashboard...");
       navigate("/resetPassword");
     } catch (error) {
       console.error("OTP verification failed:", error);
-     
+
       const errorMessage =
         error?.detail ||
         error?.otp?.[0] ||
@@ -94,7 +94,9 @@ const VerifyPasswordResetOtp = () => {
     }
     setResending(true);
     try {
-      await dispatch(resendPasswordResetOtp({ email: formData.email })).unwrap();
+      await dispatch(
+        resendPasswordResetOtp({ email: formData.email })
+      ).unwrap();
       setTimer(180);
       alert("A new OTP has been sent!");
     } catch (error) {

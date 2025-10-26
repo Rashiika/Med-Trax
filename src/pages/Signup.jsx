@@ -202,7 +202,7 @@ const Signup = () => {
                     onFocus={() => setPasswordFocused(true)} 
                     onBlur={() => setPasswordFocused(false)}
                 />
- =
+
                 {passwordFocused && (
                     <div className="text-xs mt-1 space-y-1 p-3 bg-blue-50 rounded-xl border border-blue-200 transition-all duration-300">
                         <p className="font-semibold text-gray-700 mb-1">Password must include:</p>
