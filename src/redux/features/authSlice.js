@@ -8,10 +8,9 @@ export const roleSelect = createAsyncThunk(
   "auth/roleSelect",
   async (role, { rejectWithValue }) => {
     try {
-      // 🔥 Use axios.post instead of fetch
       const response = await axios.post(`${API_BASE_URL}/select-role/`, {
         role: role,
-      }); // axios automatically handles the status and provides data
+      }); 
 
       if (response.data?.token)
         localStorage.setItem("token", response.data.token);
@@ -25,8 +24,6 @@ export const roleSelect = createAsyncThunk(
   }
 );
 
-/* ----------------------------- 1️⃣ Registration ----------------------------- */
-
 export const registerUser = createAsyncThunk(
   "auth/registerUser",
   async (userData, { rejectWithValue }) => {
@@ -37,20 +34,18 @@ export const registerUser = createAsyncThunk(
         password1: userData.password1,
         password2: userData.password2,
       };
-      // 🔥 Use axios.post instead of fetch
-      const response = await axios.post(`${API_BASE_URL}/signup/`, payload); // axios automatically parses JSON and checks status codes.
+
+      const response = await axios.post(`${API_BASE_URL}/signup/`, payload);
 
       console.log(response);
       return response.data;
     } catch (error) {
-      console.log(error); // axios error structure is different
+      console.log(error); 
       return rejectWithValue(error.response?.data || "Network error");
     }
   }
 );
 
-/* -------------------------- Verify OTP Thunk -------------------------- */
-// Takes the whole formData: { email: '...', otp: '...' }
 export const verifyOtp = createAsyncThunk(
   "auth/verifyOtp",
   async (otpData, { rejectWithValue }) => {
@@ -59,7 +54,7 @@ export const verifyOtp = createAsyncThunk(
         `${API_BASE_URL}/verify-signup-otp/`,
         otpData
       );
-      // Return the data on success
+      
       console.log(response);
       return response.data;
     } catch (error) {
@@ -67,23 +62,19 @@ export const verifyOtp = createAsyncThunk(
         "OTP verification error:",
         error.response?.data || error.message
       );
-      // Return the detailed error data for the component to handle
+     
       return rejectWithValue(error.response?.data || "OTP verification failed");
     }
   }
 );
 
-/* -------------------------- Resend OTP Thunk -------------------------- */
-// Takes an object: { email: '...' }
 export const resendSignupOtp = createAsyncThunk(
   "auth/resendSignupOtp",
   async ({ email }, { rejectWithValue }) => {
     try {
-      // API expects an object { email: 'user@example.com' }
       const response = await axios.post(`${API_BASE_URL}/resend-signup-otp/`, {
         email,
       });
-      // Return the data on success
       console.log(response);
       return response.data;
     } catch (error) {
@@ -91,7 +82,7 @@ export const resendSignupOtp = createAsyncThunk(
         "Resend signup OTP error:",
         error.response?.data || error.message
       );
-      // Return the detailed error data
+      
       return rejectWithValue(error.response?.data || "Failed to resend OTP");
     }
   }
@@ -123,7 +114,6 @@ export const completeProfile = createAsyncThunk(
   }
 );
 
-/* ----------------------------- 4️⃣ Login ----------------------------- */
 export const loginUser = createAsyncThunk(
   "auth/loginUser",
   async ({ credentials, role }, { rejectWithValue }) => {
@@ -148,7 +138,6 @@ export const loginUser = createAsyncThunk(
   }
 );
 
-/* ----------------------------- 5️⃣ Forgot Password ----------------------------- */
 export const forgotPassword = createAsyncThunk(
   "auth/forgotPassword",
   async ({ email }, { rejectWithValue }) => {
@@ -157,15 +146,13 @@ export const forgotPassword = createAsyncThunk(
         email,
       });
       console.log(response);
-      return response.data; // ✅ Data goes to fulfilled case
     } catch (error) {
       console.log("Forgot password error:", error);
-      return rejectWithValue(error.response?.data || "error"); // ❌ Triggers rejected case
+      return rejectWithValue(error.response?.data || "error"); 
     }
-  }
-);
+});
 
-// ✅ Verify OTP Thunk
+
 export const verifyPasswordResetOtp = createAsyncThunk(
   "auth/verifyPasswordResetOtp",
   async ({ email, otp }, { rejectWithValue }) => {
@@ -183,7 +170,7 @@ export const verifyPasswordResetOtp = createAsyncThunk(
   }
 );
 
-// ✅ Resend OTP Thunk
+
 export const resendPasswordResetOtp = createAsyncThunk(
   "auth/resendPasswordResetOtp",
   async ({ email }, { rejectWithValue }) => {
@@ -201,7 +188,7 @@ export const resendPasswordResetOtp = createAsyncThunk(
   }
 );
 
-/* ----------------------------- 6️⃣ Reset Password ----------------------------- */
+
 export const resetPassword = createAsyncThunk(
   "auth/resetPassword",
   async ({ data }, { rejectWithValue }) => {
@@ -219,7 +206,6 @@ export const resetPassword = createAsyncThunk(
   }
 );
 
-/* ----------------------------- 🔹 Slice ----------------------------- */
 const authSlice = createSlice({
   name: "auth",
   initialState: {

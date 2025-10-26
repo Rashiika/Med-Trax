@@ -1,26 +1,23 @@
 import React, { useState, useEffect } from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom"; // Import useNavigate
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import FormLayout from "../components/Layout/FormLayout";
 import Input from "../components/Input/Input";
-import Button from "../components/Button/Button"; // Assuming you need this
+import Button from "../components/Button/Button";
 import { useDispatch } from "react-redux";
-// Import THUNKS from the Redux slice file
 import { resendSignupOtp, verifyOtp } from "../redux/features/authSlice";
 
 const VerifyOtp = () => {
   const dispatch = useDispatch();
   const location = useLocation();
-  const navigate = useNavigate(); // Initialize navigate
-  const initialEmail = location.state?.email || "copisej192@elygifts.com"; // 🎯 FIX 1: Initialise formData with the email and otp
+  const navigate = useNavigate();
+  const initialEmail = location.state?.email ;
 
   const [formData, setFormData] = useState({ email: initialEmail, otp: "" });
   const [errors, setErrors] = useState({});
-  const [timer, setTimer] = useState(180); // 🎯 FIX 2: Define the missing state for the resend button
+  const [timer, setTimer] = useState(180);
   const [isResending, setResending] = useState(false);
-  const [isLoading, setLoading] = useState(false); // Add loading state for verification
-
+  const [isLoading, setLoading] = useState(false);
   useEffect(() => {
-    // If there's no email, redirect to signup/login
     if (!initialEmail) {
       alert("Email is missing. Please sign up again.");
       navigate("/signup");
@@ -41,7 +38,7 @@ const VerifyOtp = () => {
   };
 
   const handleChange = (e) => {
-    const { value } = e.target; // 🎯 FIX 3: Preserve the existing formData (which includes email)
+    const { value } = e.target;
     setFormData((prev) => ({ ...prev, otp: value }));
 
     if (!value) {
@@ -54,7 +51,6 @@ const VerifyOtp = () => {
   };
 
   const handleSubmit = async (e) => {
-    // Use async
     e.preventDefault();
     if (!formData.otp || formData.otp.length !== 6) {
       setErrors({ otp: "Please enter a valid 6-digit OTP" });
@@ -62,16 +58,15 @@ const VerifyOtp = () => {
     }
 
     setLoading(true);
-    // console.log("Submitting:", formData); // Logs { email: '...', otp: '...' }
+    //console.log("Submitting:", formData);
 
     try {
-      // 🎯 FIX 4: Dispatch the thunk and use unwrap() to handle the result
       await dispatch(verifyOtp(formData)).unwrap();
       alert("OTP Verified Successfully! Redirecting to patient dashboard...");
       navigate("/patient");
     } catch (error) {
       console.error("OTP verification failed:", error);
-      // Display user-friendly error from the backend/thunk
+
       const errorMessage =
         error?.detail ||
         error?.otp?.[0] ||
@@ -135,18 +130,16 @@ const VerifyOtp = () => {
             error={errors.otp}
           />
           <p className="absolute left-0 -bottom-6 text-sm text-gray-600">
-             Resend available in:{" "}
+            Resend available in:{" "}
             <span className="font-medium ml-1 text-black">
               {formatTime(timer)}
             </span>
           </p>
-
         </div>
         <div className="text-right mb-6">
           <button
             type="button"
             onClick={handleResendOtp}
-            // Disable when timer is running OR when resending is in progress
             disabled={timer > 0 || isResending}
             className={`text-sm text-blue-600 font-medium ${
               timer > 0 || isResending
@@ -154,28 +147,24 @@ const VerifyOtp = () => {
                 : "hover:underline cursor-pointer"
             }`}
           >
-                          {isResending ? "Sending..." : "Resend OTP"}           {" "}
+            {isResending ? "Sending..." : "Resend OTP"}
           </button>
-                   {" "}
         </div>
-               {" "}
         <Button type="submit" fullWidth disabled={isLoading}>
-                    {isLoading ? "Verifying..." : "Proceed"}       {" "}
+          {isLoading ? "Verifying..." : "Proceed"}
         </Button>
-               {" "}
         <p className="text-center text-gray-600 text-sm mt-12">
-                    Don’t have an account?          {" "}
+          Don’t have an account?{" "}
           <Link
             to="/signup"
             className="text-blue-600 hover:underline font-medium"
           >
-                        Sign Up          {" "}
+            Sign Up
           </Link>
-                 {" "}
+          {" "}
         </p>
-             {" "}
       </form>
-         {" "}
+     
     </FormLayout>
   );
 };

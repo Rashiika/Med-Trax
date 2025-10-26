@@ -103,18 +103,14 @@ const Signup = () => {
     const handleChange = (e) => {
         const { name, value } = e.target;
         
-        // 1. Update form data
         const newFormData = { ...formData, [name]: value };
         setFormData(newFormData);
 
-        // 2. Validate field and update errors
         const error = validateField(name, value, newFormData);
         setErrors(prev => ({ ...prev, [name]: error }));
 
-        // 3. Update password rules feedback specifically for password1
         if (name === 'password1') {
             setPasswordRules(checkPasswordRules(value));
-            // 4. If password1 changes, re-validate password2 immediately
             if (newFormData.password2 !== undefined) {
                 const confirmError = validateField('password2', newFormData.password2, newFormData);
                 setErrors(prev => ({ ...prev, password2: confirmError }));
@@ -132,25 +128,19 @@ const Signup = () => {
 
         setLoading(true);
         try {
-            // In a real Redux app, this would be:
-            // const userData = await dispatch(registerUser(formData)).unwrap();
-            
-            // SIMULATION: Call the function that executes the thunk logic
             const userData = await dispatch(registerUser(formData));
             
             console.log('Registration data:', userData);
             
-            // Success toast notification
+            
             showToast("Success! Your account is created. Check your email for verification.", 'success');
             
-            // Navigate on success
+         
             navigate('/verifyOtp', { state: { email: formData.email } });
 
         } catch (error) {
             console.error("Registration failed:", error);
-            
-            // Error toast notification, displaying the specific backend error message 
-            // from the simulation (which corresponds to your rejectWithValue payload)
+           
             showToast(`Registration Failed: ${error.message || 'An unknown error occurred'}`, 'error');
 
         } finally {
@@ -158,17 +148,17 @@ const Signup = () => {
         }
     };
     
-    // Check form validity for button enablement
+   
     const isFormValid = useMemo(() => {
         const { email, password1, password2 } = formData;
         
-        // Check if fields are non-empty and passwords match
+        
         if (!email || !password1 || !password2 || password1 !== password2) return false;
         
-        // Check detailed rules
+ 
         const rulesMet = Object.values(checkPasswordRules(password1)).every(rule => rule);
         
-        // Check if there are any active field-level errors
+       
         const hasNoFieldErrors = Object.values(errors).every(err => !err);
         
         return rulesMet && hasNoFieldErrors;
@@ -196,7 +186,7 @@ const Signup = () => {
                     error={errors.email}
                 />
 
-                {/* Password Input */}
+              
                 <Input
                     label="Password"
                     type={showPassword ? "text" : "password"}
@@ -212,8 +202,7 @@ const Signup = () => {
                     onFocus={() => setPasswordFocused(true)} 
                     onBlur={() => setPasswordFocused(false)}
                 />
-
-                {/* Password Specification Lines */}
+ =
                 {passwordFocused && (
                     <div className="text-xs mt-1 space-y-1 p-3 bg-blue-50 rounded-xl border border-blue-200 transition-all duration-300">
                         <p className="font-semibold text-gray-700 mb-1">Password must include:</p>
@@ -236,7 +225,7 @@ const Signup = () => {
                     </div>
                 )}
                 
-                {/* Confirm Password Input */}
+             
                 <Input
                     label="Confirm Password"
                     type={showConfirm ? "text" : "password"}

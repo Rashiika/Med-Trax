@@ -60,7 +60,6 @@ const DoctorForm = () => {
       sectionFields={sectionFields}
       onSubmit={handleSubmit}
     >
-      {/* PERSONAL DETAILS */}
       <Section title="Personal Details">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <DetailsInput label="First Name" name="firstName" value={formData.firstName} onChange={handleChange} placeholder="Enter your first name" required />
@@ -72,7 +71,7 @@ const DoctorForm = () => {
         </div>
       </Section>
 
-      {/* RESIDENTIAL DETAILS */}
+      
       <Section title="Residential Details">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <DetailsInput label="Address" className="w-full" name="address" value={formData.address} onChange={handleChange} placeholder="Enter your address" required />
@@ -83,11 +82,11 @@ const DoctorForm = () => {
         </div>
       </Section>
 
-      {/* PROFESSIONAL DETAILS */}
+      
       <Section title="Professional Details">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <DetailsInput label="Registration Number" name="regNo" value={formData.regNo} onChange={handleChange} placeholder="Enter registration number" required />
-          <DetailsInput label="Specialization" name="specialization" value={formData.specialization} onChange={handleChange} placeholder="Enter specialization" required />
+          <DetailsInput label="Specialization" type="select" name="specialization" options={["Cardiologist","Radiologist","Neurologist","Orthopedic Surgeon","Dermatologist","Gynecologist","Psychiatrist","Dentist","Urologist","General Physician","Pediatrician"]} value={formData.specialization} onChange={handleChange} required />
           <DetailsInput label="Qualification" name="qualification" value={formData.qualification} onChange={handleChange} placeholder="Enter qualifications" required />
           <DetailsInput label="Years of Experience" name="experience" value={formData.experience} onChange={handleChange} placeholder="Enter experience" required />
           <DetailsInput label="Department" name="department" value={formData.department} onChange={handleChange} placeholder="Enter department" required />
@@ -95,7 +94,7 @@ const DoctorForm = () => {
         </div>
       </Section>
 
-      {/* CONTACT DETAILS */}
+      
       <Section title="Contact Details">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <DetailsInput label="Mobile number" name="mobile" value={formData.mobile} onChange={handleChange} placeholder="Enter mobile number" required />

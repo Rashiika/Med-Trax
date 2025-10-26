@@ -1,26 +1,25 @@
 import React, { useState, useEffect } from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom"; // Import useNavigate
+import { Link, useLocation, useNavigate } from "react-router-dom"; 
 import FormLayout from "../components/Layout/FormLayout";
 import Input from "../components/Input/Input";
-import Button from "../components/Button/Button"; // Assuming you need this
+import Button from "../components/Button/Button";
 import { useDispatch } from "react-redux";
 import { resendPasswordResetOtp, verifyPasswordResetOtp } from "../redux/features/authSlice";
-// Import THUNKS from the Redux slice file
+
 
 const VerifyPasswordResetOtp = () => {
   const dispatch = useDispatch();
   const location = useLocation();
-  const navigate = useNavigate(); // Initialize navigate
-  const initialEmail = location.state?.email || "copisej192@elygifts.com"; // 🎯 FIX 1: Initialise formData with the email and otp
-
+  const navigate = useNavigate(); 
+  const initialEmail = location.state?.email || "copisej192@elygifts.com"; 
   const [formData, setFormData] = useState({ email: initialEmail, otp: "" });
   const [errors, setErrors] = useState({});
-  const [timer, setTimer] = useState(180); // 🎯 FIX 2: Define the missing state for the resend button
+  const [timer, setTimer] = useState(180); 
   const [isResending, setResending] = useState(false);
-  const [isLoading, setLoading] = useState(false); // Add loading state for verification
+  const [isLoading, setLoading] = useState(false); 
 
   useEffect(() => {
-    // If there's no email, redirect to signup/login
+    
     if (!initialEmail) {
       alert("Email is missing. Please sign up again.");
       navigate("/signup");
@@ -41,7 +40,7 @@ const VerifyPasswordResetOtp = () => {
   };
 
   const handleChange = (e) => {
-    const { value } = e.target; // 🎯 FIX 3: Preserve the existing formData (which includes email)
+    const { value } = e.target; 
     setFormData((prev) => ({ ...prev, otp: value }));
 
     if (!value) {
@@ -54,7 +53,6 @@ const VerifyPasswordResetOtp = () => {
   };
 
   const handleSubmit = async (e) => {
-    // Use async
     e.preventDefault();
     if (!formData.otp || formData.otp.length !== 6) {
       setErrors({ otp: "Please enter a valid 6-digit OTP" });
@@ -62,16 +60,15 @@ const VerifyPasswordResetOtp = () => {
     }
 
     setLoading(true);
-    // console.log("Submitting:", formData); // Logs { email: '...', otp: '...' }
-
+    
     try {
-      // 🎯 FIX 4: Dispatch the thunk and use unwrap() to handle the result
+      
       await dispatch(verifyPasswordResetOtp(formData)).unwrap();
       alert("OTP Verified Successfully! Redirecting to patient dashboard...");
       navigate("/resetPassword");
     } catch (error) {
       console.error("OTP verification failed:", error);
-      // Display user-friendly error from the backend/thunk
+     
       const errorMessage =
         error?.detail ||
         error?.otp?.[0] ||

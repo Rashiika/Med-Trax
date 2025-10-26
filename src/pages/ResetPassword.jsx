@@ -10,8 +10,8 @@ const ResetPassword = () => {
 
   const dispatch = useDispatch();
   const location = useLocation();
-  const navigate = useNavigate(); // Initialize navigate
-  const initialEmail = location.state?.email || "copisej192@elygifts.com"; // 🎯 FIX 1: Initialise formData with the email and otp
+  const navigate = useNavigate(); 
+  const initialEmail = location.state?.email || "copisej192@elygifts.com"; 
 
   const [formData, setFormData] = useState({
     email: initialEmail,

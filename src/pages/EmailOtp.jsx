@@ -14,7 +14,7 @@ const EmailOtp = () => {
 
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-  // ✅ Validate form
+ 
   const validate = () => {
     const newErrors = {};
     if (!formData.email.trim()) newErrors.email = "Email is required";
@@ -25,7 +25,7 @@ const EmailOtp = () => {
     return Object.keys(newErrors).length === 0;
   };
 
-  // ✅ Handle submit
+  
   const handleSubmit = (e) => {
     e.preventDefault();
     if (validate()) {
