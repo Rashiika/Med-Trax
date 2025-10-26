@@ -1,71 +1,59 @@
 import React, { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, Navigate, useNavigate } from "react-router-dom";
 import FormLayout from "../components/Layout/FormLayout";
-import Input from "../components/Input/Input"; 
+import Input from "../components/Input/Input";
 import emailIcon from "../assets/email.png";
-import lockIcon from "../assets/lock.png";
-import eyeOpen from "../assets/eye.png";
-import eyeClose from "../assets/eyeclose.png";
+import { useDispatch } from "react-redux";
+import { forgotPassword } from "../redux/features/authSlice";
 
 const EmailOtp = () => {
-  const [formData, setFormData] = useState({ email: "", password: "" });
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
+  const [formData, setFormData] = useState({ email: "" });
   const [errors, setErrors] = useState({});
-  const [showPassword, setShowPassword] = useState(false);
 
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
+ 
   const validate = () => {
     const newErrors = {};
-    const email = formData.email.trim();
-
-    if (!email) newErrors.email = "Email is required";
-    else if (!emailRegex.test(email)) newErrors.email = "Invalid email address";
-
-    if (!formData.password) newErrors.password = "Password is required";
-    else if (formData.password.length < 8)
-      newErrors.password = "Password must be at least 8 characters";
+    if (!formData.email.trim()) newErrors.email = "Email is required";
+    else if (!emailRegex.test(formData.email))
+      newErrors.email = "Invalid email address";
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
+  
   const handleSubmit = (e) => {
     e.preventDefault();
     if (validate()) {
-      alert("Login successful!");
-      console.log(formData);
+      dispatch(forgotPassword({ email: formData.email }));
+      console.log("Email submitted:", formData.email);
+      navigate("/resetPassword")
     }
   };
 
   return (
     <FormLayout>
       <h2 className="text-3xl font-semibold text-center mb-8 text-gray-800">
-       Your Email
+        Your Email
       </h2>
 
-      <form onSubmit={handleSubmit}>
-       
+      <form onSubmit={handleSubmit} noValidate>
         <div className="mb-8">
-        <Input
-          type="email"
-          label="Email"
-          value={formData.email}
-          onChange={(e) => {
-            const email = e.target.value.trim();
-            setFormData({ ...formData, email: e.target.value });
-
-            if (!email) {
-              setErrors((prev) => ({ ...prev, email: "Email is required" }));
-            } else if (!emailRegex.test(email)) {
-              setErrors((prev) => ({ ...prev, email: "Invalid email address" }));
-            } else {
-              setErrors((prev) => ({ ...prev, email: "" }));
+          <Input
+            type="email"
+            label="Email"
+            value={formData.email}
+            onChange={(e) =>
+              setFormData({ ...formData, email: e.target.value })
             }
-          }}
-          placeholder="Enter your email"
-          icon={emailIcon}
-          error={errors.email}
-        />
+            placeholder="Enter your email"
+            icon={emailIcon}
+            error={errors.email}
+          />
         </div>
 
         <button
@@ -75,10 +63,12 @@ const EmailOtp = () => {
           Proceed
         </button>
 
-        
         <p className="text-center text-gray-600 text-sm mt-12">
           Don’t have an account?{" "}
-          <Link to="/signup" className="text-blue-600 hover:underline font-medium">
+          <Link
+            to="/signup"
+            className="text-blue-600 hover:underline font-medium"
+          >
             Sign Up
           </Link>
         </p>

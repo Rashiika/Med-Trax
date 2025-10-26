@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import FormLayout from "../components/Layout/FormLayout";
 import Input from "../components/Input/Input";
@@ -6,250 +6,262 @@ import Button from "../components/Button/Button";
 import userIcon from "../assets/user.png";
 import emailIcon from "../assets/email.png";
 import lockIcon from "../assets/lock.png";
-import { useDispatch, useSelector } from "react-redux";
-import { registerUser } from "../redux/features/authSlice"; // Assuming this is the correct path
+import { useDispatch } from "react-redux";
+import { registerUser } from "../redux/features/authSlice";
+import { PasswordRuleLine } from "../components/PasswordRuleLine";
+import { ToastContainer } from "../components/Toast";
 
 const Signup = () => {
-  const dispatch = useDispatch();
-  // Ensure 'role' is read correctly from your separate roleSlice
-  const role = useSelector((state) => state.role.selectedRole); 
+
+    const dispatch = useDispatch();
   const navigate = useNavigate();
 
-  const [formData, setFormData] = useState({
-    username: "",
-    email: "",
-    password: "",
-    confirmPassword: "",
-    // ✅ Keep the role here so it is included in the final payload
-    role: role, 
-  });
-
-  const [errors, setErrors] = useState({});
-  const [loading, setLoading] = useState(false); // 💡 Added loading state
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirm, setShowConfirm] = useState(false);
-
-  // --- Validation and Change Handlers (Mostly correct, but needs cleanup) ---
-
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-  const validate = (name, value, currentFormData) => {
-    let newErrors = { ...errors };
-
-    // --- Username Validation ---
-    if (name === "username") {
-      newErrors.username = !value ? "Username is required" : "";
-    }
-
-    // --- Email Validation ---
-    if (name === "email") {
-      if (!value) {
-        newErrors.email = "Email is required";
-      } else if (!emailRegex.test(value)) {
-        newErrors.email = "Invalid email format";
-      } else {
-        newErrors.email = "";
-      }
-    }
-
-    // --- Password Validation ---
-    if (name === "password") {
-      if (!value) {
-        newErrors.password = "Password is required";
-      } else if (value.length < 8) {
-        newErrors.password = "Password must be at least 8 characters";
-      } else {
-        newErrors.password = "";
-      }
-      // Re-check confirmPassword when password changes
-      if (currentFormData.confirmPassword && currentFormData.confirmPassword !== value) {
-        newErrors.confirmPassword = "Passwords do not match";
-      } else if (currentFormData.confirmPassword) {
-        newErrors.confirmPassword = "";
-      }
-    }
-
-    // --- Confirm Password Validation ---
-    if (name === "confirmPassword") {
-      if (!value) {
-        newErrors.confirmPassword = "Confirm Password is required";
-      } else if (value !== currentFormData.password) {
-        newErrors.confirmPassword = "Passwords do not match";
-      } else {
-        newErrors.confirmPassword = "";
-      }
-    }
-    
-    return newErrors;
-  };
-
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    
-    const updatedFormData = { ...formData, [name]: value };
-    setFormData(updatedFormData);
-
-    // Run validation only for the field that changed
-    const newErrors = validate(name, value, updatedFormData);
-    setErrors(newErrors);
-  };
-
-  // --- Submission Handler with Corrections ---
-  
-  // 💡 Helper function to validate all fields before submit
-  const validateAll = () => {
-    let allErrors = {};
-    Object.keys(formData).forEach(key => {
-        // Pass the key, value, and full formData for cross-field checks (like confirmPassword)
-        const fieldErrors = validate(key, formData[key], formData);
-        if (fieldErrors[key]) {
-            allErrors[key] = fieldErrors[key];
-        }
+    const [formData, setFormData] = useState({
+        email: "",
+        password1: "",
+        password2: ""
     });
-    
-    // Add check for role selection
-    if (!formData.role) {
-        allErrors.role = "Please select a role (Doctor/Patient) before signing up.";
-    }
 
-    setErrors(allErrors);
-    return Object.keys(allErrors).length === 0;
-  };
+    const [errors, setErrors] = useState({});
+    const [loading, setLoading] = useState(false);
+    const [showPassword, setShowPassword] = useState(false);
+    const [showConfirm, setShowConfirm] = useState(false);
+    const [passwordFocused, setPasswordFocused] = useState(false);
+    const [toasts, setToasts] = useState([]);
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+    // --- Toast Logic ---
+    const showToast = useCallback((message, type = 'warning') => {
+        const id = Date.now();
+        setToasts(prev => [...prev, { id, message, type }]);
+    }, []);
 
-    if (!validateAll()) {
-      console.log("Validation failed:", errors);
-      return;
-    }
-    const { confirmPassword, ...baseData } = formData;
-    
-    const payload = { formData: baseData };
-    
-    console.log("Dispatching Signup data:", payload.formData);
+    const closeToast = useCallback((id) => {
+        setToasts(prev => prev.filter(toast => toast.id !== id));
+    }, []);
+    // --- End Toast Logic ---
 
-    setLoading(true);
+    // --- Validation Rules ---
+    const uppercaseRegex = /[A-Z]/;
+    const numberRegex = /[0-9]/;
+    const specialCharRegex = /[!@#$%^&*(),.?":{}|<>]/;
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-    try {
-        const response = await registerUser(payload);
+    const checkPasswordRules = (password) => ({
+        hasLength: password.length >= 8,
+        hasUppercase: uppercaseRegex.test(password),
+        hasNumber: numberRegex.test(password),
+        hasSpecialChar: specialCharRegex.test(password),
+    });
+
+    const [passwordRules, setPasswordRules] = useState(checkPasswordRules(formData.password1));
+
+    const validateField = (name, value, allFormData) => {
+        let error = '';
+
+        if (name === 'email') {
+            if (!value) {
+                error = 'Email address is required';
+            } else if (!emailRegex.test(value)) {
+                error = 'Please enter a valid email address';
+            }
+        } else if (name === 'password1') {
+            const rules = checkPasswordRules(value);
+            setPasswordRules(rules);
+
+            if (!value) {
+                error = 'Password is required';
+            } else if (!Object.values(rules).every(rule => rule)) {
+                error = 'Password does not meet all security requirements listed below';
+            }
+        } else if (name === 'password2') {
+            if (!value) {
+                error = 'Confirmation is required';
+            } else if (value !== allFormData.password1) {
+                error = 'Passwords do not match';
+            }
+        }
+        return error;
+    };
+
+    const validateForm = (data) => {
+        let newErrors = {};
+        let isValid = true;
         
-      
-        if (response && response.status === 201) { 
-             alert("Registration successful! Verifying OTP...");
-             navigate("/verifyOtp");
-        } else {
-             // Handle non-error, but failed responses if the API doesn't throw on logic errors
-             alert("Registration failed. Please check the server response.");
-             console.error("API returned unsuccessful status:", response);
+        ['email', 'password1', 'password2'].forEach(name => {
+            const error = validateField(name, data[name], data);
+            if (error) {
+                newErrors[name] = error;
+                isValid = false;
+            }
+        });
+
+        setErrors(newErrors);
+        return isValid;
+    };
+
+
+    const handleChange = (e) => {
+        const { name, value } = e.target;
+        
+        const newFormData = { ...formData, [name]: value };
+        setFormData(newFormData);
+
+        const error = validateField(name, value, newFormData);
+        setErrors(prev => ({ ...prev, [name]: error }));
+
+        if (name === 'password1') {
+            setPasswordRules(checkPasswordRules(value));
+            if (newFormData.password2 !== undefined) {
+                const confirmError = validateField('password2', newFormData.password2, newFormData);
+                setErrors(prev => ({ ...prev, password2: confirmError }));
+            }
+        }
+    };
+
+     const handleSubmit = async (e) => {
+        e.preventDefault();
+        
+        if (!validateForm(formData)) {
+            showToast("Please review the form. Not all required fields are valid.", 'warning');
+            return;
         }
 
-    } catch (error) {
-        // 5. Handle network or API errors (since registerUser throws the error)
-        console.error("Registration error:", error);
-        // Display specific error message from the backend if available
-        const errorMessage = error.response?.data?.email?.[0] || // Django/DRF common format
-                             error.response?.data?.username?.[0] ||
-                             error.response?.data?.detail ||
-                             "Registration failed. Please try again.";
-        alert(errorMessage);
-    } finally {
-        setLoading(false);
-    }
-  };
+        setLoading(true);
+        try {
+            const userData = await dispatch(registerUser(formData));
+            
+            console.log('Registration data:', userData);
+            
+            
+            showToast("Success! Your account is created. Check your email for verification.", 'success');
+            
+         
+            navigate('/verifyOtp', { state: { email: formData.email } });
 
+        } catch (error) {
+            console.error("Registration failed:", error);
+           
+            showToast(`Registration Failed: ${error.message || 'An unknown error occurred'}`, 'error');
 
-  // ... (Rest of the component rendering)
-
-  return (
-    <FormLayout>
-      <h2 className="text-3xl font-semibold text-center mb-8 text-gray-900">
-        Sign Up
-      </h2>
-
-      <form
-        onSubmit={handleSubmit}
-        className="space-y-4 w-full max-w-md mx-auto px-4 sm:px-8"
-      >
-        {/* Role Missing Warning */}
-        {!role && (
-            <p className="text-red-500 text-sm text-center font-medium mb-4 p-2 border border-red-200 rounded-md bg-red-50">
-                Please select your role (Doctor or Patient) before signing up.
-            </p>
-        )}
-
-        <Input
-          label="Username"
-          type="text"
-          name="username"
-          placeholder="Enter your username"
-          value={formData.username}
-          onChange={handleChange}
-          icon={userIcon}
-          error={errors.username}
-        />
-        
-        <Input
-          label="Email"
-          type="email"
-          name="email"
-          placeholder="Enter your email"
-          value={formData.email}
-          onChange={handleChange}
-          icon={emailIcon}
-          error={errors.email}
-        />
-
-        
-        <Input
-          label="Password"
-          type={showPassword ? "text" : "password"} // 💡 Use local state for input type
-          name="password"
-          placeholder="Enter your password"
-          value={formData.password}
-          onChange={handleChange}
-          icon={lockIcon}
-          showPasswordToggle
-          showPassword={showPassword}
-          onTogglePassword={() => setShowPassword(!showPassword)}
-          error={errors.password}
-        />
-
-        <Input
-          label="Confirm Password"
-          type={showConfirm ? "text" : "password"} // 💡 Use local state for input type
-          name="confirmPassword"
-          placeholder="Confirm your password"
-          value={formData.confirmPassword}
-          onChange={handleChange}
-          icon={lockIcon}
-          showPasswordToggle
-          showPassword={showConfirm}
-          onTogglePassword={() => setShowConfirm(!showConfirm)}
-          error={errors.confirmPassword}
-        />
-
-        
-        <div className="mt-8">
-          <Button 
-            type="submit" 
-            fullWidth 
-            disabled={loading || Object.values(errors).some(e => e) || !formData.username || !formData.email || !formData.password || !formData.confirmPassword || !role}
-          >
-            {loading ? "Signing Up..." : "Proceed"}
-          </Button>
-        </div>
-      </form>
-
+        } finally {
+            setLoading(false);
+        }
+    };
     
-      <p className="text-center text-gray-600 text-sm mt-8">
-        Already have an account?{" "}
-        <Link to="/login" className="text-blue-600 hover:underline font-medium">
-          Login
-        </Link>
-      </p>
-    </FormLayout>
-  );
+   
+    const isFormValid = useMemo(() => {
+        const { email, password1, password2 } = formData;
+        
+        
+        if (!email || !password1 || !password2 || password1 !== password2) return false;
+        
+ 
+        const rulesMet = Object.values(checkPasswordRules(password1)).every(rule => rule);
+        
+       
+        const hasNoFieldErrors = Object.values(errors).every(err => !err);
+        
+        return rulesMet && hasNoFieldErrors;
+    }, [formData, errors]);
+
+
+    return (
+        <FormLayout>
+            <h2 className="text-3xl font-bold text-center mb-8 text-gray-900">
+                Create Your Account
+            </h2>
+
+            <form
+                onSubmit={handleSubmit}
+                className="space-y-4 w-full max-w-md mx-auto px-4 sm:px-0"
+            >
+                <Input
+                    label="Email"
+                    type="email"
+                    name="email"
+                    placeholder="Enter your email"
+                    value={formData.email}
+                    onChange={handleChange}
+                    icon={emailIcon}
+                    error={errors.email}
+                />
+
+              
+                <Input
+                    label="Password"
+                    type={showPassword ? "text" : "password"}
+                    name="password1"
+                    placeholder="Enter password"
+                    value={formData.password1}
+                    onChange={handleChange}
+                    icon={lockIcon}
+                    showPasswordToggle
+                    showPassword={showPassword}
+                    onTogglePassword={() => setShowPassword(!showPassword)}
+                    error={errors.password1}
+                    onFocus={() => setPasswordFocused(true)} 
+                    onBlur={() => setPasswordFocused(false)}
+                />
+ =
+                {passwordFocused && (
+                    <div className="text-xs mt-1 space-y-1 p-3 bg-blue-50 rounded-xl border border-blue-200 transition-all duration-300">
+                        <p className="font-semibold text-gray-700 mb-1">Password must include:</p>
+                        <PasswordRuleLine 
+                            isValid={passwordRules.hasLength} 
+                            text="At least 8 characters" 
+                        />
+                        <PasswordRuleLine 
+                            isValid={passwordRules.hasUppercase} 
+                            text="An uppercase letter (A-Z)" 
+                        />
+                        <PasswordRuleLine 
+                            isValid={passwordRules.hasNumber} 
+                            text="A number (0-9)" 
+                        />
+                        <PasswordRuleLine 
+                            isValid={passwordRules.hasSpecialChar} 
+                            text="A special symbol (!@#$...)" 
+                        />
+                    </div>
+                )}
+                
+             
+                <Input
+                    label="Confirm Password"
+                    type={showConfirm ? "text" : "password"}
+                    name="password2"
+                    placeholder="Confirm password"
+                    value={formData.password2}
+                    onChange={handleChange}
+                    icon={lockIcon}
+                    showPasswordToggle
+                    showPassword={showConfirm}
+                    onTogglePassword={() => setShowConfirm(!showConfirm)}
+                    error={errors.password2}
+                />
+
+                <div className="pt-4">
+                    <Button 
+                        type="submit" 
+                        fullWidth 
+                        loading={loading}
+                        disabled={!isFormValid || loading}
+                    >
+                        Sign Up
+                    </Button>
+                </div>
+            </form>
+
+            <p className="text-center text-gray-600 text-sm mt-8">
+                Already have an account?
+                <a href="#login" onClick={(e) => { e.preventDefault(); navigate('/login'); }} className="text-blue-600 hover:underline font-medium">
+                    Login
+                </a>
+            </p>
+            
+            <ToastContainer toasts={toasts} onClose={closeToast} />
+        </FormLayout>
+    );
 };
 
 export default Signup;

@@ -1,23 +1,25 @@
 import React, { useState, useEffect } from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom"; 
 import FormLayout from "../components/Layout/FormLayout";
 import Input from "../components/Input/Input";
 import Button from "../components/Button/Button";
 import { useDispatch } from "react-redux";
-import { resendSignupOtp, verifyOtp } from "../redux/features/authSlice";
+import { resendPasswordResetOtp, verifyPasswordResetOtp } from "../redux/features/authSlice";
 
-const VerifyOtp = () => {
+
+const VerifyPasswordResetOtp = () => {
   const dispatch = useDispatch();
   const location = useLocation();
-  const navigate = useNavigate();
-  const initialEmail = location.state?.email ;
-
+  const navigate = useNavigate(); 
+  const initialEmail = location.state?.email || "copisej192@elygifts.com"; 
   const [formData, setFormData] = useState({ email: initialEmail, otp: "" });
   const [errors, setErrors] = useState({});
-  const [timer, setTimer] = useState(180);
+  const [timer, setTimer] = useState(180); 
   const [isResending, setResending] = useState(false);
-  const [isLoading, setLoading] = useState(false);
+  const [isLoading, setLoading] = useState(false); 
+
   useEffect(() => {
+    
     if (!initialEmail) {
       alert("Email is missing. Please sign up again.");
       navigate("/signup");
@@ -38,7 +40,7 @@ const VerifyOtp = () => {
   };
 
   const handleChange = (e) => {
-    const { value } = e.target;
+    const { value } = e.target; 
     setFormData((prev) => ({ ...prev, otp: value }));
 
     if (!value) {
@@ -58,15 +60,15 @@ const VerifyOtp = () => {
     }
 
     setLoading(true);
-    //console.log("Submitting:", formData);
-
+    
     try {
-      await dispatch(verifyOtp(formData)).unwrap();
+      
+      await dispatch(verifyPasswordResetOtp(formData)).unwrap();
       alert("OTP Verified Successfully! Redirecting to patient dashboard...");
-      navigate("/patient");
+      navigate("/resetPassword");
     } catch (error) {
       console.error("OTP verification failed:", error);
-
+     
       const errorMessage =
         error?.detail ||
         error?.otp?.[0] ||
@@ -92,7 +94,7 @@ const VerifyOtp = () => {
     }
     setResending(true);
     try {
-      await dispatch(resendSignupOtp({ email: formData.email })).unwrap();
+      await dispatch(resendPasswordResetOtp({ email: formData.email })).unwrap();
       setTimer(180);
       alert("A new OTP has been sent!");
     } catch (error) {
@@ -140,6 +142,7 @@ const VerifyOtp = () => {
           <button
             type="button"
             onClick={handleResendOtp}
+            // Disable when timer is running OR when resending is in progress
             disabled={timer > 0 || isResending}
             className={`text-sm text-blue-600 font-medium ${
               timer > 0 || isResending
@@ -147,26 +150,29 @@ const VerifyOtp = () => {
                 : "hover:underline cursor-pointer"
             }`}
           >
-            {isResending ? "Sending..." : "Resend OTP"}
+                          {isResending ? "Sending..." : "Resend OTP"}           {" "}
           </button>
+                   {" "}
         </div>
+               {" "}
         <Button type="submit" fullWidth disabled={isLoading}>
-          {isLoading ? "Verifying..." : "Proceed"}
+                    {isLoading ? "Verifying..." : "Proceed"}       {" "}
         </Button>
+               {" "}
         <p className="text-center text-gray-600 text-sm mt-12">
-          Don’t have an account?{" "}
+                    Don’t have an account?          {" "}
           <Link
             to="/signup"
             className="text-blue-600 hover:underline font-medium"
           >
-            Sign Up
+                        Sign Up          {" "}
           </Link>
-          {" "}
+                 {" "}
         </p>
+             {" "}
       </form>
-     
+         {" "}
     </FormLayout>
   );
 };
-
-export default VerifyOtp;
+export default VerifyPasswordResetOtp;

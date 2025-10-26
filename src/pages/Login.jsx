@@ -62,7 +62,7 @@ const LoginPage = () => {
     alert("Login successful!");
     console.log(formData);
 
-    dispatch(loginUser({ credentials: formData }));
+    dispatch(loginUser({ credentials: formData, role: "patient" }));
   };
 
   return (
