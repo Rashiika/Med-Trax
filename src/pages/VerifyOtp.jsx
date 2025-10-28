@@ -10,7 +10,9 @@ const VerifyOtp = () => {
   const dispatch = useDispatch();
   const location = useLocation();
   const navigate = useNavigate();
-  const initialEmail = location.state?.email ;
+  //const initialEmail = location.state?.email ;
+  const initialEmail = location.state?.email;
+  const initialRole = location.state?.role || "patient";
 
   const [formData, setFormData] = useState({ email: initialEmail, otp: "" });
   const [errors, setErrors] = useState({});
@@ -64,6 +66,14 @@ const VerifyOtp = () => {
       await dispatch(verifyOtp(formData)).unwrap();
       alert("OTP Verified Successfully! Redirecting to patient dashboard...");
       navigate("/patient");
+      const payload = await dispatch(verifyOtp(formData)).unwrap();
+      const roleToUse = payload?.role || initialRole;
+      alert("OTP Verified Successfully! Redirecting...");
+      if (roleToUse === "doctor") {
+        navigate("/doctor");
+      } else {
+        navigate("/patient");
+      }
     } catch (error) {
       console.error("OTP verification failed:", error);
 
@@ -110,11 +120,11 @@ const VerifyOtp = () => {
       <h2 className="text-3xl font-semibold text-center mb-8 text-gray-800">
         Verify OTP
       </h2>
-      {initialEmail && (
+      {/* {initialEmail && (
         <p className="text-center text-gray-600 mb-6">
           A 6-digit code has been sent to **{initialEmail}**
         </p>
-      )}
+      )} */}
       <form
         onSubmit={handleSubmit}
         className="space-y-4 w-full max-w-md mx-auto px-4 sm:px-8"
