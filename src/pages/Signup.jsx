@@ -135,8 +135,8 @@ const Signup = () => {
             
             showToast("Success! Your account is created. Check your email for verification.", 'success');
             
-         
-            navigate('/verifyOtp', { state: { email: formData.email } });
+            navigate("/verifyOtp", { state: { email: formData.email, role: formData.role } });
+            //navigate('/verifyOtp', { state: { email: formData.email } });
 
         } catch (error) {
             console.error("Registration failed:", error);

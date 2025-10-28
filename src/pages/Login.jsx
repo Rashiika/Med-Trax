@@ -49,7 +49,7 @@ const LoginPage = () => {
     }
   };
 
- const handleSubmit = (e) => {
+ const handleSubmit = async(e) => {
     e.preventDefault();
     if (Object.values(errors).some((error) => error)) {
       alert("Please fix the errors before submitting.");
@@ -59,10 +59,25 @@ const LoginPage = () => {
       alert("Please fill in all fields.");
       return;
     }
-    alert("Login successful!");
-    console.log(formData);
+    // alert("Login successful!");
+    // console.log(formData);
 
-    dispatch(loginUser({ credentials: formData, role: "patient" }));
+    // dispatch(loginUser({ credentials: formData, role: "patient" }));
+    setLoading(true);
+    try {
+      const payload = await dispatch(loginUser({ credentials: formData, role })).unwrap();
+      const userRole = payload?.role || role;
+      // navigate based on resolved role
+      if (userRole === "doctor") {
+        navigate("/doctor");
+      } else {
+        navigate("/patient");
+      }
+    } catch (err) {
+      alert(err?.message || "Login failed");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -146,7 +161,7 @@ const LoginPage = () => {
           type="submit"
           className="w-full bg-blue-600 text-white py-3 rounded-md font-semibold hover:bg-blue-700 transition-all duration-200 mt-8"
         >
-          Login
+          {loading ? "Logging in..." : "Login"}
         </button>
 
         <p className="text-center text-gray-600 text-sm mt-12">
