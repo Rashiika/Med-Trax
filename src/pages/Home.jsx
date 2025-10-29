@@ -2,23 +2,23 @@ import React, { useState } from "react";
 import logo from "../assets/logo.png";
 import { useNavigate } from "react-router-dom";
 import { useDispatch } from "react-redux";
-import { roleSelect } from "../redux/features/authSlice";
+import { selectRole } from "../redux/features/authSlice";
 
 const Home = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const [selectedRole, setSelectedRole] = useState("");
 
-  const handleRoleSelect = async (role) => {
-    if (role) {
-      try {
-        await dispatch(roleSelect(selectedRole)).unwrap(); 
-        navigate("/signup");
-      } catch (error) {
-        console.error("Role selection failed:", error);
-      }
+  const handleRoleSelect = async () => {
+  if (selectedRole) {
+    try {
+      await dispatch(selectRole(selectedRole)).unwrap(); 
+      navigate("/signup");
+    } catch (error) {
+      console.error("Role selection failed:", error);
     }
-  };
+  }
+};
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-white border border-blue-300 px-4 sm:px-6 lg:px-10">

@@ -6,7 +6,7 @@ import Button from "../components/Button/Button";
 import userIcon from "../assets/user.png";
 import emailIcon from "../assets/email.png";
 import lockIcon from "../assets/lock.png";
-import { useDispatch } from "react-redux";
+import { useDispatch , useSelector} from "react-redux";
 import { registerUser } from "../redux/features/authSlice";
 import { PasswordRuleLine } from "../components/PasswordRuleLine";
 import { ToastContainer } from "../components/Toast";
@@ -15,6 +15,7 @@ const Signup = () => {
 
     const dispatch = useDispatch();
   const navigate = useNavigate();
+  const role = useSelector((state) => state.auth.role);
 
     const [formData, setFormData] = useState({
         email: "",
@@ -29,7 +30,6 @@ const Signup = () => {
     const [passwordFocused, setPasswordFocused] = useState(false);
     const [toasts, setToasts] = useState([]);
 
-    // --- Toast Logic ---
     const showToast = useCallback((message, type = 'warning') => {
         const id = Date.now();
         setToasts(prev => [...prev, { id, message, type }]);
@@ -38,9 +38,7 @@ const Signup = () => {
     const closeToast = useCallback((id) => {
         setToasts(prev => prev.filter(toast => toast.id !== id));
     }, []);
-    // --- End Toast Logic ---
 
-    // --- Validation Rules ---
     const uppercaseRegex = /[A-Z]/;
     const numberRegex = /[0-9]/;
     const specialCharRegex = /[!@#$%^&*(),.?":{}|<>]/;
@@ -70,9 +68,7 @@ const Signup = () => {
 
             if (!value) {
                 error = 'Password is required';
-             } //else if (!Object.values(rules).every(rule => rule)) {
-            //     error = 'Password does not meet all security requirements listed below';
-            // }
+             } 
         } else if (name === 'password2') {
             if (!value) {
                 error = 'Confirmation is required';
@@ -135,8 +131,9 @@ const Signup = () => {
             
             showToast("Success! Your account is created. Check your email for verification.", 'success');
             
-            navigate("/verifyOtp", { state: { email: formData.email, role: formData.role } });
-            //navigate('/verifyOtp', { state: { email: formData.email } });
+            localStorage.setItem("signupEmail", formData.email);
+
+            navigate("/verifyOtp", { state: { email: formData.email, role: role } });
 
         } catch (error) {
             console.error("Registration failed:", error);

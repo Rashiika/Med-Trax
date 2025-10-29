@@ -1,20 +1,18 @@
 import React, { useState } from "react";
-import { Link,useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
 import FormLayout from "../components/Layout/FormLayout";
 import Input from "../components/Input/Input"; 
 import emailIcon from "../assets/email.png";
 import lockIcon from "../assets/lock.png";
-import eyeOpen from "../assets/eye.png";
-import eyeClose from "../assets/eyeclose.png";
-import { useDispatch } from "react-redux";
 import { loginUser } from "../redux/features/authSlice";
 
 const LoginPage = () => {
-
   const dispatch = useDispatch();
   const navigate = useNavigate(); 
+  const role = useSelector((state) => state.auth.role) || "patient";
+  
   const [formData, setFormData] = useState({ email: "", password: "" });
-  const [role, setRole] = useState(sessionStorage.getItem("userRole") || "patient");
   const [errors, setErrors] = useState({});
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -25,7 +23,6 @@ const LoginPage = () => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
 
-    
     if (name === "email") {
       if (!value) {
         setErrors((prev) => ({ ...prev, email: "Email is required" }));
@@ -52,13 +49,7 @@ const LoginPage = () => {
     }
   };
 
-  const handleRoleChange = (e) => {
-    const newRole = e.target.value;
-    setRole(newRole);
-    sessionStorage.setItem("userRole", newRole); // save in session
-  };
-
- const handleSubmit = async(e) => {
+  const handleSubmit = async(e) => {
     e.preventDefault();
     if (Object.values(errors).some((error) => error)) {
       alert("Please fix the errors before submitting.");
@@ -68,22 +59,48 @@ const LoginPage = () => {
       alert("Please fill in all fields.");
       return;
     }
-    // alert("Login successful!");
-    // console.log(formData);
 
-    // dispatch(loginUser({ credentials: formData, role: "patient" }));
     setLoading(true);
     try {
       const payload = await dispatch(loginUser({ credentials: formData, role })).unwrap();
-      const userRole = payload?.role || role;
-      // navigate based on resolved role
-      if (userRole === "doctor") {
-        navigate("/doctor");
+      
+      const userRole = payload?.user?.role || payload?.role;
+      
+      if (payload.access_token && payload.refresh_token) {
+        alert("Login successful!");
+        if (userRole === "doctor") {
+          navigate("/doctor/dashboard");
+        } else {
+          navigate("/patient/dashboard");
+        }
       } else {
-        navigate("/patient");
+        alert("Please complete your profile to continue.");
+        if (userRole === "doctor") {
+          navigate("/doctor");
+        } else {
+          navigate("/patient");
+        }
       }
     } catch (err) {
-      alert(err?.message || "Login failed");
+      const errorData = err?.errors || err;
+      
+      if (err?.is_profile_complete === false) {
+        alert(err?.message || "Please complete your profile to continue.");
+        const userRole = err?.role;
+        if (userRole === "doctor") {
+          navigate("/doctor");
+        } else {
+          navigate("/patient");
+        }
+      } else {
+        const errorMessage = 
+          errorData?.non_field_errors?.[0] ||
+          errorData?.email?.[0] ||
+          errorData?.password?.[0] ||
+          err?.message || 
+          "Invalid email or password";
+        alert(errorMessage);
+      }
     } finally {
       setLoading(false);
     }
@@ -97,34 +114,31 @@ const LoginPage = () => {
 
       <form onSubmit={handleSubmit} 
       className="space-y-4 w-full max-w-md mx-auto px-4 sm:px-8">
-
-       
         <div className="mb-5">
-        <Input
-          type="email"
-          label="Email"
-          value={formData.email}
-          onChange={(e) => {
-            const email = e.target.value.trim();
-            setFormData({ ...formData, email: e.target.value });
+          <Input
+            type="email"
+            label="Email"
+            value={formData.email}
+            onChange={(e) => {
+              const email = e.target.value.trim();
+              setFormData({ ...formData, email: e.target.value });
 
-            if (!email) {
-              setErrors((prev) => ({ ...prev, email: "Email is required" }));
-            } else if (!email.includes("@")) {
-              setErrors((prev) => ({ ...prev, email: "'@' is missing in the email" }));
-            } else if (!emailRegex.test(email)) {
-              setErrors((prev) => ({ ...prev, email: "Invalid email address" }));
-            } else {
-              setErrors((prev) => ({ ...prev, email: "" }));
-            }
-          }}
-          placeholder="Enter your email"
-          icon={emailIcon}
-          error={errors.email}
-        />
+              if (!email) {
+                setErrors((prev) => ({ ...prev, email: "Email is required" }));
+              } else if (!email.includes("@")) {
+                setErrors((prev) => ({ ...prev, email: "'@' is missing in the email" }));
+              } else if (!emailRegex.test(email)) {
+                setErrors((prev) => ({ ...prev, email: "Invalid email address" }));
+              } else {
+                setErrors((prev) => ({ ...prev, email: "" }));
+              }
+            }}
+            placeholder="Enter your email"
+            icon={emailIcon}
+            error={errors.email}
+          />
         </div>
 
-       
         <Input
           type="password"
           label="Password"
@@ -155,7 +169,6 @@ const LoginPage = () => {
           error={errors.password}
         />
 
-        
         <div className="text-right mb-6">
           <Link
             to="/EmailOtp"
@@ -165,7 +178,6 @@ const LoginPage = () => {
           </Link>
         </div>
 
-        
         <button
           type="submit"
           className="w-full bg-blue-600 text-white py-3 rounded-md font-semibold hover:bg-blue-700 transition-all duration-200 mt-8"
@@ -174,7 +186,7 @@ const LoginPage = () => {
         </button>
 
         <p className="text-center text-gray-600 text-sm mt-12">
-          Don’t have an account?{" "}
+          Don't have an account?{" "}
           <Link to="/signup" className="text-blue-600 hover:underline font-medium">
             Sign Up
           </Link>

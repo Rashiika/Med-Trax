@@ -1,55 +1,50 @@
+const saveTokensToLocalStorage = (access, refresh) => {
+  if (access) localStorage.setItem("accessToken", access);
+  if (refresh) localStorage.setItem("refreshToken", refresh);
+};
+
+const getTokensFromLocalStorage = () => {
+  return {
+    accessToken: localStorage.getItem("accessToken") || null,
+    refreshToken: localStorage.getItem("refreshToken") || null,
+  };
+};
+
+const clearTokensFromLocalStorage = () => {
+  localStorage.removeItem("accessToken");
+  localStorage.removeItem("refreshToken");
+};
+
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import axios from "axios";
 import axiosInstance from "../../api/axiosInstance";
-import Cookies from 'js-cookie';
 
-<<<<<<< Updated upstream
-const API_BASE_URL = "http://13.49.67.184/api";
-axios.defaults.withCredentials = true;
-=======
-// const API_BASE_URL = "https://medtrax.me/api";
-// axios.defaults.withCredentials = true;
->>>>>>> Stashed changes
-
-export const roleSelect = createAsyncThunk(
-  "auth/roleSelect",
+export const selectRole = createAsyncThunk(
+  "auth/selectRole",
   async (role, { rejectWithValue }) => {
     try {
-      const response = await axiosInstance.post(`/select-role/`, { role } , { withCredentials: true });
-
-      if (response.data?.role) {
-        localStorage.setItem("selected_role", response.data.role);
-      }
-
-      console.log("Role Select Response:", response);
-      return response.data;
+      return role;
     } catch (error) {
-      console.error("Role Select Error:", error);
-      return rejectWithValue(error.response?.data || "Something went wrong");
+      return rejectWithValue("Failed to set role");
     }
   }
 );
 
-
 export const registerUser = createAsyncThunk(
   "auth/registerUser",
-  async (userData, { rejectWithValue }) => {
+  async (userData, { getState, rejectWithValue }) => {
     try {
+      const { role } = getState().auth; 
       const payload = {
         email: userData.email,
         password1: userData.password1,
         password2: userData.password2,
+        role: role, 
       };
-      const token =Cookies.get('sessionid')
 
-      console.log(token)
       const response = await axiosInstance.post("/signup/", payload);
-
-      console.log("Signup response:", response.data);
-      return response.data;
+      return response.data; 
     } catch (error) {
-      console.error("Signup error:", error);
-      return rejectWithValue(error.response?.data || "Network error");
+      return rejectWithValue(error.response?.data || "Signup failed");
     }
   }
 );
@@ -58,12 +53,9 @@ export const verifyOtp = createAsyncThunk(
   "auth/verifyOtp",
   async (otpData, { rejectWithValue }) => {
     try {
-      const response = await axiosInstance.post("/verify-signup-otp/", otpData , { withCredentials: true });
-
-      console.log("OTP Verify Response:", response.data);
-      return response.data;
+      const response = await axiosInstance.post("/verify-signup-otp/", otpData);
+      return response.data; 
     } catch (error) {
-      console.error("OTP verification error:", error.response?.data || error.message);
       return rejectWithValue(error.response?.data || "OTP verification failed");
     }
   }
@@ -73,62 +65,10 @@ export const resendSignupOtp = createAsyncThunk(
   "auth/resendSignupOtp",
   async ({ email }, { rejectWithValue }) => {
     try {
-      const response = await axiosInstance.post("/resend-signup-otp/", { email }, { withCredentials: true });
-      console.log("Resend OTP response:", response.data);
+      const response = await axiosInstance.post("/resend-signup-otp/", { email });
       return response.data;
     } catch (error) {
-      console.log(
-        "Resend signup OTP error:",
-        error.response?.data || error.message
-      );
-      
       return rejectWithValue(error.response?.data || "Failed to resend OTP");
-    }
-  }
-);
-
-export const completeProfile = createAsyncThunk(
-  "auth/completeProfile",
-  async ({ formData, role }, { rejectWithValue }) => {
-    console.log(formData);
-    try {
-      if (!role) {
-        return rejectWithValue("User role is missing. Please select a role.");
-      }
-
-      const endpoint =
-        role === "doctor"
-          ? "/complete-doctor-profile/"
-          : "/complete-patient-profile/";
-      const response = await axiosInstance.post(endpoint, formData, { withCredentials: true });
-      console.log("Complete Profile Response:", response.data);
-      return { ...response.data, role };
-    } catch (error) {
-      console.error("Complete Profile Error:", error);
-      return rejectWithValue(
-        error.response?.data || "Profile completion failed"
-      );
-    }
-  }
-);
-
-export const loginUser = createAsyncThunk(
-  "auth/loginUser",
-  async ({ credentials, role }, { rejectWithValue }) => {
-    //console.log(role);
-    try {
-      if (!role) {
-        return rejectWithValue("User role is missing. Please select a role.");
-      }
-
-      const endpoint =
-         role === "doctor" ? "/doctor-login/" : "/patient-login/";
-      const response = await axiosInstance.post(endpoint, credentials, { withCredentials: true });
-      console.log(response);
-      return { ...response.data, role };
-    } catch (error) {
-      console.log(error);
-      return rejectWithValue(error.response?.data || "Login failed");
     }
   }
 );
@@ -138,55 +78,91 @@ export const forgotPassword = createAsyncThunk(
   async ({ email }, { rejectWithValue }) => {
     try {
       const response = await axiosInstance.post("/forgot-password/", { email });
-      console.log("Forgot password:", response.data);
       return response.data;
     } catch (error) {
-      console.log("Forgot password error:", error);
-      return rejectWithValue(error.response?.data || "error"); 
-    }
-});
-
-
-export const verifyPasswordResetOtp = createAsyncThunk(
-  "auth/verifyPasswordResetOtp",
-  async ({ email, otp }, { rejectWithValue }) => {
-    try {
-      const response = await axiosInstance.post("/verify-password-reset-otp/", { email, otp });
-      console.log("OTP verify response:", response.data);
-      return response.data;
-    } catch (error) {
-      console.log("Verify reset OTP error:", error);
-      return rejectWithValue(error.response?.data || "Verification failed");
+      return rejectWithValue(error.response?.data || "Failed to send reset email");
     }
   }
 );
 
+export const verifyPasswordResetOtp = createAsyncThunk(
+  "auth/verifyPasswordResetOtp",
+  async (otpData, { rejectWithValue }) => {
+    try {
+      const response = await axiosInstance.post("/verify-password-reset-otp/", otpData);
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(error.response?.data || "OTP verification failed");
+    }
+  }
+);
 
 export const resendPasswordResetOtp = createAsyncThunk(
   "auth/resendPasswordResetOtp",
   async ({ email }, { rejectWithValue }) => {
     try {
-       const response = await axiosInstance.post("/resend-password-reset-otp/", { email });
-      console.log("Resend OTP response:", response.data);
+      const response = await axiosInstance.post("/resend-password-reset-otp/", { email });
       return response.data;
     } catch (error) {
-      console.log("Resend reset OTP error:", error);
-      return rejectWithValue(error.response?.data || "Resend failed");
+      return rejectWithValue(error.response?.data || "Failed to resend OTP");
     }
   }
 );
-
 
 export const resetPassword = createAsyncThunk(
   "auth/resetPassword",
   async ({ data }, { rejectWithValue }) => {
     try {
-       const response = await axiosInstance.post("/reset-password/", data);
-      console.log("Reset password success:", response.data);
+      const response = await axiosInstance.post("/reset-password/", data);
       return response.data;
     } catch (error) {
-      console.log("Reset password error:", error);
-      return rejectWithValue(error.response?.data || "Something went wrong");
+      return rejectWithValue(error.response?.data || "Password reset failed");
+    }
+  }
+);
+
+export const loginUser = createAsyncThunk(
+  "auth/loginUser",
+  async ({ credentials, role }, { rejectWithValue }) => {
+    try {
+      const payload = {
+        email: credentials.email,
+        password: credentials.password
+      };
+      const response = await axiosInstance.post("/login/", payload);
+      
+      return {
+        ...response.data,
+        role: response.data.user?.role || role
+      };
+    } catch (error) {
+      const errorData = error.response?.data;
+      
+      if (errorData?.is_profile_complete === false) {
+        return rejectWithValue({
+          ...errorData,
+          isIncompleteProfile: true 
+        });
+      }
+      
+  
+      return rejectWithValue(errorData || { message: "Login failed" });
+    }
+  }
+);
+
+export const completeProfile = createAsyncThunk(
+  "auth/completeProfile",
+  async ({ formData, role }, { rejectWithValue }) => {
+    try {
+      const endpoint = role === "doctor" ? "/complete-doctor-profile/" : "/complete-patient-profile/";
+      const response = await axiosInstance.post(endpoint, formData);
+      return {
+        ...response.data,
+        role: role
+      };
+    } catch (error) {
+      return rejectWithValue(error.response?.data || "Profile completion failed");
     }
   }
 );
@@ -194,55 +170,202 @@ export const resetPassword = createAsyncThunk(
 const authSlice = createSlice({
   name: "auth",
   initialState: {
-    user: null,
-    loading: false,
-    error: null,
-    message: "",
+  user: null,
+  role: null,
+  isProfileCompleted: false,
+  loading: false,
+  error: null,
+  message: "",
+},
+
+ reducers: {
+  logout: (state) => {
+    state.user = null;
+    state.role = null;
+    state.isProfileCompleted = false;
+    state.loading = false;
+    state.error = null;
+    state.message = "";
+    
+    clearTokensFromLocalStorage();
   },
-  reducers: {
-    logout: (state) => {
-      state.user = null;
-      state.loading = false;
-      state.error = null;
-      state.message = "";
-      localStorage.removeItem("token");
-      localStorage.removeItem("role");
-    },
+  hydrateAuth: (state, action) => {
+    const { accessToken, refreshToken } = getTokensFromLocalStorage();
+    
+
+    if (accessToken && refreshToken) {
+      state.isProfileCompleted = true;
+      state.user = action.payload?.user || state.user;
+      state.role = action.payload?.role || state.role;
+    }
   },
+},
+
   extraReducers: (builder) => {
     builder
-      .addMatcher(
-        (action) =>
-          action.type.startsWith("auth/") && action.type.endsWith("/pending"),
-        (state) => {
-          state.loading = true;
-          state.error = null;
-          state.message = "";
-        }
-      )
-      .addMatcher(
-        (action) =>
-          action.type.startsWith("auth/") && action.type.endsWith("/fulfilled"),
-        (state, action) => {
-          state.loading = false;
-          state.message = action.payload?.message || "Success";
-          state.user = action.payload?.user ?? state.user;
-        }
-      )
-      .addMatcher(
-        (action) =>
-          action.type.startsWith("auth/") && action.type.endsWith("/rejected"),
-        (state, action) => {
-          state.loading = false;
-          state.error =
-            action.payload?.detail ||
-            action.payload?.message ||
-            action.payload ||
-            "Something went wrong";
-        }
-      );
+
+      .addCase(selectRole.fulfilled, (state, action) => {
+        state.role = action.payload;
+      })
+
+ 
+      .addCase(registerUser.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(registerUser.fulfilled, (state, action) => {
+        state.loading = false;
+        state.message = action.payload.message || "Signup successful";
+      })
+      .addCase(registerUser.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+
+ 
+      .addCase(verifyOtp.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(verifyOtp.fulfilled, (state, action) => {
+  state.loading = false;
+  state.user = {
+    email: action.payload.email,
+    role: action.payload.role
+  };
+  state.role = action.payload.role;
+  state.message = action.payload.message || "OTP verified successfully";
+})
+      .addCase(verifyOtp.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+      .addCase(resendSignupOtp.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(resendSignupOtp.fulfilled, (state, action) => {
+        state.loading = false;
+        state.message = action.payload.message || "OTP resent successfully";
+      })      
+      .addCase(resendSignupOtp.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+
+      .addCase(loginUser.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(loginUser.fulfilled, (state, action) => {
+   state.loading = false;
+   state.role = action.payload.role;
+   state.isProfileCompleted = action.payload.is_profile_complete !== false;
+
+
+   if (action.payload.access_token && action.payload.refresh_token) {
+     saveTokensToLocalStorage(action.payload.access_token, action.payload.refresh_token);
+     state.isProfileCompleted = true;
+   }
+
+   state.user = action.payload.user || {
+     email: action.payload.email,
+     role: action.payload.role
+   };
+   state.message = action.payload.message || "Login successful";
+})
+      .addCase(loginUser.rejected, (state, action) => {
+  state.loading = false;
+  
+  if (action.payload?.isIncompleteProfile) {
+    state.isProfileCompleted = false;
+    state.role = action.payload.role;
+    state.user = {
+      email: action.payload.email,
+      role: action.payload.role
+    };
+    state.message = action.payload.message;
+    state.error = null; 
+  } else {
+    state.error = action.payload;
+  }
+})
+
+      .addCase(forgotPassword.pending, (state) => {
+  state.loading = true;
+  state.error = null;
+})
+.addCase(forgotPassword.fulfilled, (state, action) => {
+  state.loading = false;
+  state.message = action.payload.message || "Password reset email sent";
+})
+.addCase(forgotPassword.rejected, (state, action) => {
+  state.loading = false;
+  state.error = action.payload;
+})
+.addCase(completeProfile.pending, (state) => {
+  state.loading = true;
+  state.error = null;
+})
+.addCase(completeProfile.fulfilled, (state, action) => {
+  state.loading = false;
+  state.isProfileCompleted = true;
+
+  saveTokensToLocalStorage(action.payload.access_token, action.payload.refresh_token);
+  
+  state.user = action.payload.user || {
+    email: action.payload.user?.email,
+    role: action.payload.user?.role,
+    username: action.payload.user?.username
+  };
+  state.message = action.payload.message || "Profile completed successfully";
+})
+.addCase(completeProfile.rejected, (state, action) => {
+  state.loading = false;
+  state.error = action.payload;
+})
+
+.addCase(verifyPasswordResetOtp.pending, (state) => {
+  state.loading = true;
+  state.error = null;
+})
+.addCase(verifyPasswordResetOtp.fulfilled, (state, action) => {
+  state.loading = false;
+  state.message = action.payload.message || "OTP verified successfully";
+})
+.addCase(verifyPasswordResetOtp.rejected, (state, action) => {
+  state.loading = false;
+  state.error = action.payload;
+})
+
+.addCase(resendPasswordResetOtp.pending, (state) => {
+  state.loading = true;
+  state.error = null;
+})
+.addCase(resendPasswordResetOtp.fulfilled, (state, action) => {
+  state.loading = false;
+  state.message = action.payload.message || "OTP resent successfully";
+})
+.addCase(resendPasswordResetOtp.rejected, (state, action) => {
+  state.loading = false;
+  state.error = action.payload;
+})
+
+.addCase(resetPassword.pending, (state) => {
+  state.loading = true;
+  state.error = null;
+})
+.addCase(resetPassword.fulfilled, (state, action) => {
+  state.loading = false;
+  state.message = action.payload.message || "Password reset successfully";
+})
+.addCase(resetPassword.rejected, (state, action) => {
+  state.loading = false;
+  state.error = action.payload;
+});
+
   },
 });
 
-export const { logout } = authSlice.actions;
+export const { logout, hydrateAuth } = authSlice.actions;
 export default authSlice.reducer;

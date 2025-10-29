@@ -11,7 +11,7 @@ const VerifyPasswordResetOtp = () => {
   const dispatch = useDispatch();
   const location = useLocation();
   const navigate = useNavigate(); 
-  const initialEmail = location.state?.email || "copisej192@elygifts.com"; 
+  const initialEmail = location.state?.email || ""; 
   const [formData, setFormData] = useState({ email: initialEmail, otp: "" });
   const [errors, setErrors] = useState({});
   const [timer, setTimer] = useState(180); 
@@ -53,31 +53,30 @@ const VerifyPasswordResetOtp = () => {
   };
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (!formData.otp || formData.otp.length !== 6) {
-      setErrors({ otp: "Please enter a valid 6-digit OTP" });
-      return;
-    }
+  e.preventDefault();
+  if (!formData.otp || formData.otp.length !== 6) {
+    setErrors({ otp: "Please enter a valid 6-digit OTP" });
+    return;
+  }
 
-    setLoading(true);
-    
-    try {
-      
-      await dispatch(verifyPasswordResetOtp(formData)).unwrap();
-      alert("OTP Verified Successfully! Redirecting to patient dashboard...");
-      navigate("/resetPassword");
-    } catch (error) {
-      console.error("OTP verification failed:", error);
-     
-      const errorMessage =
-        error?.detail ||
-        error?.otp?.[0] ||
-        "Verification failed. Please check your OTP.";
-      alert(`Verification failed: ${errorMessage}`);
-    } finally {
-      setLoading(false);
-    }
-  };
+  setLoading(true);
+  
+  try {
+    await dispatch(verifyPasswordResetOtp(formData)).unwrap();
+    alert("OTP Verified Successfully! You can now reset your password.");
+    navigate("/resetPassword", { state: { email: formData.email } });
+  } catch (error) {
+    console.error("OTP verification failed:", error);
+   
+    const errorMessage =
+      error?.detail ||
+      error?.otp?.[0] ||
+      "Verification failed. Please check your OTP.";
+    alert(`Verification failed: ${errorMessage}`);
+  } finally {
+    setLoading(false);
+  }
+};
 
   const handleResendOtp = async (e) => {
     e.preventDefault();
@@ -142,7 +141,6 @@ const VerifyPasswordResetOtp = () => {
           <button
             type="button"
             onClick={handleResendOtp}
-            // Disable when timer is running OR when resending is in progress
             disabled={timer > 0 || isResending}
             className={`text-sm text-blue-600 font-medium ${
               timer > 0 || isResending
@@ -150,28 +148,25 @@ const VerifyPasswordResetOtp = () => {
                 : "hover:underline cursor-pointer"
             }`}
           >
-                          {isResending ? "Sending..." : "Resend OTP"}           {" "}
+             {isResending ? "Sending..." : "Resend OTP"}{" "}
           </button>
-                   {" "}
+            {" "}
         </div>
-               {" "}
         <Button type="submit" fullWidth disabled={isLoading}>
-                    {isLoading ? "Verifying..." : "Proceed"}       {" "}
+          {isLoading ? "Verifying..." : "Proceed"}
         </Button>
-               {" "}
+        {" "}
         <p className="text-center text-gray-600 text-sm mt-12">
-                    Don’t have an account?          {" "}
+          Don’t have an account?{" "}
           <Link
             to="/signup"
             className="text-blue-600 hover:underline font-medium"
           >
-                        Sign Up          {" "}
+            Sign Up
           </Link>
-                 {" "}
         </p>
-             {" "}
       </form>
-         {" "}
+      {" "}
     </FormLayout>
   );
 };

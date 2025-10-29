@@ -26,14 +26,18 @@ const EmailOtp = () => {
   };
 
   
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    if (validate()) {
-      dispatch(forgotPassword({ email: formData.email }));
+  const handleSubmit = async (e) => {
+  e.preventDefault();
+  if (validate()) {
+    try {
+      await dispatch(forgotPassword({ email: formData.email })).unwrap();
       console.log("Email submitted:", formData.email);
-      navigate("/resetPassword")
+      navigate("/verifyPasswordResetOtp", { state: { email: formData.email } });
+    } catch (error) {
+      alert("Failed to send OTP. Please try again.");
     }
-  };
+  }
+};
 
   return (
     <FormLayout>
