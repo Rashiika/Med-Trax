@@ -1,8 +1,8 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import axios from "axios";
 
-const API_BASE_URL = "http://13.49.67.184/api";
-axios.defaults.withCredentials = true;
+// const API_BASE_URL = "https://medtrax.me/api";
+// axios.defaults.withCredentials = true;
 
 export const roleSelect = createAsyncThunk(
   "auth/roleSelect",
