@@ -10,8 +10,8 @@ const VerifyOtp = () => {
   const dispatch = useDispatch();
   const location = useLocation();
   const navigate = useNavigate();
-  //const initialEmail = location.state?.email ;
-  const initialEmail = location.state?.email;
+  const savedEmail = localStorage.getItem("signupEmail");
+  const initialEmail = location.state?.email || savedEmail;
   const initialRole = location.state?.role || "patient";
 
   const [formData, setFormData] = useState({ email: initialEmail, otp: "" });
@@ -20,10 +20,13 @@ const VerifyOtp = () => {
   const [isResending, setResending] = useState(false);
   const [isLoading, setLoading] = useState(false);
   useEffect(() => {
-    if (!initialEmail) {
-      alert("Email is missing. Please sign up again.");
-      navigate("/signup");
-    }
+     if (initialEmail) {
+    localStorage.setItem("signupEmail", initialEmail);
+  } else {
+    alert("Email is missing. Please sign up again.");
+    navigate("/signup");
+    return;
+  }
 
     if (timer > 0) {
       const interval = setInterval(() => {
@@ -63,9 +66,9 @@ const VerifyOtp = () => {
     //console.log("Submitting:", formData);
 
     try {
-      await dispatch(verifyOtp(formData)).unwrap();
-      alert("OTP Verified Successfully! Redirecting to patient dashboard...");
-      navigate("/patient");
+      // await dispatch(verifyOtp(formData)).unwrap();
+      // alert("OTP Verified Successfully! Redirecting to patient dashboard...");
+      // navigate("/patient");
       const payload = await dispatch(verifyOtp(formData)).unwrap();
       const roleToUse = payload?.role || initialRole;
       alert("OTP Verified Successfully! Redirecting...");

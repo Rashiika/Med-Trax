@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link,useNavigate } from "react-router-dom";
 import FormLayout from "../components/Layout/FormLayout";
 import Input from "../components/Input/Input"; 
 import emailIcon from "../assets/email.png";
@@ -12,9 +12,12 @@ import { loginUser } from "../redux/features/authSlice";
 const LoginPage = () => {
 
   const dispatch = useDispatch();
+  const navigate = useNavigate(); 
   const [formData, setFormData] = useState({ email: "", password: "" });
+  const [role, setRole] = useState(sessionStorage.getItem("userRole") || "patient");
   const [errors, setErrors] = useState({});
   const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -47,6 +50,12 @@ const LoginPage = () => {
         setErrors((prev) => ({ ...prev, password: "" }));
       }
     }
+  };
+
+  const handleRoleChange = (e) => {
+    const newRole = e.target.value;
+    setRole(newRole);
+    sessionStorage.setItem("userRole", newRole); // save in session
   };
 
  const handleSubmit = async(e) => {
