@@ -70,9 +70,9 @@ const Signup = () => {
 
             if (!value) {
                 error = 'Password is required';
-            } else if (!Object.values(rules).every(rule => rule)) {
-                error = 'Password does not meet all security requirements listed below';
-            }
+             } //else if (!Object.values(rules).every(rule => rule)) {
+            //     error = 'Password does not meet all security requirements listed below';
+            // }
         } else if (name === 'password2') {
             if (!value) {
                 error = 'Confirmation is required';
