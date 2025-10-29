@@ -3,13 +3,10 @@ import axios from "axios";
 import axiosInstance from "../../api/axiosInstance";
 import Cookies from 'js-cookie';
 
-<<<<<<< Updated upstream
-const API_BASE_URL = "http://13.49.67.184/api";
-axios.defaults.withCredentials = true;
-=======
+
 // const API_BASE_URL = "https://medtrax.me/api";
 // axios.defaults.withCredentials = true;
->>>>>>> Stashed changes
+
 
 export const roleSelect = createAsyncThunk(
   "auth/roleSelect",
