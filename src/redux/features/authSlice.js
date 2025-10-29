@@ -17,6 +17,9 @@ const clearTokensFromLocalStorage = () => {
 
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import axiosInstance from "../../api/axiosInstance";
+import Cookies from 'js-cookie';
+
+
 
 export const selectRole = createAsyncThunk(
   "auth/selectRole",
