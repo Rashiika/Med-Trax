@@ -20,8 +20,8 @@ import axiosInstance from "../../api/axiosInstance";
 import Cookies from 'js-cookie';
 
 
-export const roleSelect = createAsyncThunk(
-  "auth/roleSelect",
+export const selectRole = createAsyncThunk(
+  "auth/selectRole",
   async (role, { rejectWithValue }) => {
     try {
       return role;
@@ -225,10 +225,8 @@ const authSlice = createSlice({
     builder
 
       .addCase(selectRole.fulfilled, (state, action) => {
-        state.role = action.payload;
-      })
-
- 
+  state.role = action.payload;
+})
       .addCase(registerUser.pending, (state) => {
         state.loading = true;
         state.error = null;
