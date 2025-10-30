@@ -1,7 +1,8 @@
 import React, { useState, forwardRef } from "react";
+import { useNavigate } from "react-router-dom";
 import DetailFormLayout from "../components/Layout/DetailFormLayout";
 import DetailsInput from "../components/Input/DetailsInput";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { completeProfile } from "../redux/features/authSlice";
 
 const Section = forwardRef(({ id, title, children }, ref) => (
@@ -12,45 +13,202 @@ const Section = forwardRef(({ id, title, children }, ref) => (
 ));
 
 const PatientForm = () => {
-
   const dispatch = useDispatch();
+  const navigate = useNavigate();
+  const [loading, setLoading] = useState(false);
+  const [errors, setErrors] = useState({});
+  const userEmail = useSelector((state) => state.auth.user?.email) || localStorage.getItem("signupEmail") || "";
 
   const [formData, setFormData] = useState({
-    first_name: "",
-    last_name: "",
-    date_of_birth: "",
+    firstName: "",
+    lastName: "",
+    dob: "",
     gender: "",
-    blood_group: "",
+    bloodGroup: "",
     city: "",
-    phone_number: "",
+    mobile: "",
     email: "",
-    emergency_contact: "",
-    emergency_email: "",
-    is_insurance: "",
-    ins_company_name: "",
-    ins_policy_number: "",
-    known_allergies: "",
-    chronic_diseases: "",
-    previous_surgeries: "",
-    family_medical_history: "",
+    emergencyContact: "",
+    emergencyEmail: "",
+    insuranceStatus: "",
+    insuranceCompany: "",
+    policyNumber: "",
+    allergies: "",
+    chronicDiseases: "",
+    surgeries: "",
+    familyHistory: "",
   });
 
-  const handleChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    console.log("Patient Data:", formData);
-    dispatch(completeProfile({formData: formData, role: "patient"}))
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  const phoneRegex = /^[6-9]\d{9}$/; 
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData({ ...formData, [name]: value });
+    
+  
+    if (errors[name]) {
+      setErrors({ ...errors, [name]: "" });
+    }
+
+    if (name === "insuranceStatus" && value === "No") {
+      setFormData({
+        ...formData,
+        insuranceStatus: value,
+        insuranceCompany: "N/A",
+        policyNumber: "N/A"
+      });
+    }
   };
 
+  const validateField = (name, value) => {
+    switch (name) {
+      case "firstName":
+      case "lastName":
+        if (!value.trim()) return `${name === "firstName" ? "First" : "Last"} name is required`;
+        break;
+      case "dob":
+        if (!value) return "Date of birth is required";
+        break;
+      case "gender":
+        if (!value) return "Gender is required";
+        break;
+      case "bloodGroup":
+        if (!value) return "Blood group is required";
+        break;
+      case "city":
+        if (!value) return "City is required";
+        break;
+      case "email":
+        if (!value.trim()) return "Email is required";
+        if (!emailRegex.test(value)) return "Invalid email format";
+        break;
+      case "mobile":
+        if (!value.trim()) return "Mobile number is required";
+        if (!phoneRegex.test(value)) return "Invalid mobile number (10 digits, starts with 6-9)";
+        break;
+      case "emergencyContact":
+        if (value && !phoneRegex.test(value)) return "Invalid emergency contact number";
+        break;
+      case "emergencyEmail":
+        if (value && !emailRegex.test(value)) return "Invalid emergency email";
+        break;
+      case "insuranceStatus":
+        if (!value) return "Insurance status is required";
+        break;
+      case "insuranceCompany":
+        if (formData.insuranceStatus === "Yes" && !value.trim()) return "Insurance company is required";
+        break;
+      case "policyNumber":
+        if (formData.insuranceStatus === "Yes" && !value.trim()) return "Policy number is required";
+        break;
+      default:
+        return "";
+    }
+    return "";
+  };
+
+  const validateAllFields = () => {
+    const newErrors = {};
+    const requiredFields = [
+      "firstName", "lastName", "dob", "gender", "bloodGroup", 
+      "city", "email", "mobile", "insuranceStatus"
+    ];
+
+   
+    if (formData.insuranceStatus === "Yes") {
+      requiredFields.push("insuranceCompany", "policyNumber");
+    }
+
+    requiredFields.forEach(field => {
+      const error = validateField(field, formData[field]);
+      if (error) {
+        newErrors[field] = error;
+      }
+    });
+
+    if (formData.emergencyContact) {
+      const error = validateField("emergencyContact", formData.emergencyContact);
+      if (error) newErrors.emergencyContact = error;
+    }
+    if (formData.emergencyEmail) {
+      const error = validateField("emergencyEmail", formData.emergencyEmail);
+      if (error) newErrors.emergencyEmail = error;
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+ const handleSubmit = async (e) => {
+    e.preventDefault();
+    
+    if (!validateAllFields()) {
+      const firstErrorField = Object.keys(errors)[0];
+      const errorElement = document.querySelector(`[name="${firstErrorField}"]`);
+      if (errorElement) {
+        errorElement.scrollIntoView({ behavior: "smooth", block: "center" });
+        errorElement.focus();
+      }
+      return;
+    }
+
+    const finalFormData = {
+      email: userEmail,
+      first_name: formData.firstName,
+      last_name: formData.lastName,
+      date_of_birth: formData.dob,
+      gender: formData.gender,
+      blood_group: formData.bloodGroup,
+      city: formData.city,
+      phone_number: formData.mobile,
+      emergency_contact: formData.emergencyContact || "",
+      emergency_email: formData.emergencyEmail || "",
+      is_insurance: formData.insuranceStatus === "Yes",
+      ins_company_name: formData.insuranceCompany || "",
+      ins_policy_number: formData.policyNumber || "",
+      known_allergies: formData.allergies || "",
+      chronic_diseases: formData.chronicDiseases || "",
+      previous_surgeries: formData.surgeries || "",
+      family_medical_history: formData.familyHistory || "",
+    };
+
+    console.log("Patient Data:", finalFormData);
+    
+    setLoading(true);
+    try {
+      const response = await dispatch(completeProfile({ formData: finalFormData, role: "patient" })).unwrap();
+      
+      localStorage.setItem("accessToken", response.access_token);
+      localStorage.setItem("refreshToken", response.refresh_token);
+  
+      localStorage.removeItem("signupEmail");
+      
+      alert("Profile completed successfully!");
+      navigate("/patient/dashboard");
+    } catch (err) {
+      console.error("Profile creation error:", err);
+      
+      const errorMessage = err?.error || 
+                          err?.message || 
+                          err?.errors?.phone_number?.[0] ||
+                          "Failed to complete profile";
+      
+      alert(errorMessage);
+    } finally {
+      setLoading(false);
+    }
+  };
   const steps = ["Personal Information", "Contact Details", "Insurance Details", "Medical Details"];
 
-  // Define required fields for each section
   const sectionFields = {
     "Personal Information": ["firstName", "lastName", "dob", "gender", "bloodGroup", "city"],
     "Contact Details": ["mobile", "email"],
-    "Insurance Details": ["insuranceStatus"], // Only "insuranceStatus" is required
-    "Medical Details": [], // No required fields
+    "Insurance Details": formData.insuranceStatus === "Yes" 
+      ? ["insuranceStatus", "insuranceCompany", "policyNumber"] 
+      : ["insuranceStatus"],
+    "Medical Details": [], 
   };
 
   return (
@@ -60,57 +218,185 @@ const PatientForm = () => {
       formData={formData}
       sectionFields={sectionFields}
       onSubmit={handleSubmit}
+      loading={loading}
     >
-      {/* Personal Info */}
+  
       <Section title="Personal Information">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <DetailsInput label="First Name" name="first_name" value={formData.first_name} onChange={handleChange} placeholder="Enter your first name" required/>
-          <DetailsInput label="Last Name" name="last_name" value={formData.last_name} onChange={handleChange} placeholder="Enter your last name" required/>
-          <DetailsInput label="Date of Birth" type="date" name="date_of_birth" value={formData.date_of_birth} onChange={handleChange} required/>
-          <DetailsInput label="Gender" type="select" name="gender" options={[{ label: "Male", value: "M" }, { label: "Female", value: "F" }, { label: "Other", value: "O" },{ label: "Prefer not to say", value: "N" }]} value={formData.gender} onChange={handleChange} required/>
-          <DetailsInput label="Blood Group" type="select" name="blood_group" options={["A+", "A-", "B+", "B-", "O+", "O-", "AB+", "AB-"]} value={formData.blood_group} onChange={handleChange} required/>
-          <DetailsInput label="City" name="city" value={formData.city} onChange={handleChange} placeholder="Enter your city" required/>
+          <DetailsInput 
+            label="First Name" 
+            name="firstName" 
+            value={formData.firstName} 
+            onChange={handleChange} 
+            placeholder="Enter your first name" 
+            required
+            error={errors.firstName}
+          />
+          <DetailsInput 
+            label="Last Name" 
+            name="lastName" 
+            value={formData.lastName} 
+            onChange={handleChange} 
+            placeholder="Enter your last name" 
+            required
+            error={errors.lastName}
+          />
+          <DetailsInput 
+            label="Date of Birth" 
+            type="date" 
+            name="dob" 
+            value={formData.dob} 
+            onChange={handleChange} 
+            required
+            error={errors.dob}
+          />
+          <DetailsInput 
+            label="Gender" 
+            type="select" 
+            name="gender" 
+            options={[
+              { label: "Male", value: "M" }, 
+              { label: "Female", value: "F" }, 
+              { label: "Other", value: "O" },
+              { label: "Prefer not to say", value: "N" }
+            ]} 
+            value={formData.gender} 
+            onChange={handleChange} 
+            required
+            error={errors.gender}
+          />
+          <DetailsInput 
+            label="Blood Group" 
+            type="select" 
+            name="bloodGroup" 
+            options={["A+", "A-", "B+", "B-", "O+", "O-", "AB+", "AB-"]} 
+            value={formData.bloodGroup} 
+            onChange={handleChange} 
+            required
+            error={errors.bloodGroup}
+          />
+          <DetailsInput 
+            label="City" 
+            type="select"
+            name="city" 
+            value={formData.city} 
+            onChange={handleChange} 
+            options={["Mumbai", "Delhi", "Pune"]}
+            required
+            error={errors.city}
+          />
         </div>
       </Section>
 
-      {/* Contact Details */}
+     
       <Section title="Contact Details">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <DetailsInput label="Mobile number" name="phone_number" value={formData.phone_number} onChange={handleChange} placeholder="Enter mobile number" required/>
-          <DetailsInput label="Email" type="email" name="email" value={formData.email} onChange={handleChange} placeholder="Enter email" required/>
-          <DetailsInput label="Emergency contact number" name="emergency_contact" value={formData.emergency_contact} onChange={handleChange} placeholder="Enter emergency contact" />
-          <DetailsInput label="Emergency Email" type="email" name="emergency_email" value={formData.emergency_email} onChange={handleChange} placeholder="Enter emergency email" />
+          <DetailsInput 
+            label="Mobile number" 
+            name="mobile" 
+            value={formData.mobile} 
+            onChange={handleChange} 
+            placeholder="Enter 10-digit mobile number" 
+            required
+            error={errors.mobile}
+          />
+          <DetailsInput 
+            label="Email" 
+            type="email" 
+            name="email" 
+            value={formData.email} 
+            onChange={handleChange} 
+            placeholder="Enter email" 
+            required
+            error={errors.email}
+          />
+          <DetailsInput 
+            label="Emergency contact number" 
+            name="emergencyContact" 
+            value={formData.emergencyContact} 
+            onChange={handleChange} 
+            placeholder="Enter emergency contact"
+            error={errors.emergencyContact}
+          />
+          <DetailsInput 
+            label="Emergency Email" 
+            type="email" 
+            name="emergencyEmail" 
+            value={formData.emergencyEmail} 
+            onChange={handleChange} 
+            placeholder="Enter emergency email"
+            error={errors.emergencyEmail}
+          />
         </div>
       </Section>
 
-      {/* Insurance */}
       <Section title="Insurance Details">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <DetailsInput
             label="Insurance Status"
-            name="is_insurance"
+            name="insuranceStatus"
             type="select"
-            value={formData.is_insurance}
+            value={formData.insuranceStatus}
             onChange={handleChange}
             options={["Yes", "No"]}
             required
+            error={errors.insuranceStatus}
           />
-          {formData.is_insurance === "Yes" && (
+          {formData.insuranceStatus === "Yes" && (
             <>
-              <DetailsInput label="Insurance Company Name" name="ins_company_name" value={formData.ins_company_name} onChange={handleChange} placeholder="Enter company name" />
-              <DetailsInput label="Policy / ID Number" name="ins_policy_number" value={formData.ins_policy_number} onChange={handleChange} placeholder="Enter policy ID" />
+              <DetailsInput 
+                label="Insurance Company Name" 
+                name="insuranceCompany" 
+                value={formData.insuranceCompany} 
+                onChange={handleChange} 
+                placeholder="Enter company name" 
+                required
+                error={errors.insuranceCompany}
+              />
+              <DetailsInput 
+                label="Policy / ID Number" 
+                name="policyNumber" 
+                value={formData.policyNumber} 
+                onChange={handleChange} 
+                placeholder="Enter policy ID" 
+                required
+                error={errors.policyNumber}
+              />
             </>
           )}
         </div>
       </Section>
 
-      {/* Medical */}
       <Section title="Medical Details">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <DetailsInput label="Known Allergies" name="known_allergies" value={formData.known_allergies} onChange={handleChange} placeholder="Enter allergies" />
-          <DetailsInput label="Chronic Diseases" name="chronic_diseases" value={formData.chronic_diseases} onChange={handleChange} placeholder="Enter chronic diseases" />
-          <DetailsInput label="Previous Surgeries" name="previous_surgeries" value={formData.previous_surgeries} onChange={handleChange} placeholder="Enter previous surgeries" />
-          <DetailsInput label="Family Medical History" name="family_history" value={formData.family_history} onChange={handleChange} placeholder="Enter family medical history" />
+          <DetailsInput 
+            label="Known Allergies" 
+            name="allergies" 
+            value={formData.allergies} 
+            onChange={handleChange} 
+            placeholder="Enter allergies" 
+          />
+          <DetailsInput 
+            label="Chronic Diseases" 
+            name="chronicDiseases" 
+            value={formData.chronicDiseases} 
+            onChange={handleChange} 
+            placeholder="Enter chronic diseases" 
+          />
+          <DetailsInput 
+            label="Previous Surgeries" 
+            name="surgeries" 
+            value={formData.surgeries} 
+            onChange={handleChange} 
+            placeholder="Enter previous surgeries" 
+          />
+          <DetailsInput 
+            label="Family Medical History" 
+            name="familyHistory" 
+            value={formData.familyHistory} 
+            onChange={handleChange} 
+            placeholder="Enter family medical history" 
+          />
         </div>
       </Section>
     </DetailFormLayout>
