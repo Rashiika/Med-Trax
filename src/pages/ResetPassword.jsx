@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState ,  useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import FormLayout from "../components/Layout/FormLayout";
 import Input from "../components/Input/Input";
@@ -10,8 +10,15 @@ const ResetPassword = () => {
 
   const dispatch = useDispatch();
   const location = useLocation();
-  const navigate = useNavigate(); 
-  const initialEmail = location.state?.email || "copisej192@elygifts.com"; 
+const navigate = useNavigate(); 
+const initialEmail = location.state?.email || "";
+
+useEffect(() => {
+  if (!initialEmail) {
+    alert("Email is missing. Please start the password reset process again.");
+    navigate("/emailOtp");
+  }
+}, [initialEmail, navigate]); 
 
   const [formData, setFormData] = useState({
     email: initialEmail,
@@ -46,15 +53,15 @@ const ResetPassword = () => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
 
-    if (name === "password") {
-      setPasswordRules(checkPasswordRules(value));
+    if (name === "new_password") {
+  setPasswordRules(checkPasswordRules(value));
 
-      if (!value) {
-        setErrors((prev) => ({ ...prev, new_password: "Password is required" }));
-      } else {
-        setErrors((prev) => ({ ...prev, new_password: "" }));
-      }
-    }
+  if (!value) {
+    setErrors((prev) => ({ ...prev, new_password: "Password is required" }));
+  } else {
+    setErrors((prev) => ({ ...prev, new_password: "" }));
+  }
+}
 
     if (name === "confirm_password") {
       if (!value) {

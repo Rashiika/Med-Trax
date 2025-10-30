@@ -3,7 +3,7 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import FormLayout from "../components/Layout/FormLayout";
 import Input from "../components/Input/Input";
 import Button from "../components/Button/Button";
-import { useDispatch } from "react-redux";
+import { useDispatch ,  useSelector } from "react-redux";
 import { resendSignupOtp, verifyOtp } from "../redux/features/authSlice";
 
 const VerifyOtp = () => {
@@ -13,12 +13,14 @@ const VerifyOtp = () => {
   const savedEmail = localStorage.getItem("signupEmail");
   const initialEmail = location.state?.email || savedEmail;
   const initialRole = location.state?.role || "patient";
+ 
 
   const [formData, setFormData] = useState({ email: initialEmail, otp: "" });
   const [errors, setErrors] = useState({});
   const [timer, setTimer] = useState(180);
   const [isResending, setResending] = useState(false);
   const [isLoading, setLoading] = useState(false);
+   const roleFromRedux = useSelector((state) => state.auth.role);
   useEffect(() => {
      if (initialEmail) {
     localStorage.setItem("signupEmail", initialEmail);
@@ -56,39 +58,38 @@ const VerifyOtp = () => {
   };
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (!formData.otp || formData.otp.length !== 6) {
-      setErrors({ otp: "Please enter a valid 6-digit OTP" });
-      return;
+  e.preventDefault();
+  if (!formData.otp || formData.otp.length !== 6) {
+    setErrors({ otp: "Please enter a valid 6-digit OTP" });
+    return;
+  }
+
+  setLoading(true);
+
+  try {
+    await dispatch(verifyOtp(formData)).unwrap();
+    
+    const roleToUse = roleFromRedux || initialRole;
+    
+    alert("Account created successfully! Please complete your profile.");
+    
+    if (roleToUse === "doctor") {
+      navigate("/doctor"); 
+    } else {
+      navigate("/patient");
     }
+  } catch (error) {
+    console.error("OTP verification failed:", error);
 
-    setLoading(true);
-    //console.log("Submitting:", formData);
-
-    try {
-      // await dispatch(verifyOtp(formData)).unwrap();
-      // alert("OTP Verified Successfully! Redirecting to patient dashboard...");
-      // navigate("/patient");
-      const payload = await dispatch(verifyOtp(formData)).unwrap();
-      const roleToUse = payload?.role || initialRole;
-      alert("OTP Verified Successfully! Redirecting...");
-      if (roleToUse === "doctor") {
-        navigate("/doctor");
-      } else {
-        navigate("/patient");
-      }
-    } catch (error) {
-      console.error("OTP verification failed:", error);
-
-      const errorMessage =
-        error?.detail ||
-        error?.otp?.[0] ||
-        "Verification failed. Please check your OTP.";
-      alert(`Verification failed: ${errorMessage}`);
-    } finally {
-      setLoading(false);
-    }
-  };
+    const errorMessage =
+      error?.detail ||
+      error?.otp?.[0] ||
+      "Verification failed. Please check your OTP.";
+    alert(`Verification failed: ${errorMessage}`);
+  } finally {
+    setLoading(false);
+  }
+};
 
   const handleResendOtp = async (e) => {
     e.preventDefault();
@@ -123,11 +124,6 @@ const VerifyOtp = () => {
       <h2 className="text-3xl font-semibold text-center mb-8 text-gray-800">
         Verify OTP
       </h2>
-      {/* {initialEmail && (
-        <p className="text-center text-gray-600 mb-6">
-          A 6-digit code has been sent to **{initialEmail}**
-        </p>
-      )} */}
       <form
         onSubmit={handleSubmit}
         className="space-y-4 w-full max-w-md mx-auto px-4 sm:px-8"

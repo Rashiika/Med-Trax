@@ -9,10 +9,11 @@ const DetailsInput = ({
   placeholder,
   options,
   required = false,
+  error = "",
+  disabled = false,
 }) => {
   return (
     <div className="flex flex-col mb-4">
-      {/* Label */}
       <label className="text-gray-700 font-medium mb-1">
         {label}{" "}
         {required ? (
@@ -22,15 +23,19 @@ const DetailsInput = ({
         )}
       </label>
 
-      {/* Input or Select */}
       {type === "select" ? (
         <select
-          name={name}
-          value={value}
-          onChange={onChange}
-          required={required}
-          className="border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-        >
+  name={name}
+  value={value}
+  onChange={onChange}
+  required={required}
+  disabled={disabled}
+  className={`border rounded-md p-2 focus:outline-none focus:ring-2 transition-all ${
+    error
+      ? "border-red-500 focus:ring-red-500"
+      : "border-gray-300 focus:ring-blue-500"
+  } ${disabled ? "bg-gray-100 cursor-not-allowed" : ""}`}
+>
           <option value="" disabled hidden>
             Select
           </option>
@@ -45,14 +50,23 @@ const DetailsInput = ({
         </select>
       ) : (
         <input
-          type={type}
-          name={name}
-          value={value}
-          onChange={onChange}
-          placeholder={placeholder}
-          required={required}
-          className="border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-        />
+  type={type}
+  name={name}
+  value={value}
+  onChange={onChange}
+  placeholder={placeholder}
+  required={required}
+  disabled={disabled}
+  className={`border rounded-md p-2 focus:outline-none focus:ring-2 transition-all ${
+    error
+      ? "border-red-500 focus:ring-red-500"
+      : "border-gray-300 focus:ring-blue-500"
+  } ${disabled ? "bg-gray-100 cursor-not-allowed" : ""}`}
+/>
+      )}
+
+      {error && (
+        <span className="text-red-500 text-sm mt-1">{error}</span>
       )}
     </div>
   );
