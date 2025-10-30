@@ -1,24 +1,24 @@
-import React, { useState ,  useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import FormLayout from "../components/Layout/FormLayout";
 import Input from "../components/Input/Input";
 import lockIcon from "../assets/lock.png";
 import { useDispatch } from "react-redux";
 import { resetPassword } from "../redux/features/authSlice";
+import { showToast } from "../components/Toast"; 
 
 const ResetPassword = () => {
-
   const dispatch = useDispatch();
   const location = useLocation();
-const navigate = useNavigate(); 
-const initialEmail = location.state?.email || "";
+  const navigate = useNavigate(); 
+  const initialEmail = location.state?.email || "";
 
-useEffect(() => {
-  if (!initialEmail) {
-    alert("Email is missing. Please start the password reset process again.");
-    navigate("/emailOtp");
-  }
-}, [initialEmail, navigate]); 
+  useEffect(() => {
+    if (!initialEmail) {
+      showToast.error("Email is missing. Please start the password reset process again."); 
+      setTimeout(() => navigate("/emailOtp"), 1500);
+    }
+  }, [initialEmail, navigate]); 
 
   const [formData, setFormData] = useState({
     email: initialEmail,
@@ -54,14 +54,14 @@ useEffect(() => {
     setFormData({ ...formData, [name]: value });
 
     if (name === "new_password") {
-  setPasswordRules(checkPasswordRules(value));
+      setPasswordRules(checkPasswordRules(value));
 
-  if (!value) {
-    setErrors((prev) => ({ ...prev, new_password: "Password is required" }));
-  } else {
-    setErrors((prev) => ({ ...prev, new_password: "" }));
-  }
-}
+      if (!value) {
+        setErrors((prev) => ({ ...prev, new_password: "Password is required" }));
+      } else {
+        setErrors((prev) => ({ ...prev, new_password: "" }));
+      }
+    }
 
     if (name === "confirm_password") {
       if (!value) {
@@ -79,22 +79,31 @@ useEffect(() => {
       }
     }
   };
-const handleSubmit = async (e) => {
-  e.preventDefault();
-  console.log(formData);
-  if (!formData.new_password || !formData.confirm_password) return;
 
-  setLoading(true);
-  try {
-    await dispatch(resetPassword({ data: formData })).unwrap();
-    alert("Password reset successful!");
-    navigate("/login");
-  } catch (err) {
-    alert("Reset failed. Please try again.");
-  } finally {
-    setLoading(false);
-  }
-};
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    console.log(formData);
+    if (!formData.new_password || !formData.confirm_password) return;
+
+    setLoading(true);
+    //const loadingToast = showToast.loading("Resetting password...");
+    
+    try {
+      await dispatch(resetPassword({ data: formData })).unwrap();
+
+      //showToast.dismiss(loadingToast);
+      showToast.success("Password reset successful! Please login with your new password.");
+
+      setTimeout(() => {
+        navigate("/login");
+      }, 2000);
+    } catch (err) {
+      //showToast.dismiss(loadingToast);
+      showToast.error("Reset failed. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <FormLayout>
@@ -187,13 +196,14 @@ const handleSubmit = async (e) => {
 
         <button
           type="submit"
-          className="w-full bg-blue-600 text-white py-3 rounded-md font-semibold hover:bg-blue-700 transition-all duration-200 mt-8"
+          disabled={loading}
+          className="w-full bg-blue-600 text-white py-3 rounded-md font-semibold hover:bg-blue-700 transition-all duration-200 mt-8 disabled:opacity-50 disabled:cursor-not-allowed" 
         >
-          Reset Password
+          {loading ? "Resetting..." : "Reset Password"} 
         </button>
 
         <p className="text-center text-gray-600 text-sm mt-12">
-          Don’t have an account?{" "}
+          Don't have an account?{" "}
           <Link
             to="/signup"
             className="text-blue-600 hover:underline font-medium"

@@ -4,10 +4,8 @@ import FormLayout from "../components/Layout/FormLayout";
 import Input from "../components/Input/Input";
 import Button from "../components/Button/Button";
 import { useDispatch } from "react-redux";
-import {
-  resendPasswordResetOtp,
-  verifyPasswordResetOtp,
-} from "../redux/features/authSlice";
+import {resendPasswordResetOtp, verifyPasswordResetOtp} from "../redux/features/authSlice";
+import { showToast } from "../components/Toast"; 
 
 const VerifyPasswordResetOtp = () => {
   const dispatch = useDispatch();
@@ -22,8 +20,8 @@ const VerifyPasswordResetOtp = () => {
 
   useEffect(() => {
     if (!initialEmail) {
-      alert("Email is missing. Please sign up again.");
-      navigate("/signup");
+      showToast.error("Email is missing. Please start the password reset process again.");
+      setTimeout(() => navigate("/emailOtp"), 1500);
     }
 
     if (timer > 0) {
@@ -54,55 +52,68 @@ const VerifyPasswordResetOtp = () => {
   };
 
   const handleSubmit = async (e) => {
-  e.preventDefault();
-  if (!formData.otp || formData.otp.length !== 6) {
-    setErrors({ otp: "Please enter a valid 6-digit OTP" });
-    return;
-  }
+    e.preventDefault();
+    if (!formData.otp || formData.otp.length !== 6) {
+      setErrors({ otp: "Please enter a valid 6-digit OTP" });
+      return;
+    }
 
-  setLoading(true);
-  
-  try {
-    await dispatch(verifyPasswordResetOtp(formData)).unwrap();
-    alert("OTP Verified Successfully! You can now reset your password.");
-    navigate("/resetPassword", { state: { email: formData.email } });
-  } catch (error) {
-    console.error("OTP verification failed:", error);
-   
-    const errorMessage =
-      error?.detail ||
-      error?.otp?.[0] ||
-      "Verification failed. Please check your OTP.";
-    alert(`Verification failed: ${errorMessage}`);
-  } finally {
-    setLoading(false);
-  }
-};
+    setLoading(true);
+    //const loadingToast = showToast.loading("Verifying OTP..."); 
+    
+    try {
+      await dispatch(verifyPasswordResetOtp(formData)).unwrap();
+      
+      //showToast.dismiss(loadingToast); 
+      showToast.success("OTP Verified Successfully! You can now reset your password."); 
+      
+      setTimeout(() => {
+        navigate("/resetPassword", { state: { email: formData.email } });
+      }, 1500);
+    } catch (error) {
+      console.error("OTP verification failed:", error);
+
+      //showToast.dismiss(loadingToast);
+
+      const errorMessage =
+        error?.detail ||
+        error?.otp?.[0] ||
+        "Verification failed. Please check your OTP.";
+      showToast.error(`Verification failed: ${errorMessage}`); 
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleResendOtp = async (e) => {
     e.preventDefault();
     if (timer > 0) {
-      alert("Please wait for the timer to expire before resending.");
+      showToast.error("Please wait for the timer to expire before resending."); 
       return;
     }
 
     if (!formData.email) {
-      alert(
-        "Cannot resend OTP. Email address is missing. Please go back to Signup."
-      );
+      showToast.error("Cannot resend OTP. Email address is missing. Please go back to email page.");
       return;
     }
+
     setResending(true);
+    const loadingToast = showToast.loading("Resending OTP...");
+    
     try {
       await dispatch(
         resendPasswordResetOtp({ email: formData.email })
       ).unwrap();
       setTimer(180);
-      alert("A new OTP has been sent!");
+      
+      //showToast.dismiss(loadingToast); 
+      showToast.success("A new OTP has been sent!"); 
     } catch (error) {
+      showToast.dismiss(loadingToast);
+
       const errorMessage =
         error?.detail || "Failed to resend OTP. Please try again.";
-      alert(errorMessage);
+      showToast.error(errorMessage); 
       console.error("Resend error:", error);
     } finally {
       setResending(false);
@@ -151,16 +162,14 @@ const VerifyPasswordResetOtp = () => {
                 : "hover:underline cursor-pointer"
             }`}
           >
-             {isResending ? "Sending..." : "Resend OTP"}{" "}
+            {isResending ? "Sending..." : "Resend OTP"}
           </button>
-            {" "}
         </div>
         <Button type="submit" fullWidth disabled={isLoading}>
           {isLoading ? "Verifying..." : "Proceed"}
         </Button>
-        {" "}
         <p className="text-center text-gray-600 text-sm mt-12">
-          Don’t have an account?{" "}
+          Don't have an account?{" "}
           <Link
             to="/signup"
             className="text-blue-600 hover:underline font-medium"
@@ -169,8 +178,8 @@ const VerifyPasswordResetOtp = () => {
           </Link>
         </p>
       </form>
-      {" "}
     </FormLayout>
   );
 };
+
 export default VerifyPasswordResetOtp;

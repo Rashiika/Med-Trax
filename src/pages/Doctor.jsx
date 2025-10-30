@@ -4,6 +4,7 @@ import DetailFormLayout from "../components/Layout/DetailFormLayout";
 import DetailsInput from "../components/Input/DetailsInput";
 import { useDispatch , useSelector} from "react-redux";
 import { completeProfile } from "../redux/features/authSlice";
+import { showToast } from "../components/Toast";
 
 const Section = forwardRef(({ title, children }, ref) => (
   <section ref={ref} className="mb-16 scroll-mt-20">
@@ -50,193 +51,199 @@ const DoctorForm = () => {
   const pinRegex = /^\d{6}$/;
 
   const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData({ ...formData, [name]: value });
-    
-    if (errors[name]) {
-      setErrors({ ...errors, [name]: "" });
-    }
-  };
-
-  const validateField = (name, value) => {
-    switch (name) {
- 
-      case "firstName":
-      case "lastName":
-        if (!value.trim()) return `${name === "firstName" ? "First" : "Last"} name is required`;
-        break;
-      case "dob":
-        if (!value) return "Date of birth is required";
-        break;
-      case "gender":
-        if (!value) return "Gender is required";
-        break;
-      case "bloodGroup":
-        if (!value) return "Blood group is required";
-        break;
-      case "city":
-        if (!value) return "City is required";
-        break;
-      case "mobile":
-        if (!value.trim()) return "Mobile number is required";
-        if (!phoneRegex.test(value)) return "Invalid mobile number (10 digits, starts with 6-9)";
-        break;
-      
-      case "maritalStatus":
-        break;
-      case "address":
-        break;
-      case "pin":
-        if (value && !pinRegex.test(value)) return "Pin code must be 6 digits";
-        break;
-      case "state":
-        break;
-      case "country":
-        break;
-      case "regNo":
-
-        break;
-      case "specialization":
-
-        break;
-      case "qualification":
-        break;
-      case "experience":
-        if (value && (isNaN(value) || Number(value) < 0)) return "Experience must be a valid number";
-        break;
-      case "department":
-        break;
-      case "clinic":
-        break;
-      case "email":
-        break;
-      case "altMobile":
-        if (value && !phoneRegex.test(value)) return "Invalid alternate mobile number";
-        break;
-      case "altEmail":
-        if (value && !emailRegex.test(value)) return "Invalid alternate email";
-        break;
-      case "emergencyContact":
-        if (value && !phoneRegex.test(value)) return "Invalid emergency contact number";
-        break;
-      default:
-        return "";
-    }
-    return "";
-  };
-  const validateAllFields = () => {
-    const newErrors = {};
-    
-
-    const requiredFields = [
-      "firstName", 
-      "lastName", 
-      "dob", 
-      "gender", 
-      "bloodGroup",
-      "city",
-      "mobile"
-      
-    ];
-
-    requiredFields.forEach(field => {
-      const error = validateField(field, formData[field]);
-      if (error) {
-        newErrors[field] = error;
-      }
-    });
-
-
-    if (formData.altMobile) {
-      const error = validateField("altMobile", formData.altMobile);
-      if (error) newErrors.altMobile = error;
-    }
-    if (formData.altEmail) {
-      const error = validateField("altEmail", formData.altEmail);
-      if (error) newErrors.altEmail = error;
-    }
-    if (formData.emergencyContact) {
-      const error = validateField("emergencyContact", formData.emergencyContact);
-      if (error) newErrors.emergencyContact = error;
-    }
-    if (formData.pin) {
-      const error = validateField("pin", formData.pin);
-      if (error) newErrors.pin = error;
-    }
-    if (formData.experience) {
-      const error = validateField("experience", formData.experience);
-      if (error) newErrors.experience = error;
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-  const handleSubmit = async (e) => {
-  e.preventDefault();
+  const { name, value } = e.target;
+  const newFormData = { ...formData, [name]: value };
+  setFormData(newFormData);
   
-  if (!validateAllFields()) {
-    const firstErrorField = Object.keys(errors)[0];
-    const errorElement = document.querySelector(`[name="${firstErrorField}"]`);
-    if (errorElement) {
-      errorElement.scrollIntoView({ behavior: "smooth", block: "center" });
-      errorElement.focus();
-    }
-    return;
-  }
-
-
-  const finalFormData = {
-    email: userEmail,                                          
-    first_name: formData.firstName,                           
-    last_name: formData.lastName,                             
-    date_of_birth: formData.dob,                              
-    gender: formData.gender,                                  
-    blood_group: formData.bloodGroup,                         
-    marital_status: formData.maritalStatus || "",             
-    address: formData.address || "",                         
-    city: formData.city,                                      
-    state: formData.state || "",                              
-    pincode: formData.pin || "",                              
-    country: formData.country || "",                          
-    registration_number: formData.regNo || "",                
-    specialization: formData.specialization || "",            
-    qualification: formData.qualification || "",              
-    years_of_experience: formData.experience ? Number(formData.experience) : null,  
-    department: formData.department || "",                   
-    clinic_name: formData.clinic || "",                      
-    phone_number: formData.mobile,                           
-    alternate_phone_number: formData.altMobile || "",        
-    alternate_email: formData.altEmail || "",                 
-    emergency_contact_person: formData.emergencyPerson || "",
-    emergency_contact_number: formData.emergencyContact || "" ,
-  };
-
-  console.log("Doctor Form Data:", finalFormData);
-  
-  setLoading(true);
-  try {
-    const response = await dispatch(completeProfile({ formData: finalFormData, role: "doctor" })).unwrap();
-
-    localStorage.setItem("accessToken", response.access_token);
-    localStorage.setItem("refreshToken", response.refresh_token);
-
-    localStorage.removeItem("signupEmail");
-    
-    alert("Profile completed successfully!");
-    navigate("/doctor/dashboard");
-  } catch (err) {
-    console.error("Profile creation error:", err);
-    
-    const errorMessage = err?.error || 
-                        err?.message || 
-                        err?.errors?.phone_number?.[0] ||
-                        "Failed to complete profile";
-    
-    alert(errorMessage);
-  } finally {
-    setLoading(false);
-  }
+  const error = validateField(name, value);
+  setErrors({ ...errors, [name]: error });
 };
+
+ const validateField = (name, value) => {
+  switch (name) {
+    case "firstName":
+    case "lastName":
+      if (!value.trim()) return `${name === "firstName" ? "First" : "Last"} name is required`;
+      break;
+    case "dob":
+      if (!value) return "Date of birth is required";
+      break;
+    case "gender":
+      if (!value) return "Gender is required";
+      break;
+    case "bloodGroup":
+      if (!value) return "Blood group is required";
+      break;
+    case "maritalStatus":
+      if (!value) return "Marital status is required";
+      break;
+    case "address":
+      if (!value.trim()) return "Address is required";
+      break;
+    case "city":
+      if (!value) return "City is required";
+      break;
+    case "pin":
+      if (!value.trim()) return "Pin code is required";
+      if (!pinRegex.test(value)) return "Pin code must be 6 digits";
+      break;
+    case "state":
+      if (!value.trim()) return "State is required";
+      break;
+    case "country":
+      if (!value.trim()) return "Country is required";
+      break;
+    case "regNo":
+      if (!value.trim()) return "Registration number is required";
+      if (!/^[A-Za-z0-9]+$/.test(value)) return "Registration number must contain only letters and numbers";
+      break;
+    case "specialization":
+      if (!value) return "Specialization is required";
+      break;
+    case "qualification":
+      if (!value.trim()) return "Qualification is required";
+      break;
+    case "experience":
+      if (!value.trim()) return "Years of experience is required";
+      if (isNaN(value) || Number(value) < 0) return "Experience must be a valid positive number";
+      break;
+    case "department":
+      if (!value.trim()) return "Department is required";
+      break;
+    case "clinic":
+      if (!value.trim()) return "Clinic name is required";
+      break;
+    case "mobile":
+      if (!value.trim()) return "Mobile number is required";
+      if (!phoneRegex.test(value)) return "Invalid mobile number (10 digits, starts with 6-9)";
+      break;
+    case "email":
+      if (!value.trim()) return "Email is required";
+      if (!emailRegex.test(value)) return "Invalid email format";
+      break;
+    case "altMobile":
+      if (value && !phoneRegex.test(value)) return "Invalid alternate mobile number";
+      break;
+    case "altEmail":
+      if (value && !emailRegex.test(value)) return "Invalid alternate email";
+      break;
+    case "emergencyContact":
+      if (value && !phoneRegex.test(value)) return "Invalid emergency contact number";
+      break;
+    default:
+      return "";
+  }
+  return "";
+};
+
+ const validateAllFields = () => {
+  const newErrors = {};
+  
+  const requiredFields = [
+    "firstName", "lastName", "dob", "gender", "bloodGroup", "maritalStatus",
+    "address", "city", "pin", "state", "country",
+    "regNo", "specialization", "qualification", "experience", "department", "clinic",
+    "mobile", "email"
+  ];
+
+  requiredFields.forEach(field => {
+    const error = validateField(field, formData[field]);
+    if (error) {
+      newErrors[field] = error;
+    }
+  });
+
+  if (formData.altMobile) {
+    const error = validateField("altMobile", formData.altMobile);
+    if (error) newErrors.altMobile = error;
+  }
+  if (formData.altEmail) {
+    const error = validateField("altEmail", formData.altEmail);
+    if (error) newErrors.altEmail = error;
+  }
+  if (formData.emergencyContact) {
+    const error = validateField("emergencyContact", formData.emergencyContact);
+    if (error) newErrors.emergencyContact = error;
+  }
+
+  setErrors(newErrors);
+  return Object.keys(newErrors).length === 0;
+};
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    
+    if (!validateAllFields()) {
+      showToast.error("Please fill all required fields correctly."); 
+      const firstErrorField = Object.keys(errors)[0];
+      const errorElement = document.querySelector(`[name="${firstErrorField}"]`);
+      if (errorElement) {
+        errorElement.scrollIntoView({ behavior: "smooth", block: "center" });
+        errorElement.focus();
+      }
+      return;
+    }
+
+    const finalFormData = {
+      email: userEmail,                                          
+      first_name: formData.firstName,                           
+      last_name: formData.lastName,                             
+      date_of_birth: formData.dob,                              
+      gender: formData.gender,                                  
+      blood_group: formData.bloodGroup,                         
+      marital_status: formData.maritalStatus || "",             
+      address: formData.address || "",                         
+      city: formData.city,                                      
+      state: formData.state || "",                              
+      pincode: formData.pin || "",                              
+      country: formData.country || "",                          
+      registration_number: formData.regNo || "",                
+      specialization: formData.specialization || "",            
+      qualification: formData.qualification || "",              
+      years_of_experience: formData.experience ? Number(formData.experience) : null,  
+      department: formData.department || "",                   
+      clinic_name: formData.clinic || "",                      
+      phone_number: formData.mobile,                           
+      alternate_phone_number: formData.altMobile || "",        
+      alternate_email: formData.altEmail || "",                 
+      emergency_contact_person: formData.emergencyPerson || "",
+      emergency_contact_number: formData.emergencyContact || "" ,
+    };
+
+    console.log("Doctor Form Data:", finalFormData);
+    
+    setLoading(true);
+   // const loadingToast = showToast.loading("Completing your profile..."); 
+    
+    try {
+      const response = await dispatch(completeProfile({ formData: finalFormData, role: "doctor" })).unwrap();
+
+      localStorage.setItem("accessToken", response.access_token);
+      localStorage.setItem("refreshToken", response.refresh_token);
+      localStorage.removeItem("signupEmail");
+
+     // showToast.dismiss(loadingToast);
+      showToast.success("Profile completed successfully! Redirecting to dashboard...");
+
+      setTimeout(() => {
+        navigate("/doctor/dashboard");
+      }, 2000);
+    } catch (err) {
+      console.error("Profile creation error:", err);
+
+      //showToast.dismiss(loadingToast);
+
+      const errorMessage = err?.error ||
+                          err?.message ||
+                          err?.errors?.phone_number?.[0] ||
+                          "Failed to complete profile";
+
+      showToast.error(errorMessage);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const steps = ["Personal Information", "Residential Details", "Professional Details", "Contact Details"];
 
   const sectionFields = {
@@ -244,7 +251,7 @@ const DoctorForm = () => {
     "Residential Details": ["city"], 
     "Professional Details": [], 
     "Contact Details": ["mobile"], 
-};
+  };
 
   return (
     <DetailFormLayout

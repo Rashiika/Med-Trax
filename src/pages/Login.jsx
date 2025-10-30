@@ -6,6 +6,7 @@ import Input from "../components/Input/Input";
 import emailIcon from "../assets/email.png";
 import lockIcon from "../assets/lock.png";
 import { loginUser } from "../redux/features/authSlice";
+import { showToast } from "../components/Toast"; 
 
 const LoginPage = () => {
   const dispatch = useDispatch();
@@ -53,57 +54,61 @@ const LoginPage = () => {
     e.preventDefault();
     
     if (Object.values(errors).some((error) => error)) {
-      alert("Please fix the errors before submitting.");
+      showToast.error("Please fix the errors before submitting.");
       return;
     }
     if (!formData.email || !formData.password) {
-      alert("Please fill in all fields.");
+      showToast.error("Please fill in all fields.");
       return;
     }
 
     setLoading(true);
+    const loadingToast = showToast.loading("Logging in...");
+    
     try {
       const resultAction = await dispatch(loginUser({ 
-  credentials: formData, 
-  role 
-}));
+        credentials: formData, 
+        role 
+      }));
      
-if (loginUser.fulfilled.match(resultAction)) {
-  const payload = resultAction.payload;
-  console.log("Login success payload:", payload);
-  
-  const userRole = payload.user?.role || payload.role;
-  
-  alert("Login successful!");
- 
-  if (userRole === "doctor") {
-    navigate("/doctor/dashboard");
-  } else {
-    navigate("/patient/dashboard");
-  }
-} else {
-  throw resultAction.payload;
-}
+      if (loginUser.fulfilled.match(resultAction)) {
+        const payload = resultAction.payload;
+        const userRole = payload.user?.role || payload.role;
+        
+        showToast.dismiss(loadingToast);
+        showToast.success("Login successful! Redirecting...");
+        
+        setTimeout(() => {
+          if (userRole === "doctor") {
+            navigate("/doctor/dashboard");
+          } else {
+            navigate("/patient/dashboard");
+          }
+        }, 1000);
+      } else {
+        throw resultAction.payload;
+      }
       
     } catch (err) {
-  console.error("Login error:", err);
+      showToast.dismiss(loadingToast);
+      console.error("Login error:", err);
 
-  if (err?.isIncompleteProfile || err?.is_profile_complete === false) {
-        alert(err?.message || "Please complete your profile.");
+      if (err?.isIncompleteProfile || err?.is_profile_complete === false) {
+        showToast.error(err?.message || "Please complete your profile.");
         
         const userRole = err?.role;
-
         if (err?.email) {
           localStorage.setItem("signupEmail", err.email);
         }
-     
-        if (userRole === "doctor") {
-          navigate("/doctor");
-        } else {
-          navigate("/patient");
-        }
+        
+        setTimeout(() => {
+          if (userRole === "doctor") {
+            navigate("/doctor");
+          } else {
+            navigate("/patient");
+          }
+        }, 1500);
       } else {
-  
         const errorMessage = 
           err?.error || 
           err?.errors?.email?.[0] || 
@@ -112,12 +117,13 @@ if (loginUser.fulfilled.match(resultAction)) {
           err?.message ||  
           "Invalid email or password. Please try again.";
         
-        alert(errorMessage);
+        showToast.error(errorMessage);
       }
     } finally {
       setLoading(false);
     }
   };
+
   return (
     <FormLayout>
       <h2 className="text-3xl font-semibold text-center mb-8 text-gray-800">
@@ -125,7 +131,7 @@ if (loginUser.fulfilled.match(resultAction)) {
       </h2>
 
       <form onSubmit={handleSubmit} 
-      className="space-y-4 w-full max-w-md mx-auto px-4 sm:px-8">
+        className="space-y-4 w-full max-w-md mx-auto px-4 sm:px-8">
         <div className="mb-5">
           <Input
             type="email"
@@ -191,10 +197,10 @@ if (loginUser.fulfilled.match(resultAction)) {
         </div>
 
         <button
-  type="submit"
-  className="w-full bg-blue-600 text-white py-3 rounded-md font-semibold hover:bg-blue-700 transition-all duration-200 mt-8"
-  disabled={loading}
->
+          type="submit"
+          className="w-full bg-blue-600 text-white py-3 rounded-md font-semibold hover:bg-blue-700 transition-all duration-200 mt-8 disabled:opacity-50 disabled:cursor-not-allowed"
+          disabled={loading}
+        >
           {loading ? "Logging in..." : "Login"}
         </button>
 

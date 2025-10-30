@@ -5,6 +5,7 @@ import Input from "../components/Input/Input";
 import emailIcon from "../assets/email.png";
 import { useDispatch } from "react-redux";
 import { forgotPassword } from "../redux/features/authSlice";
+import { showToast } from "../components/Toast"; 
 
 const EmailOtp = () => {
   const dispatch = useDispatch();
@@ -14,7 +15,6 @@ const EmailOtp = () => {
 
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
- 
   const validate = () => {
     const newErrors = {};
     if (!formData.email.trim()) newErrors.email = "Email is required";
@@ -25,19 +25,27 @@ const EmailOtp = () => {
     return Object.keys(newErrors).length === 0;
   };
 
-  
   const handleSubmit = async (e) => {
-  e.preventDefault();
-  if (validate()) {
-    try {
-      await dispatch(forgotPassword({ email: formData.email })).unwrap();
-      console.log("Email submitted:", formData.email);
-      navigate("/verifyPasswordResetOtp", { state: { email: formData.email } });
-    } catch (error) {
-      alert("Failed to send OTP. Please try again.");
+    e.preventDefault();
+    if (validate()) {
+      const loadingToast = showToast.loading("Sending OTP..."); 
+      
+      try {
+        await dispatch(forgotPassword({ email: formData.email })).unwrap();
+        console.log("Email submitted:", formData.email);
+
+        showToast.dismiss(loadingToast);
+        showToast.success("OTP sent successfully! Check your email.");
+
+        setTimeout(() => {
+          navigate("/verifyPasswordResetOtp", { state: { email: formData.email } });
+        }, 1000);
+      } catch (error) {
+        showToast.dismiss(loadingToast);
+        showToast.error("Failed to send OTP. Please try again.");
+      }
     }
-  }
-};
+  };
 
   return (
     <FormLayout>
@@ -68,7 +76,7 @@ const EmailOtp = () => {
         </button>
 
         <p className="text-center text-gray-600 text-sm mt-12">
-          Don’t have an account?{" "}
+          Don't have an account?{" "}
           <Link
             to="/signup"
             className="text-blue-600 hover:underline font-medium"

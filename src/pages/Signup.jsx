@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import FormLayout from "../components/Layout/FormLayout";
 import Input from "../components/Input/Input";
@@ -9,13 +9,12 @@ import lockIcon from "../assets/lock.png";
 import { useDispatch , useSelector} from "react-redux";
 import { registerUser } from "../redux/features/authSlice";
 import { PasswordRuleLine } from "../components/PasswordRuleLine";
-import { ToastContainer } from "../components/Toast";
+import { showToast } from "../components/Toast";
 
 const Signup = () => {
-
     const dispatch = useDispatch();
-  const navigate = useNavigate();
-  const role = useSelector((state) => state.auth.role);
+    const navigate = useNavigate();
+    const role = useSelector((state) => state.auth.role);
 
     const [formData, setFormData] = useState({
         email: "",
@@ -28,16 +27,6 @@ const Signup = () => {
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirm, setShowConfirm] = useState(false);
     const [passwordFocused, setPasswordFocused] = useState(false);
-    const [toasts, setToasts] = useState([]);
-
-    const showToast = useCallback((message, type = 'warning') => {
-        const id = Date.now();
-        setToasts(prev => [...prev, { id, message, type }]);
-    }, []);
-
-    const closeToast = useCallback((id) => {
-        setToasts(prev => prev.filter(toast => toast.id !== id));
-    }, []);
 
     const uppercaseRegex = /[A-Z]/;
     const numberRegex = /[0-9]/;
@@ -68,7 +57,7 @@ const Signup = () => {
 
             if (!value) {
                 error = 'Password is required';
-             } 
+            } 
         } else if (name === 'password2') {
             if (!value) {
                 error = 'Confirmation is required';
@@ -95,7 +84,6 @@ const Signup = () => {
         return isValid;
     };
 
-
     const handleChange = (e) => {
         const { name, value } = e.target;
         
@@ -114,59 +102,53 @@ const Signup = () => {
         }
     };
 
-     const handleSubmit = async (e) => {
-    e.preventDefault();
-    
-    if (!role) {
-        showToast("Please select a role from the home page first.", 'error');
-        navigate("/");
-        return;
-    }
-    
-    if (!validateForm(formData)) {
-        showToast("Please review the form. Not all required fields are valid.", 'warning');
-        return;
-    }
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        
+        if (!role) {
+            showToast.error("Please select a role from the home page first.");
+            setTimeout(() => navigate("/"), 1500);
+            return;
+        }
+        
+        if (!validateForm(formData)) {
+            showToast.error("Please review the form. Not all required fields are valid.");
+            return;
+        }
 
-    setLoading(true);
-    try {
-        
-        const payload = {
-            ...formData,
-            role: role  
-        };
-        
-        const userData = await dispatch(registerUser(payload)).unwrap();
-        
-        localStorage.setItem("signupEmail", formData.email);
-        showToast("Success! Check your email for verification.", 'success');
-        
-        navigate("/verifyOtp", { state: { email: formData.email, role: role } });
+        setLoading(true);
+        try {
+            const payload = {
+                ...formData,
+                role: role  
+            };
+            
+            const userData = await dispatch(registerUser(payload)).unwrap();
+            
+            localStorage.setItem("signupEmail", formData.email);
+            showToast.success("Success! Check your email for verification.");
+            setTimeout(() => {
+                navigate("/verifyOtp", { state: { email: formData.email, role: role } });
+            }, 1000);
 
-    } catch (error) {
-        console.error("Registration failed:", error);
-        showToast(`Registration Failed: ${error.message || 'Unknown error'}`, 'error');
-    } finally {
-        setLoading(false);
-    }
-};
+        } catch (error) {
+            console.error("Registration failed:", error);
+            showToast.error(`Registration Failed: ${error.message || 'Unknown error'}`);
+        } finally {
+            setLoading(false);
+        }
+    };
     
-   
     const isFormValid = useMemo(() => {
         const { email, password1, password2 } = formData;
         
-        
         if (!email || !password1 || !password2 || password1 !== password2) return false;
         
- 
         const rulesMet = Object.values(checkPasswordRules(password1)).every(rule => rule);
-        
-       
         const hasNoFieldErrors = Object.values(errors).every(err => !err);
         
         return rulesMet && hasNoFieldErrors;
     }, [formData, errors]);
-
 
     return (
         <FormLayout>
@@ -174,10 +156,7 @@ const Signup = () => {
                 Create Your Account
             </h2>
 
-            <form
-                onSubmit={handleSubmit}
-                className="space-y-4 w-full max-w-md mx-auto px-4 sm:px-0"
-            >
+            <form onSubmit={handleSubmit} className="space-y-4 w-full max-w-md mx-auto px-4 sm:px-0">
                 <Input
                     label="Email"
                     type="email"
@@ -189,7 +168,6 @@ const Signup = () => {
                     error={errors.email}
                 />
 
-              
                 <Input
                     label="Password"
                     type={showPassword ? "text" : "password"}
@@ -209,26 +187,13 @@ const Signup = () => {
                 {passwordFocused && (
                     <div className="text-xs mt-1 space-y-1 p-3 bg-blue-50 rounded-xl border border-blue-200 transition-all duration-300">
                         <p className="font-semibold text-gray-700 mb-1">Password must include:</p>
-                        <PasswordRuleLine 
-                            isValid={passwordRules.hasLength} 
-                            text="At least 8 characters" 
-                        />
-                        <PasswordRuleLine 
-                            isValid={passwordRules.hasUppercase} 
-                            text="An uppercase letter (A-Z)" 
-                        />
-                        <PasswordRuleLine 
-                            isValid={passwordRules.hasNumber} 
-                            text="A number (0-9)" 
-                        />
-                        <PasswordRuleLine 
-                            isValid={passwordRules.hasSpecialChar} 
-                            text="A special symbol (!@#$...)" 
-                        />
+                        <PasswordRuleLine isValid={passwordRules.hasLength} text="At least 8 characters" />
+                        <PasswordRuleLine isValid={passwordRules.hasUppercase} text="An uppercase letter (A-Z)" />
+                        <PasswordRuleLine isValid={passwordRules.hasNumber} text="A number (0-9)" />
+                        <PasswordRuleLine isValid={passwordRules.hasSpecialChar} text="A special symbol (!@#$...)" />
                     </div>
                 )}
                 
-             
                 <Input
                     label="Confirm Password"
                     type={showConfirm ? "text" : "password"}
@@ -244,12 +209,7 @@ const Signup = () => {
                 />
 
                 <div className="pt-4">
-                    <Button 
-                        type="submit" 
-                        fullWidth 
-                        loading={loading}
-                        disabled={!isFormValid || loading}
-                    >
+                    <Button type="submit" fullWidth loading={loading} disabled={!isFormValid || loading}>
                         Sign Up
                     </Button>
                 </div>
@@ -261,8 +221,6 @@ const Signup = () => {
                     Login
                 </a>
             </p>
-            
-            <ToastContainer toasts={toasts} onClose={closeToast} />
         </FormLayout>
     );
 };

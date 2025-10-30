@@ -3,8 +3,9 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import FormLayout from "../components/Layout/FormLayout";
 import Input from "../components/Input/Input";
 import Button from "../components/Button/Button";
-import { useDispatch ,  useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { resendSignupOtp, verifyOtp } from "../redux/features/authSlice";
+import { showToast } from "../components/Toast"; 
 
 const VerifyOtp = () => {
   const dispatch = useDispatch();
@@ -13,22 +14,22 @@ const VerifyOtp = () => {
   const savedEmail = localStorage.getItem("signupEmail");
   const initialEmail = location.state?.email || savedEmail;
   const initialRole = location.state?.role || "patient";
- 
 
   const [formData, setFormData] = useState({ email: initialEmail, otp: "" });
   const [errors, setErrors] = useState({});
   const [timer, setTimer] = useState(180);
   const [isResending, setResending] = useState(false);
   const [isLoading, setLoading] = useState(false);
-   const roleFromRedux = useSelector((state) => state.auth.role);
+  const roleFromRedux = useSelector((state) => state.auth.role);
+
   useEffect(() => {
-     if (initialEmail) {
-    localStorage.setItem("signupEmail", initialEmail);
-  } else {
-    alert("Email is missing. Please sign up again.");
-    navigate("/signup");
-    return;
-  }
+    if (initialEmail) {
+      localStorage.setItem("signupEmail", initialEmail);
+    } else {
+      showToast.error("Email is missing. Please sign up again."); 
+      setTimeout(() => navigate("/signup"), 1500);
+      return;
+    }
 
     if (timer > 0) {
       const interval = setInterval(() => {
@@ -58,61 +59,72 @@ const VerifyOtp = () => {
   };
 
   const handleSubmit = async (e) => {
-  e.preventDefault();
-  if (!formData.otp || formData.otp.length !== 6) {
-    setErrors({ otp: "Please enter a valid 6-digit OTP" });
-    return;
-  }
-
-  setLoading(true);
-
-  try {
-    await dispatch(verifyOtp(formData)).unwrap();
-    
-    const roleToUse = roleFromRedux || initialRole;
-    
-    alert("Account created successfully! Please complete your profile.");
-    
-    if (roleToUse === "doctor") {
-      navigate("/doctor"); 
-    } else {
-      navigate("/patient");
+    e.preventDefault();
+    if (!formData.otp || formData.otp.length !== 6) {
+      setErrors({ otp: "Please enter a valid 6-digit OTP" });
+      return;
     }
-  } catch (error) {
-    console.error("OTP verification failed:", error);
 
-    const errorMessage =
-      error?.detail ||
-      error?.otp?.[0] ||
-      "Verification failed. Please check your OTP.";
-    alert(`Verification failed: ${errorMessage}`);
-  } finally {
-    setLoading(false);
-  }
-};
+    setLoading(true);
+    //const loadingToast = showToast.loading("Verifying OTP..."); 
+
+    try {
+      await dispatch(verifyOtp(formData)).unwrap();
+      
+      const roleToUse = roleFromRedux || initialRole;
+      
+      //showToast.dismiss(loadingToast); 
+      showToast.success("Account created successfully! Please complete your profile."); 
+      
+      setTimeout(() => {
+        if (roleToUse === "doctor") {
+          navigate("/doctor"); 
+        } else {
+          navigate("/patient");
+        }
+      }, 1500);
+    } catch (error) {
+      console.error("OTP verification failed:", error);
+
+      //showToast.dismiss(loadingToast); 
+      
+      const errorMessage =
+        error?.detail ||
+        error?.otp?.[0] ||
+        "Verification failed. Please check your OTP.";
+      showToast.error(`Verification failed: ${errorMessage}`); 
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleResendOtp = async (e) => {
     e.preventDefault();
     if (timer > 0) {
-      alert("Please wait for the timer to expire before resending.");
+      showToast.error("Please wait for the timer to expire before resending.");
       return;
     }
 
     if (!formData.email) {
-      alert(
-        "Cannot resend OTP. Email address is missing. Please go back to Signup."
-      );
+      showToast.error("Cannot resend OTP. Email address is missing. Please go back to Signup.");
       return;
     }
+
     setResending(true);
+    const loadingToast = showToast.loading("Resending OTP..."); 
+    
     try {
       await dispatch(resendSignupOtp({ email: formData.email })).unwrap();
       setTimer(180);
-      alert("A new OTP has been sent!");
+      
+      showToast.dismiss(loadingToast); 
+      showToast.success("A new OTP has been sent!"); 
     } catch (error) {
+      showToast.dismiss(loadingToast); 
+      
       const errorMessage =
         error?.detail || "Failed to resend OTP. Please try again.";
-      alert(errorMessage);
+      showToast.error(errorMessage); 
       console.error("Resend error:", error);
     } finally {
       setResending(false);
@@ -163,17 +175,15 @@ const VerifyOtp = () => {
           {isLoading ? "Verifying..." : "Proceed"}
         </Button>
         <p className="text-center text-gray-600 text-sm mt-12">
-          Don’t have an account?{" "}
+          Don't have an account?{" "}
           <Link
             to="/signup"
             className="text-blue-600 hover:underline font-medium"
           >
             Sign Up
           </Link>
-          {" "}
         </p>
       </form>
-     
     </FormLayout>
   );
 };

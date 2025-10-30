@@ -4,6 +4,7 @@ import DetailFormLayout from "../components/Layout/DetailFormLayout";
 import DetailsInput from "../components/Input/DetailsInput";
 import { useDispatch, useSelector } from "react-redux";
 import { completeProfile } from "../redux/features/authSlice";
+import { showToast } from "../components/Toast"; 
 
 const Section = forwardRef(({ id, title, children }, ref) => (
   <section ref={ref} id={id} className="mb-16 scroll-mt-20">
@@ -39,30 +40,51 @@ const PatientForm = () => {
     familyHistory: "",
   });
 
-
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   const phoneRegex = /^[6-9]\d{9}$/; 
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData({ ...formData, [name]: value });
-    
+ const handleChange = (e) => {
+  const { name, value } = e.target;
+  const newFormData = { ...formData, [name]: value };
+  setFormData(newFormData);
   
-    if (errors[name]) {
-      setErrors({ ...errors, [name]: "" });
-    }
+  const error = validateField(name, value);
+  const newErrors = { ...errors, [name]: error };
 
-    if (name === "insuranceStatus" && value === "No") {
+  if (name === "insuranceStatus") {
+    if (value === "No") {
       setFormData({
-        ...formData,
+        ...newFormData,
         insuranceStatus: value,
         insuranceCompany: "N/A",
         policyNumber: "N/A"
       });
+      newErrors.insuranceCompany = "";
+      newErrors.policyNumber = "";
+    } else if (value === "Yes") {
+      setFormData({
+        ...newFormData,
+        insuranceStatus: value,
+        insuranceCompany: "",
+        policyNumber: ""
+      });
     }
-  };
+  }
 
-  const validateField = (name, value) => {
+ if (name === "insuranceCompany" && newFormData.insuranceStatus === "Yes") {
+  const companyError = validateField("insuranceCompany", value, newFormData);
+  newErrors.insuranceCompany = companyError;
+}
+
+if (name === "policyNumber" && newFormData.insuranceStatus === "Yes") {
+  const policyError = validateField("policyNumber", value, newFormData);
+  newErrors.policyNumber = policyError;
+}
+
+  setErrors(newErrors);
+};
+
+  const validateField = (name, value, currentFormData = formData) => {
     switch (name) {
       case "firstName":
       case "lastName":
@@ -101,7 +123,10 @@ const PatientForm = () => {
         if (formData.insuranceStatus === "Yes" && !value.trim()) return "Insurance company is required";
         break;
       case "policyNumber":
-        if (formData.insuranceStatus === "Yes" && !value.trim()) return "Policy number is required";
+        if (currentFormData.insuranceStatus === "Yes") {
+        if (!value.trim()) return "Policy number is required";
+        if (!/^\d+$/.test(value)) return "Policy number must contain only digits";
+      }   
         break;
       default:
         return "";
@@ -116,7 +141,6 @@ const PatientForm = () => {
       "city", "email", "mobile", "insuranceStatus"
     ];
 
-   
     if (formData.insuranceStatus === "Yes") {
       requiredFields.push("insuranceCompany", "policyNumber");
     }
@@ -141,11 +165,12 @@ const PatientForm = () => {
     return Object.keys(newErrors).length === 0;
   };
 
- const handleSubmit = async (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     
     if (!validateAllFields()) {
-      const firstErrorField = Object.keys(errors)[0];
+      showToast.error("Please fill all required fields correctly."); 
+      const firstErrorField = Object.keys(errors)[0]; 
       const errorElement = document.querySelector(`[name="${firstErrorField}"]`);
       if (errorElement) {
         errorElement.scrollIntoView({ behavior: "smooth", block: "center" });
@@ -177,29 +202,36 @@ const PatientForm = () => {
     console.log("Patient Data:", finalFormData);
     
     setLoading(true);
+    //const loadingToast = showToast.loading("Completing your profile..."); 
+    
     try {
       const response = await dispatch(completeProfile({ formData: finalFormData, role: "patient" })).unwrap();
       
       localStorage.setItem("accessToken", response.access_token);
       localStorage.setItem("refreshToken", response.refresh_token);
-  
       localStorage.removeItem("signupEmail");
-      
-      alert("Profile completed successfully!");
-      navigate("/patient/dashboard");
+      //showToast.dismiss(loadingToast);
+      showToast.success("Profile completed successfully! Redirecting to dashboard...");
+
+      setTimeout(() => {
+        navigate("/patient/dashboard");
+      }, 2000);
     } catch (err) {
       console.error("Profile creation error:", err);
+      
+      //showToast.dismiss(loadingToast); 
       
       const errorMessage = err?.error || 
                           err?.message || 
                           err?.errors?.phone_number?.[0] ||
                           "Failed to complete profile";
       
-      alert(errorMessage);
+      showToast.error(errorMessage); 
     } finally {
       setLoading(false);
     }
   };
+
   const steps = ["Personal Information", "Contact Details", "Insurance Details", "Medical Details"];
 
   const sectionFields = {
@@ -220,7 +252,6 @@ const PatientForm = () => {
       onSubmit={handleSubmit}
       loading={loading}
     >
-  
       <Section title="Personal Information">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <DetailsInput 
@@ -288,7 +319,6 @@ const PatientForm = () => {
         </div>
       </Section>
 
-     
       <Section title="Contact Details">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <DetailsInput 
