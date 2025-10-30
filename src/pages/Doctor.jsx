@@ -15,7 +15,7 @@ const Section = forwardRef(({ title, children }, ref) => (
 const DoctorForm = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const userEmail = useSelector((state) => state.auth.user?.email) || "";
+ const userEmail = useSelector((state) => state.auth.user?.email) || localStorage.getItem("signupEmail") || "";
   
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
@@ -60,6 +60,7 @@ const DoctorForm = () => {
 
   const validateField = (name, value) => {
     switch (name) {
+ 
       case "firstName":
       case "lastName":
         if (!value.trim()) return `${name === "firstName" ? "First" : "Last"} name is required`;
@@ -73,51 +74,41 @@ const DoctorForm = () => {
       case "bloodGroup":
         if (!value) return "Blood group is required";
         break;
-      case "maritalStatus":
-        if (!value) return "Marital status is required";
-        break;
-      case "address":
-        if (!value.trim()) return "Address is required";
-        break;
       case "city":
         if (!value) return "City is required";
-        break;
-      case "pin":
-        if (!value.trim()) return "Pin code is required";
-        if (!pinRegex.test(value)) return "Pin code must be 6 digits";
-        break;
-      case "state":
-        if (!value.trim()) return "State is required";
-        break;
-      case "country":
-        if (!value.trim()) return "Country is required";
-        break;
-      case "regNo":
-        if (!value.trim()) return "Registration number is required";
-        break;
-      case "specialization":
-        if (!value) return "Specialization is required";
-        break;
-      case "qualification":
-        if (!value.trim()) return "Qualification is required";
-        break;
-      case "experience":
-        if (!value.trim()) return "Years of experience is required";
-        if (isNaN(value) || Number(value) < 0) return "Experience must be a valid number";
-        break;
-      case "department":
-        if (!value.trim()) return "Department is required";
-        break;
-      case "clinic":
-        if (!value.trim()) return "Clinic name is required";
         break;
       case "mobile":
         if (!value.trim()) return "Mobile number is required";
         if (!phoneRegex.test(value)) return "Invalid mobile number (10 digits, starts with 6-9)";
         break;
+      
+      case "maritalStatus":
+        break;
+      case "address":
+        break;
+      case "pin":
+        if (value && !pinRegex.test(value)) return "Pin code must be 6 digits";
+        break;
+      case "state":
+        break;
+      case "country":
+        break;
+      case "regNo":
+
+        break;
+      case "specialization":
+
+        break;
+      case "qualification":
+        break;
+      case "experience":
+        if (value && (isNaN(value) || Number(value) < 0)) return "Experience must be a valid number";
+        break;
+      case "department":
+        break;
+      case "clinic":
+        break;
       case "email":
-        if (!value.trim()) return "Email is required";
-        if (!emailRegex.test(value)) return "Invalid email format";
         break;
       case "altMobile":
         if (value && !phoneRegex.test(value)) return "Invalid alternate mobile number";
@@ -133,14 +124,19 @@ const DoctorForm = () => {
     }
     return "";
   };
-
   const validateAllFields = () => {
     const newErrors = {};
+    
+
     const requiredFields = [
-      "firstName", "lastName", "dob", "gender", "bloodGroup", "maritalStatus",
-      "address", "city", "pin", "state", "country",
-      "regNo", "specialization", "qualification", "experience", "department", "clinic",
-      "mobile", "email"
+      "firstName", 
+      "lastName", 
+      "dob", 
+      "gender", 
+      "bloodGroup",
+      "city",
+      "mobile"
+      
     ];
 
     requiredFields.forEach(field => {
@@ -149,6 +145,7 @@ const DoctorForm = () => {
         newErrors[field] = error;
       }
     });
+
 
     if (formData.altMobile) {
       const error = validateField("altMobile", formData.altMobile);
@@ -162,11 +159,18 @@ const DoctorForm = () => {
       const error = validateField("emergencyContact", formData.emergencyContact);
       if (error) newErrors.emergencyContact = error;
     }
+    if (formData.pin) {
+      const error = validateField("pin", formData.pin);
+      if (error) newErrors.pin = error;
+    }
+    if (formData.experience) {
+      const error = validateField("experience", formData.experience);
+      if (error) newErrors.experience = error;
+    }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
-
   const handleSubmit = async (e) => {
   e.preventDefault();
   
@@ -180,40 +184,55 @@ const DoctorForm = () => {
     return;
   }
 
+
   const finalFormData = {
-    email: userEmail,
-    first_name: formData.firstName,
-    last_name: formData.lastName,
-    date_of_birth: formData.dob,
-    gender: formData.gender,
-    blood_group: formData.bloodGroup,
-    marital_status: formData.maritalStatus,
-    address: formData.address,
-    city: formData.city,
-    state: formData.state,
-    pincode: formData.pin,
-    country: formData.country,
-    registration_number: formData.regNo,
-    specialization: formData.specialization,
-    qualification: formData.qualification,
-    years_of_experience: Number(formData.experience),
-    department: formData.department,
-    clinic_name: formData.clinic,
-    phone_number: formData.mobile,
-    alternate_phone_number: formData.altMobile || "",
-    alternate_email: formData.altEmail || "",
+    email: userEmail,                                          
+    first_name: formData.firstName,                           
+    last_name: formData.lastName,                             
+    date_of_birth: formData.dob,                              
+    gender: formData.gender,                                  
+    blood_group: formData.bloodGroup,                         
+    marital_status: formData.maritalStatus || "",             
+    address: formData.address || "",                         
+    city: formData.city,                                      
+    state: formData.state || "",                              
+    pincode: formData.pin || "",                              
+    country: formData.country || "",                          
+    registration_number: formData.regNo || "",                
+    specialization: formData.specialization || "",            
+    qualification: formData.qualification || "",              
+    years_of_experience: formData.experience ? Number(formData.experience) : null,  
+    department: formData.department || "",                   
+    clinic_name: formData.clinic || "",                      
+    phone_number: formData.mobile,                           
+    alternate_phone_number: formData.altMobile || "",        
+    alternate_email: formData.altEmail || "",                 
     emergency_contact_person: formData.emergencyPerson || "",
-    emergency_contact_number: formData.emergencyContact || "",
+    emergency_contact_number: formData.emergencyContact || "" ,
   };
 
   console.log("Doctor Form Data:", finalFormData);
   
   setLoading(true);
   try {
-    await dispatch(completeProfile({ formData: finalFormData, role: "doctor" })).unwrap();
+    const response = await dispatch(completeProfile({ formData: finalFormData, role: "doctor" })).unwrap();
+
+    localStorage.setItem("accessToken", response.access_token);
+    localStorage.setItem("refreshToken", response.refresh_token);
+
+    localStorage.removeItem("signupEmail");
+    
+    alert("Profile completed successfully!");
     navigate("/doctor/dashboard");
   } catch (err) {
-    alert(err?.message || "Failed to complete profile");
+    console.error("Profile creation error:", err);
+    
+    const errorMessage = err?.error || 
+                        err?.message || 
+                        err?.errors?.phone_number?.[0] ||
+                        "Failed to complete profile";
+    
+    alert(errorMessage);
   } finally {
     setLoading(false);
   }
@@ -221,11 +240,11 @@ const DoctorForm = () => {
   const steps = ["Personal Information", "Residential Details", "Professional Details", "Contact Details"];
 
   const sectionFields = {
-    "Personal Information": ["firstName", "lastName", "dob", "gender", "bloodGroup", "maritalStatus"],
-    "Residential Details": ["address", "city", "pin", "state", "country"],
-    "Professional Details": ["regNo", "specialization", "qualification", "experience", "department", "clinic"],
-    "Contact Details": ["mobile", "email"],
-  };
+    "Personal Information": ["firstName", "lastName", "dob", "gender", "bloodGroup"],
+    "Residential Details": ["city"], 
+    "Professional Details": [], 
+    "Contact Details": ["mobile"], 
+};
 
   return (
     <DetailFormLayout

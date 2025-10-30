@@ -115,35 +115,41 @@ const Signup = () => {
     };
 
      const handleSubmit = async (e) => {
-        e.preventDefault();
+    e.preventDefault();
+    
+    if (!role) {
+        showToast("Please select a role from the home page first.", 'error');
+        navigate("/");
+        return;
+    }
+    
+    if (!validateForm(formData)) {
+        showToast("Please review the form. Not all required fields are valid.", 'warning');
+        return;
+    }
+
+    setLoading(true);
+    try {
         
-        if (!validateForm(formData)) {
-            showToast("Please review the form. Not all required fields are valid.", 'warning');
-            return;
-        }
+        const payload = {
+            ...formData,
+            role: role  
+        };
+        
+        const userData = await dispatch(registerUser(payload)).unwrap();
+        
+        localStorage.setItem("signupEmail", formData.email);
+        showToast("Success! Check your email for verification.", 'success');
+        
+        navigate("/verifyOtp", { state: { email: formData.email, role: role } });
 
-        setLoading(true);
-        try {
-            const userData = await dispatch(registerUser(formData));
-            
-            console.log('Registration data:', userData);
-            
-            
-            showToast("Success! Your account is created. Check your email for verification.", 'success');
-            
-            localStorage.setItem("signupEmail", formData.email);
-
-            navigate("/verifyOtp", { state: { email: formData.email, role: role } });
-
-        } catch (error) {
-            console.error("Registration failed:", error);
-           
-            showToast(`Registration Failed: ${error.message || 'An unknown error occurred'}`, 'error');
-
-        } finally {
-            setLoading(false);
-        }
-    };
+    } catch (error) {
+        console.error("Registration failed:", error);
+        showToast(`Registration Failed: ${error.message || 'Unknown error'}`, 'error');
+    } finally {
+        setLoading(false);
+    }
+};
     
    
     const isFormValid = useMemo(() => {

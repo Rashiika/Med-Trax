@@ -51,6 +51,7 @@ const LoginPage = () => {
 
   const handleSubmit = async(e) => {
     e.preventDefault();
+    
     if (Object.values(errors).some((error) => error)) {
       alert("Please fix the errors before submitting.");
       return;
@@ -62,50 +63,61 @@ const LoginPage = () => {
 
     setLoading(true);
     try {
-      const payload = await dispatch(loginUser({ credentials: formData, role })).unwrap();
+      const resultAction = await dispatch(loginUser({ 
+  credentials: formData, 
+  role 
+}));
+     
+if (loginUser.fulfilled.match(resultAction)) {
+  const payload = resultAction.payload;
+  console.log("Login success payload:", payload);
+  
+  const userRole = payload.user?.role || payload.role;
+  
+  alert("Login successful!");
+ 
+  if (userRole === "doctor") {
+    navigate("/doctor/dashboard");
+  } else {
+    navigate("/patient/dashboard");
+  }
+} else {
+  throw resultAction.payload;
+}
       
-      const userRole = payload?.user?.role || payload?.role;
-      
-      if (payload.access_token && payload.refresh_token) {
-        alert("Login successful!");
-        if (userRole === "doctor") {
-          navigate("/doctor/dashboard");
-        } else {
-          navigate("/patient/dashboard");
-        }
-      } else {
-        alert("Please complete your profile to continue.");
-        if (userRole === "doctor") {
-          navigate("/doctor");
-        } else {
-          navigate("/patient");
-        }
-      }
     } catch (err) {
-      const errorData = err?.errors || err;
-      
-      if (err?.is_profile_complete === false) {
-        alert(err?.message || "Please complete your profile to continue.");
+  console.error("Login error:", err);
+
+  if (err?.isIncompleteProfile || err?.is_profile_complete === false) {
+        alert(err?.message || "Please complete your profile.");
+        
         const userRole = err?.role;
+
+        if (err?.email) {
+          localStorage.setItem("signupEmail", err.email);
+        }
+     
         if (userRole === "doctor") {
           navigate("/doctor");
         } else {
           navigate("/patient");
         }
       } else {
+  
         const errorMessage = 
-          errorData?.non_field_errors?.[0] ||
-          errorData?.email?.[0] ||
-          errorData?.password?.[0] ||
-          err?.message || 
-          "Invalid email or password";
+          err?.error || 
+          err?.errors?.email?.[0] || 
+          err?.errors?.password?.[0] ||
+          err?.errors?.non_field_errors?.[0] ||
+          err?.message ||  
+          "Invalid email or password. Please try again.";
+        
         alert(errorMessage);
       }
     } finally {
       setLoading(false);
     }
   };
-
   return (
     <FormLayout>
       <h2 className="text-3xl font-semibold text-center mb-8 text-gray-800">
@@ -179,9 +191,10 @@ const LoginPage = () => {
         </div>
 
         <button
-          type="submit"
-          className="w-full bg-blue-600 text-white py-3 rounded-md font-semibold hover:bg-blue-700 transition-all duration-200 mt-8"
-        >
+  type="submit"
+  className="w-full bg-blue-600 text-white py-3 rounded-md font-semibold hover:bg-blue-700 transition-all duration-200 mt-8"
+  disabled={loading}
+>
           {loading ? "Logging in..." : "Login"}
         </button>
 

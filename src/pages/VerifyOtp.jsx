@@ -74,7 +74,7 @@ const VerifyOtp = () => {
     alert("Account created successfully! Please complete your profile.");
     
     if (roleToUse === "doctor") {
-      navigate("/doctor");
+      navigate("/doctor"); 
     } else {
       navigate("/patient");
     }

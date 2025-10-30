@@ -2,7 +2,7 @@ import React, { useState, forwardRef } from "react";
 import { useNavigate } from "react-router-dom";
 import DetailFormLayout from "../components/Layout/DetailFormLayout";
 import DetailsInput from "../components/Input/DetailsInput";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { completeProfile } from "../redux/features/authSlice";
 
 const Section = forwardRef(({ id, title, children }, ref) => (
@@ -17,6 +17,7 @@ const PatientForm = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
+  const userEmail = useSelector((state) => state.auth.user?.email) || localStorage.getItem("signupEmail") || "";
 
   const [formData, setFormData] = useState({
     firstName: "",
@@ -140,11 +141,10 @@ const PatientForm = () => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = async (e) => {
+ const handleSubmit = async (e) => {
     e.preventDefault();
     
     if (!validateAllFields()) {
-   
       const firstErrorField = Object.keys(errors)[0];
       const errorElement = document.querySelector(`[name="${firstErrorField}"]`);
       if (errorElement) {
@@ -155,6 +155,7 @@ const PatientForm = () => {
     }
 
     const finalFormData = {
+      email: userEmail,
       first_name: formData.firstName,
       last_name: formData.lastName,
       date_of_birth: formData.dob,
@@ -162,31 +163,43 @@ const PatientForm = () => {
       blood_group: formData.bloodGroup,
       city: formData.city,
       phone_number: formData.mobile,
-      email: formData.email,
       emergency_contact: formData.emergencyContact || "",
       emergency_email: formData.emergencyEmail || "",
       is_insurance: formData.insuranceStatus === "Yes",
-      ins_company_name: formData.insuranceCompany || "N/A",
-      ins_policy_number: formData.policyNumber || "N/A",
-      known_allergies: formData.allergies || "N/A",
-      chronic_diseases: formData.chronicDiseases || "N/A",
-      previous_surgeries: formData.surgeries || "N/A",
-      family_medical_history: formData.familyHistory || "N/A",
+      ins_company_name: formData.insuranceCompany || "",
+      ins_policy_number: formData.policyNumber || "",
+      known_allergies: formData.allergies || "",
+      chronic_diseases: formData.chronicDiseases || "",
+      previous_surgeries: formData.surgeries || "",
+      family_medical_history: formData.familyHistory || "",
     };
 
     console.log("Patient Data:", finalFormData);
     
     setLoading(true);
     try {
-      await dispatch(completeProfile({ formData: finalFormData, role: "patient" })).unwrap();
+      const response = await dispatch(completeProfile({ formData: finalFormData, role: "patient" })).unwrap();
+      
+      localStorage.setItem("accessToken", response.access_token);
+      localStorage.setItem("refreshToken", response.refresh_token);
+  
+      localStorage.removeItem("signupEmail");
+      
+      alert("Profile completed successfully!");
       navigate("/patient/dashboard");
     } catch (err) {
-      alert(err?.message || "Failed to complete profile");
+      console.error("Profile creation error:", err);
+      
+      const errorMessage = err?.error || 
+                          err?.message || 
+                          err?.errors?.phone_number?.[0] ||
+                          "Failed to complete profile";
+      
+      alert(errorMessage);
     } finally {
       setLoading(false);
     }
   };
-
   const steps = ["Personal Information", "Contact Details", "Insurance Details", "Medical Details"];
 
   const sectionFields = {

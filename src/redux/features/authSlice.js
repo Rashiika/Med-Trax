@@ -132,6 +132,17 @@ export const loginUser = createAsyncThunk(
       };
       const response = await axiosInstance.post("/login/", payload);
       
+ 
+      if (response.data.success === false && response.data.is_profile_complete === false) {
+        return rejectWithValue({
+          isIncompleteProfile: true,
+          is_profile_complete: false,
+          role: response.data.role,
+          email: response.data.email,
+          message: response.data.message
+        });
+      }
+      
       return {
         ...response.data,
         role: response.data.user?.role || role
@@ -139,19 +150,26 @@ export const loginUser = createAsyncThunk(
     } catch (error) {
       const errorData = error.response?.data;
       
-      if (errorData?.is_profile_complete === false) {
+      if (errorData && errorData.is_profile_complete === false) {
         return rejectWithValue({
-          ...errorData,
-          isIncompleteProfile: true 
+          isIncompleteProfile: true,
+          is_profile_complete: false,
+          role: errorData.role,
+          email: errorData.email,
+          message: errorData.message || "Please complete your profile."
         });
       }
       
-  
-      return rejectWithValue(errorData || { message: "Login failed" });
+
+      return rejectWithValue(
+        errorData || { 
+          message: error.message || 'Login failed',
+          error: 'Login failed. Please try again.'
+        }
+      );
     }
   }
 );
-
 export const completeProfile = createAsyncThunk(
   "auth/completeProfile",
   async ({ formData, role }, { rejectWithValue }) => {
@@ -275,10 +293,11 @@ const authSlice = createSlice({
    };
    state.message = action.payload.message || "Login successful";
 })
-      .addCase(loginUser.rejected, (state, action) => {
+     .addCase(loginUser.rejected, (state, action) => {
   state.loading = false;
   
-  if (action.payload?.isIncompleteProfile) {
+  if (action.payload?.isIncompleteProfile === true || 
+      action.payload?.is_profile_complete === false) {
     state.isProfileCompleted = false;
     state.role = action.payload.role;
     state.user = {
@@ -288,7 +307,9 @@ const authSlice = createSlice({
     state.message = action.payload.message;
     state.error = null; 
   } else {
+   
     state.error = action.payload;
+    state.message = action.payload?.message || action.payload?.error || "Login failed";
   }
 })
 
