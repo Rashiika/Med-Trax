@@ -165,72 +165,78 @@ if (name === "policyNumber" && newFormData.insuranceStatus === "Yes") {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    
-    if (!validateAllFields()) {
-      showToast.error("Please fill all required fields correctly."); 
-      const firstErrorField = Object.keys(errors)[0]; 
-      const errorElement = document.querySelector(`[name="${firstErrorField}"]`);
-      if (errorElement) {
-        errorElement.scrollIntoView({ behavior: "smooth", block: "center" });
-        errorElement.focus();
-      }
-      return;
+ const handleSubmit = async (e) => {
+  e.preventDefault();
+  
+  if (!validateAllFields()) {
+    showToast.error("Please fill all required fields correctly."); 
+    const firstErrorField = Object.keys(errors)[0]; 
+    const errorElement = document.querySelector(`[name="${firstErrorField}"]`);
+    if (errorElement) {
+      errorElement.scrollIntoView({ behavior: "smooth", block: "center" });
+      errorElement.focus();
     }
+    return;
+  }
 
-    const finalFormData = {
-      email: userEmail,
-      first_name: formData.firstName,
-      last_name: formData.lastName,
-      date_of_birth: formData.dob,
-      gender: formData.gender,
-      blood_group: formData.bloodGroup,
-      city: formData.city,
-      phone_number: formData.mobile,
-      emergency_contact: formData.emergencyContact || "",
-      emergency_email: formData.emergencyEmail || "",
-      is_insurance: formData.insuranceStatus === "Yes",
-      ins_company_name: formData.insuranceCompany || "",
-      ins_policy_number: formData.policyNumber || "",
-      known_allergies: formData.allergies || "",
-      chronic_diseases: formData.chronicDiseases || "",
-      previous_surgeries: formData.surgeries || "",
-      family_medical_history: formData.familyHistory || "",
-    };
-
-    console.log("Patient Data:", finalFormData);
-    
-    setLoading(true);
-    //const loadingToast = showToast.loading("Completing your profile..."); 
-    
-    try {
-      const response = await dispatch(completeProfile({ formData: finalFormData, role: "patient" })).unwrap();
-      
-      localStorage.setItem("accessToken", response.access_token);
-      localStorage.setItem("refreshToken", response.refresh_token);
-      localStorage.removeItem("signupEmail");
-      //showToast.dismiss(loadingToast);
-      showToast.success("Profile completed successfully! Redirecting to dashboard...");
-
-      setTimeout(() => {
-        navigate("/patient/dashboard");
-      }, 2000);
-    } catch (err) {
-      console.error("Profile creation error:", err);
-      
-      //showToast.dismiss(loadingToast); 
-      
-      const errorMessage = err?.error || 
-                          err?.message || 
-                          err?.errors?.phone_number?.[0] ||
-                          "Failed to complete profile";
-      
-      showToast.error(errorMessage); 
-    } finally {
-      setLoading(false);
-    }
+  const updatedFormData = {
+    ...formData,
+    allergies: formData.allergies || "N/A",
+    chronicDiseases: formData.chronicDiseases || "N/A",
+    surgeries: formData.surgeries || "N/A",
+    familyHistory: formData.familyHistory || "N/A"
   };
+
+  setFormData(updatedFormData);
+
+  const finalFormData = {
+    email: userEmail,
+    first_name: updatedFormData.firstName,
+    last_name: updatedFormData.lastName,
+    date_of_birth: updatedFormData.dob,
+    gender: updatedFormData.gender,
+    blood_group: updatedFormData.bloodGroup,
+    city: updatedFormData.city,
+    phone_number: updatedFormData.mobile,
+    emergency_contact: updatedFormData.emergencyContact || "",
+    emergency_email: updatedFormData.emergencyEmail || "",
+    is_insurance: updatedFormData.insuranceStatus === "Yes",
+    ins_company_name: updatedFormData.insuranceCompany || "",
+    ins_policy_number: updatedFormData.policyNumber || "",
+    known_allergies: updatedFormData.allergies,
+    chronic_diseases: updatedFormData.chronicDiseases,
+    previous_surgeries: updatedFormData.surgeries,
+    family_medical_history: updatedFormData.familyHistory,
+  };
+
+  console.log("Patient Data:", finalFormData);
+  
+  setLoading(true);
+  
+  try {
+    const response = await dispatch(completeProfile({ formData: finalFormData, role: "patient" })).unwrap();
+    
+    localStorage.setItem("accessToken", response.access_token);
+    localStorage.setItem("refreshToken", response.refresh_token);
+    localStorage.removeItem("signupEmail");
+    showToast.success("Profile completed successfully! Redirecting to dashboard...");
+
+    setTimeout(() => {
+      navigate("/patient/dashboard");
+    }, 2000);
+  } catch (err) {
+    console.error("Profile creation error:", err);
+    
+    const errorMessage = err?.error || 
+                        err?.message || 
+                        err?.errors?.phone_number?.[0] ||
+                        "Failed to complete profile";
+    
+    showToast.error(errorMessage); 
+  } finally {
+    setLoading(false);
+  }
+};
 
   const steps = ["Personal Information", "Contact Details", "Insurance Details", "Medical Details"];
 

@@ -40,7 +40,7 @@ const DoctorForm = () => {
     clinic: "",
     mobile: "",
     altMobile: "",
-    email: "",
+    email: userEmail, 
     altEmail: "",
     emergencyPerson: "",
     emergencyContact: "",
@@ -247,11 +247,11 @@ const DoctorForm = () => {
   const steps = ["Personal Information", "Residential Details", "Professional Details", "Contact Details"];
 
   const sectionFields = {
-    "Personal Information": ["firstName", "lastName", "dob", "gender", "bloodGroup"],
-    "Residential Details": ["city"], 
-    "Professional Details": [], 
-    "Contact Details": ["mobile"], 
-  };
+  "Personal Information": ["firstName", "lastName", "dob", "gender", "bloodGroup"],
+  "Residential Details": ["address", "city", "pin", "state", "country"], 
+  "Professional Details": ["regNo", "specialization", "qualification", "experience", "department", "clinic"], 
+  "Contact Details": ["mobile"], 
+};
 
   return (
     <DetailFormLayout
@@ -323,7 +323,7 @@ const DoctorForm = () => {
             options={["Married", "Unmarried"]} 
             value={formData.maritalStatus} 
             onChange={handleChange} 
-            required 
+            required
             error={errors.maritalStatus}
           />
         </div>
@@ -346,7 +346,7 @@ const DoctorForm = () => {
             name="city" 
             value={formData.city} 
             onChange={handleChange} 
-            options={["Mumbai", "Delhi", "Pune"]}
+            options={["Mumbai", "Kolkata", "Pune" , "Jaipur"]}
             required 
             error={errors.city}
           />
@@ -361,19 +361,21 @@ const DoctorForm = () => {
           />
           <DetailsInput 
             label="State" 
+            type="select"
             name="state" 
             value={formData.state} 
             onChange={handleChange} 
-            placeholder="Enter state" 
+            options={["Uttar Pradesh", "Maharashtra", "Karnataka", "Madhya Pradesh"]}
             required 
             error={errors.state}
           />
           <DetailsInput 
             label="Country" 
+            type="select"
             name="country" 
             value={formData.country} 
             onChange={handleChange} 
-            placeholder="Enter country" 
+            options={["India", "United States", "United Kingdom", "Canada"]}
             required 
             error={errors.country}
           />
@@ -463,8 +465,8 @@ const DoctorForm = () => {
             label="E-mail" 
             type="email" 
             name="email" 
-            value={userEmail} 
-            onChange={() => {}}
+            value={formData.email} 
+            onChange={handleChange}
             placeholder="Enter e-mail" 
             required 
             error={errors.email}

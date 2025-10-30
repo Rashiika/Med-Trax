@@ -93,7 +93,7 @@ const DetailFormLayout = ({ title, steps, children, formData, sectionFields, onS
         </div>
       </div>
 
-      <div className="md:w-[70%] h-screen overflow-y-scroll [&::-webkit-scrollbar]:hidden m-5 relative">
+      <div className="md:w-[70%] h-screen overflow-y-scroll [&::-webkit-scrollbar]:hidden px-6 py-5 relative">
         <div className="sticky top-0 bg-white z-10 border-b border-gray-300 pb-4">
           <div className="flex justify-between items-center">
             <h2 className="text-2xl font-semibold text-[#2A87D7]">{title}</h2>
