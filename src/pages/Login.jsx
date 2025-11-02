@@ -127,7 +127,7 @@ const LoginPage = () => {
   return (
     <FormLayout>
       <h2 className="text-3xl font-semibold text-center mb-8 text-gray-800">
-        Secure Login
+        Sign In
       </h2>
 
       <form onSubmit={handleSubmit} 
@@ -198,13 +198,13 @@ const LoginPage = () => {
 
         <button
           type="submit"
-          className="w-full bg-blue-600 text-white py-3 rounded-md font-semibold hover:bg-blue-700 transition-all duration-200 mt-8 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-full bg-blue-600 text-white py-3 rounded-md font-semibold hover:bg-blue-700 transition-all duration-200 mt-4 disabled:opacity-50 disabled:cursor-not-allowed"
           disabled={loading}
         >
           {loading ? "Logging in..." : "Login"}
         </button>
 
-        <p className="text-center text-gray-600 text-sm mt-12">
+        <p className="text-center text-gray-600 text-sm mt-4">
           Don't have an account?{" "}
           <Link to="/signup" className="text-blue-600 hover:underline font-medium">
             Sign Up

@@ -42,13 +42,16 @@ const PatientForm = () => {
 
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   const phoneRegex = /^[6-9]\d{9}$/; 
+  const nameRegex = /^[a-zA-Z\s]+$/;
+  const textOnlyRegex = /^[a-zA-Z0-9\s.,;:()\-]+$/; 
+  const emojiRegex = /[\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{1F700}-\u{1F77F}\u{1F780}-\u{1F7FF}\u{1F800}-\u{1F8FF}\u{1F900}-\u{1F9FF}\u{1FA00}-\u{1FA6F}\u{1FA70}-\u{1FAFF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/u;
 
  const handleChange = (e) => {
   const { name, value } = e.target;
   const newFormData = { ...formData, [name]: value };
   setFormData(newFormData);
   
-  const error = validateField(name, value);
+  const error = validateField(name, value, newFormData);
   const newErrors = { ...errors, [name]: error };
 
   if (name === "insuranceStatus") {
@@ -68,71 +71,91 @@ const PatientForm = () => {
         insuranceCompany: "",
         policyNumber: ""
       });
+      const companyError = validateField("insuranceCompany", "", newFormData);
+      const policyError = validateField("policyNumber", "", newFormData);
+      newErrors.insuranceCompany = companyError;
+      newErrors.policyNumber = policyError;
     }
   }
 
- if (name === "insuranceCompany" && newFormData.insuranceStatus === "Yes") {
-  const companyError = validateField("insuranceCompany", value, newFormData);
-  newErrors.insuranceCompany = companyError;
-}
+  if (name === "insuranceCompany" && newFormData.insuranceStatus === "Yes") {
+    const companyError = validateField("insuranceCompany", value, newFormData);
+    newErrors.insuranceCompany = companyError;
+  }
 
-if (name === "policyNumber" && newFormData.insuranceStatus === "Yes") {
-  const policyError = validateField("policyNumber", value, newFormData);
-  newErrors.policyNumber = policyError;
-}
+  if (name === "policyNumber" && newFormData.insuranceStatus === "Yes") {
+    const policyError = validateField("policyNumber", value, newFormData);
+    newErrors.policyNumber = policyError;
+  }
 
   setErrors(newErrors);
 };
-
   const validateField = (name, value, currentFormData = formData) => {
-    switch (name) {
-      case "firstName":
-      case "lastName":
-        if (!value.trim()) return `${name === "firstName" ? "First" : "Last"} name is required`;
-        break;
-      case "dob":
-        if (!value) return "Date of birth is required";
-        break;
-      case "gender":
-        if (!value) return "Gender is required";
-        break;
-      case "bloodGroup":
-        if (!value) return "Blood group is required";
-        break;
-      case "city":
-        if (!value) return "City is required";
-        break;
-      case "email":
-        if (!value.trim()) return "Email is required";
-        if (!emailRegex.test(value)) return "Invalid email format";
-        break;
-      case "mobile":
-        if (!value.trim()) return "Mobile number is required";
-        if (!phoneRegex.test(value)) return "Invalid mobile number (10 digits, starts with 6-9)";
-        break;
-      case "emergencyContact":
-        if (value && !phoneRegex.test(value)) return "Invalid emergency contact number";
-        break;
-      case "emergencyEmail":
-        if (value && !emailRegex.test(value)) return "Invalid emergency email";
-        break;
-      case "insuranceStatus":
-        if (!value) return "Insurance status is required";
-        break;
-      case "insuranceCompany":
-        if (formData.insuranceStatus === "Yes" && !value.trim()) return "Insurance company is required";
-        break;
-      case "policyNumber":
-        if (currentFormData.insuranceStatus === "Yes") {
+  if (emojiRegex.test(value)) {
+    return "Emojis are not allowed";
+  }
+
+  switch (name) {
+    case "firstName":
+      if (!value.trim()) return "First name is required";
+      if (!nameRegex.test(value)) return "Only letters and spaces allowed";
+      break;
+    case "lastName":
+      if (!value.trim()) return "Last name is required";
+      if (!nameRegex.test(value)) return "Only letters and spaces allowed";
+      break;
+    case "dob":
+      if (!value) return "Date of birth is required";
+      break;
+    case "gender":
+      if (!value) return "Gender is required";
+      break;
+    case "bloodGroup":
+      if (!value) return "Blood group is required";
+      break;
+    case "city":
+      if (!value) return "City is required";
+      break;
+    case "email":
+      if (!value.trim()) return "Email is required";
+      if (!emailRegex.test(value)) return "Invalid email format";
+      break;
+    case "mobile":
+      if (!value.trim()) return "Mobile number is required";
+      if (!phoneRegex.test(value)) return "Invalid mobile number (10 digits, starts with 6-9)";
+      break;
+    case "emergencyContact":
+      if (value && !phoneRegex.test(value)) return "Invalid emergency contact number";
+      break;
+    case "emergencyEmail":
+      if (value && !emailRegex.test(value)) return "Invalid emergency email";
+      break;
+    case "insuranceStatus":
+      if (!value) return "Insurance status is required";
+      break;
+    case "insuranceCompany":
+      if (currentFormData.insuranceStatus === "Yes") {
+        if (!value.trim()) return "Insurance company is required";
+        if (!nameRegex.test(value)) return "Only letters and spaces allowed";
+      }
+      break;
+    case "policyNumber":
+      if (currentFormData.insuranceStatus === "Yes") {
         if (!value.trim()) return "Policy number is required";
         if (!/^\d+$/.test(value)) return "Policy number must contain only digits";
-      }   
-        break;
-      default:
-        return "";
-    }
-    return "";
-  };
+      }
+      break;
+    case "allergies":
+    case "chronicDiseases":
+    case "surgeries":
+    case "familyHistory":
+      if (value && !textOnlyRegex.test(value)) return "Special characters and emojis not allowed";
+      break;
+    default:
+      return "";
+  }
+  return "";
+};
 
   const validateAllFields = () => {
     const newErrors = {};
@@ -257,6 +280,7 @@ if (name === "policyNumber" && newFormData.insuranceStatus === "Yes") {
       sectionFields={sectionFields}
       onSubmit={handleSubmit}
       loading={loading}
+      errors={errors}
     >
       <Section title="Personal Information">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -318,7 +342,7 @@ if (name === "policyNumber" && newFormData.insuranceStatus === "Yes") {
             name="city" 
             value={formData.city} 
             onChange={handleChange} 
-            options={["Mumbai", "Delhi", "Pune"]}
+            options={["Mumbai", "Kanpur", "Pune" , "Kolkata"]}
             required
             error={errors.city}
           />

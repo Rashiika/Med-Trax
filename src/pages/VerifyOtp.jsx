@@ -85,8 +85,6 @@ const VerifyOtp = () => {
       }, 1500);
     } catch (error) {
       console.error("OTP verification failed:", error);
-
-      //showToast.dismiss(loadingToast); 
       
       const errorMessage =
         error?.detail ||
@@ -174,7 +172,7 @@ const VerifyOtp = () => {
         <Button type="submit" fullWidth disabled={isLoading}>
           {isLoading ? "Verifying..." : "Proceed"}
         </Button>
-        <p className="text-center text-gray-600 text-sm mt-12">
+        <p className="text-center text-gray-600 text-sm mt-8">
           Don't have an account?{" "}
           <Link
             to="/signup"

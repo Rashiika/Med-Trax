@@ -152,11 +152,11 @@ const Signup = () => {
 
     return (
         <FormLayout>
-            <h2 className="text-3xl font-bold text-center mb-8 text-gray-900">
-                Create Your Account
+            <h2 className="text-2xl md:text-3xl font-bold text-center mb-4 md:mb-8 text-gray-900">
+                Sign Up
             </h2>
 
-            <form onSubmit={handleSubmit} className="space-y-4 w-full max-w-md mx-auto px-4 sm:px-0">
+            <form onSubmit={handleSubmit} className="space-y-3 md:space-y-4 w-full max-w-md mx-auto px-0 md:px-4 sm:md:px-0">
                 <Input
                     label="Email"
                     type="email"
@@ -208,14 +208,14 @@ const Signup = () => {
                     error={errors.password2}
                 />
 
-                <div className="pt-4">
+                <div className="pt-2 md:pt-4">
                     <Button type="submit" fullWidth loading={loading} disabled={!isFormValid || loading}>
                         Sign Up
                     </Button>
                 </div>
             </form>
 
-            <p className="text-center text-gray-600 text-sm mt-8">
+            <p className="text-center text-gray-600 text-sm mt-2 md:mt-8">
                 Already have an account?
                 <a href="#login" onClick={(e) => { e.preventDefault(); navigate('/login'); }} className="text-blue-600 hover:underline font-medium">
                     Login

@@ -16,7 +16,7 @@ const Section = forwardRef(({ title, children }, ref) => (
 const DoctorForm = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
- const userEmail = useSelector((state) => state.auth.user?.email) || localStorage.getItem("signupEmail") || "";
+  const userEmail = useSelector((state) => state.auth.user?.email) || localStorage.getItem("signupEmail") || "";
   
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
@@ -49,126 +49,147 @@ const DoctorForm = () => {
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   const phoneRegex = /^[6-9]\d{9}$/;
   const pinRegex = /^\d{6}$/;
+  const nameRegex = /^[a-zA-Z\s]+$/;
+  const textOnlyRegex = /^[a-zA-Z0-9\s.,;:()\-]+$/;
+  const emojiRegex = /[\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{1F700}-\u{1F77F}\u{1F780}-\u{1F7FF}\u{1F800}-\u{1F8FF}\u{1F900}-\u{1F9FF}\u{1FA00}-\u{1FA6F}\u{1FA70}-\u{1FAFF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/u;
 
   const handleChange = (e) => {
-  const { name, value } = e.target;
-  const newFormData = { ...formData, [name]: value };
-  setFormData(newFormData);
-  
-  const error = validateField(name, value);
-  setErrors({ ...errors, [name]: error });
-};
+    const { name, value } = e.target;
+    const newFormData = { ...formData, [name]: value };
+    setFormData(newFormData);
+    const error = validateField(name, value);
+    setErrors({ ...errors, [name]: error });
+  };
 
- const validateField = (name, value) => {
-  switch (name) {
-    case "firstName":
-    case "lastName":
-      if (!value.trim()) return `${name === "firstName" ? "First" : "Last"} name is required`;
-      break;
-    case "dob":
-      if (!value) return "Date of birth is required";
-      break;
-    case "gender":
-      if (!value) return "Gender is required";
-      break;
-    case "bloodGroup":
-      if (!value) return "Blood group is required";
-      break;
-    case "maritalStatus":
-      if (!value) return "Marital status is required";
-      break;
-    case "address":
-      if (!value.trim()) return "Address is required";
-      break;
-    case "city":
-      if (!value) return "City is required";
-      break;
-    case "pin":
-      if (!value.trim()) return "Pin code is required";
-      if (!pinRegex.test(value)) return "Pin code must be 6 digits";
-      break;
-    case "state":
-      if (!value.trim()) return "State is required";
-      break;
-    case "country":
-      if (!value.trim()) return "Country is required";
-      break;
-    case "regNo":
-      if (!value.trim()) return "Registration number is required";
-      if (!/^[A-Za-z0-9]+$/.test(value)) return "Registration number must contain only letters and numbers";
-      break;
-    case "specialization":
-      if (!value) return "Specialization is required";
-      break;
-    case "qualification":
-      if (!value.trim()) return "Qualification is required";
-      break;
-    case "experience":
-      if (!value.trim()) return "Years of experience is required";
-      if (isNaN(value) || Number(value) < 0) return "Experience must be a valid positive number";
-      break;
-    case "department":
-      if (!value.trim()) return "Department is required";
-      break;
-    case "clinic":
-      if (!value.trim()) return "Clinic name is required";
-      break;
-    case "mobile":
-      if (!value.trim()) return "Mobile number is required";
-      if (!phoneRegex.test(value)) return "Invalid mobile number (10 digits, starts with 6-9)";
-      break;
-    case "email":
-      if (!value.trim()) return "Email is required";
-      if (!emailRegex.test(value)) return "Invalid email format";
-      break;
-    case "altMobile":
-      if (value && !phoneRegex.test(value)) return "Invalid alternate mobile number";
-      break;
-    case "altEmail":
-      if (value && !emailRegex.test(value)) return "Invalid alternate email";
-      break;
-    case "emergencyContact":
-      if (value && !phoneRegex.test(value)) return "Invalid emergency contact number";
-      break;
-    default:
-      return "";
-  }
-  return "";
-};
-
- const validateAllFields = () => {
-  const newErrors = {};
-  
-  const requiredFields = [
-    "firstName", "lastName", "dob", "gender", "bloodGroup", "maritalStatus",
-    "address", "city", "pin", "state", "country",
-    "regNo", "specialization", "qualification", "experience", "department", "clinic",
-    "mobile", "email"
-  ];
-
-  requiredFields.forEach(field => {
-    const error = validateField(field, formData[field]);
-    if (error) {
-      newErrors[field] = error;
+  const validateField = (name, value) => {
+    if (emojiRegex.test(value)) {
+      return "Emojis are not allowed";
     }
-  });
 
-  if (formData.altMobile) {
-    const error = validateField("altMobile", formData.altMobile);
-    if (error) newErrors.altMobile = error;
-  }
-  if (formData.altEmail) {
-    const error = validateField("altEmail", formData.altEmail);
-    if (error) newErrors.altEmail = error;
-  }
-  if (formData.emergencyContact) {
-    const error = validateField("emergencyContact", formData.emergencyContact);
-    if (error) newErrors.emergencyContact = error;
-  }
+    switch (name) {
+      case "firstName":
+        if (!value.trim()) return "First name is required";
+        if (!nameRegex.test(value)) return "Only letters and spaces allowed";
+        break;
+      case "lastName":
+        if (!value.trim()) return "Last name is required";
+        if (!nameRegex.test(value)) return "Only letters and spaces allowed";
+        break;
+      case "dob":
+        if (!value) return "Date of birth is required";
+        break;
+      case "gender":
+        if (!value) return "Gender is required";
+        break;
+      case "bloodGroup":
+        if (!value) return "Blood group is required";
+        break;
+      case "maritalStatus":
+        if (!value) return "Marital status is required";
+        break;
+      case "address":
+        if (!value.trim()) return "Address is required";
+        if (!textOnlyRegex.test(value)) return "Special characters and emojis not allowed";
+        break;
+      case "city":
+        if (!value) return "City is required";
+        break;
+      case "pin":
+        if (!value.trim()) return "Pin code is required";
+        if (!pinRegex.test(value)) return "Pin code must be 6 digits";
+        break;
+      case "state":
+        if (!value.trim()) return "State is required";
+        break;
+      case "country":
+        if (!value.trim()) return "Country is required";
+        break;
+      case "regNo":
+        if (!value.trim()) return "Registration number is required";
+        if (!/^[A-Za-z0-9]+$/.test(value)) return "Registration number must contain only letters and numbers";
+        break;
+      case "specialization":
+        if (!value) return "Specialization is required";
+        break;
+      case "qualification":
+        if (!value.trim()) return "Qualification is required";
+        if (!textOnlyRegex.test(value)) return "Special characters and emojis not allowed";
+        break;
+      case "experience":
+        if (!value.trim()) return "Years of experience is required";
+        if (isNaN(value) || Number(value) < 0) return "Experience must be a valid positive number";
+        break;
+      case "department":
+        if (!value.trim()) return "Department is required";
+        if (!nameRegex.test(value)) return "Only letters and spaces allowed";
+        break;
+      case "clinic":
+        if (!value.trim()) return "Clinic name is required";
+        if (!textOnlyRegex.test(value)) return "Special characters and emojis not allowed";
+        break;
+      case "mobile":
+        if (!value.trim()) return "Mobile number is required";
+        if (!phoneRegex.test(value)) return "Invalid mobile number (10 digits, starts with 6-9)";
+        break;
+      case "email":
+        if (!value.trim()) return "Email is required";
+        if (!emailRegex.test(value)) return "Invalid email format";
+        break;
+      case "altMobile":
+        if (value && !phoneRegex.test(value)) return "Invalid alternate mobile number";
+        break;
+      case "altEmail":
+        if (value && !emailRegex.test(value)) return "Invalid alternate email";
+        break;
+      case "emergencyPerson":
+        if (value && !nameRegex.test(value)) return "Only letters and spaces allowed";
+        break;
+      case "emergencyContact":
+        if (value && !phoneRegex.test(value)) return "Invalid emergency contact number";
+        break;
+      default:
+        return "";
+    }
+    return "";
+  };
 
-  setErrors(newErrors);
-  return Object.keys(newErrors).length === 0;
-};
+  const validateAllFields = () => {
+    const newErrors = {};
+    
+    const requiredFields = [
+      "firstName", "lastName", "dob", "gender", "bloodGroup", "maritalStatus",
+      "address", "city", "pin", "state", "country",
+      "regNo", "specialization", "qualification", "experience", "department", "clinic",
+      "mobile", "email"
+    ];
+
+    requiredFields.forEach(field => {
+      const error = validateField(field, formData[field]);
+      if (error) {
+        newErrors[field] = error;
+      }
+    });
+
+    if (formData.altMobile) {
+      const error = validateField("altMobile", formData.altMobile);
+      if (error) newErrors.altMobile = error;
+    }
+    if (formData.altEmail) {
+      const error = validateField("altEmail", formData.altEmail);
+      if (error) newErrors.altEmail = error;
+    }
+    if (formData.emergencyPerson) {
+      const error = validateField("emergencyPerson", formData.emergencyPerson);
+      if (error) newErrors.emergencyPerson = error;
+    }
+    if (formData.emergencyContact) {
+      const error = validateField("emergencyContact", formData.emergencyContact);
+      if (error) newErrors.emergencyContact = error;
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -213,7 +234,6 @@ const DoctorForm = () => {
     console.log("Doctor Form Data:", finalFormData);
     
     setLoading(true);
-   // const loadingToast = showToast.loading("Completing your profile..."); 
     
     try {
       const response = await dispatch(completeProfile({ formData: finalFormData, role: "doctor" })).unwrap();
@@ -222,7 +242,6 @@ const DoctorForm = () => {
       localStorage.setItem("refreshToken", response.refresh_token);
       localStorage.removeItem("signupEmail");
 
-     // showToast.dismiss(loadingToast);
       showToast.success("Profile completed successfully! Redirecting to dashboard...");
 
       setTimeout(() => {
@@ -230,8 +249,6 @@ const DoctorForm = () => {
       }, 2000);
     } catch (err) {
       console.error("Profile creation error:", err);
-
-      //showToast.dismiss(loadingToast);
 
       const errorMessage = err?.error ||
                           err?.message ||
@@ -247,11 +264,11 @@ const DoctorForm = () => {
   const steps = ["Personal Information", "Residential Details", "Professional Details", "Contact Details"];
 
   const sectionFields = {
-  "Personal Information": ["firstName", "lastName", "dob", "gender", "bloodGroup"],
-  "Residential Details": ["address", "city", "pin", "state", "country"], 
-  "Professional Details": ["regNo", "specialization", "qualification", "experience", "department", "clinic"], 
-  "Contact Details": ["mobile"], 
-};
+    "Personal Information": ["firstName", "lastName", "dob", "gender", "bloodGroup", "maritalStatus"],
+    "Residential Details": ["address", "city", "pin", "state", "country"], 
+    "Professional Details": ["regNo", "specialization", "qualification", "experience", "department", "clinic"], 
+    "Contact Details": ["mobile", "email"], 
+  };
 
   return (
     <DetailFormLayout
@@ -261,6 +278,7 @@ const DoctorForm = () => {
       sectionFields={sectionFields}
       onSubmit={handleSubmit}
       loading={loading}
+      errors={errors}
     >
       <Section title="Personal Details">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -331,6 +349,7 @@ const DoctorForm = () => {
 
       <Section title="Residential Details">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="md:col-span-2">
           <DetailsInput 
             label="Address" 
             name="address" 
@@ -340,6 +359,7 @@ const DoctorForm = () => {
             required 
             error={errors.address}
           />
+          </div>
           <DetailsInput 
             label="City" 
             type="select"
@@ -487,6 +507,7 @@ const DoctorForm = () => {
             value={formData.emergencyPerson} 
             onChange={handleChange} 
             placeholder="Enter name" 
+            error={errors.emergencyPerson}
           />
           <DetailsInput 
             label="Emergency Contact Number" 

@@ -70,12 +70,12 @@ const EmailOtp = () => {
 
         <button
           type="submit"
-          className="w-full bg-blue-600 text-white py-3 rounded-md font-semibold hover:bg-blue-700 transition-all duration-200 mt-8"
+          className="w-full bg-blue-600 text-white py-3 rounded-md font-semibold hover:bg-blue-700 transition-all duration-200 mt-5"
         >
           Proceed
         </button>
 
-        <p className="text-center text-gray-600 text-sm mt-12">
+        <p className="text-center text-gray-600 text-sm mt-8">
           Don't have an account?{" "}
           <Link
             to="/signup"
