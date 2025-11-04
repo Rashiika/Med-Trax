@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useId } from "react";
 import eyeOpen from "../../assets/eye.png";
 import eyeClose from "../../assets/eyeclose.png";
 
@@ -17,11 +17,14 @@ const Input = ({
   onFocus,
   onBlur,
 }) => {
+  const uniqueId = useId();
+  const inputId = `${name}-${uniqueId}`;
+
   return (
     <div className="mb-5 w-full">
       {label && (
         <label
-          htmlFor={name}
+          htmlFor={inputId}
           className="block text-gray-800 font-medium mb-2 text-sm sm:text-base"
         >
           {label}
@@ -38,7 +41,7 @@ const Input = ({
         )}
 
         <input
-          id={name}
+          id={inputId}
           name={name}
           type={
             type === "password" && showPasswordToggle
@@ -49,8 +52,8 @@ const Input = ({
           }
           value={value}
           onChange={onChange}
-          onFocus={onFocus} 
-          onBlur={onBlur} 
+          onFocus={onFocus}
+          onBlur={onBlur}
           placeholder={placeholder}
           className={`w-full border rounded-md p-3 pl-10 pr-10 focus:outline-none focus:ring-2 text-black placeholder-gray-500 ${
             error
@@ -69,7 +72,6 @@ const Input = ({
         )}
       </div>
 
-  
       {error && <p className="text-red-500 text-sm mt-1 ml-1">{error}</p>}
     </div>
   );
