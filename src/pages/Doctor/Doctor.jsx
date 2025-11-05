@@ -1,10 +1,10 @@
 import React, { useState, forwardRef } from "react";
 import { useNavigate } from "react-router-dom";
-import DetailFormLayout from "../components/Layout/DetailFormLayout";
-import DetailsInput from "../components/Input/DetailsInput";
+import DetailFormLayout from "../../components/Layout/DetailFormLayout"; 
+import DetailsInput from "../../components/Input/DetailsInput";
 import { useDispatch , useSelector} from "react-redux";
-import { completeProfile } from "../redux/features/authSlice";
-import { showToast } from "../components/Toast";
+import { completeProfile } from "../../redux/features/authSlice";
+import { showToast } from "../../components/Toast";
 
 const Section = forwardRef(({ title, children }, ref) => (
   <section ref={ref} className="mb-16 scroll-mt-20">

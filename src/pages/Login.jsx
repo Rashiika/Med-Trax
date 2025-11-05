@@ -71,11 +71,49 @@ const LoginPage = () => {
         role 
       }));
      
+      showToast.dismiss(loadingToast);
+      
+      // ✅ Check if login was rejected due to incomplete profile
+      if (loginUser.rejected.match(resultAction)) {
+        const error = resultAction.payload;
+        
+        if (error?.isIncompleteProfile || error?.is_profile_complete === false) {
+          // Handle incomplete profile case
+          showToast.success("Login successful! Please complete your profile.");
+          
+          const userRole = error?.role;
+          if (error?.email) {
+            localStorage.setItem("signupEmail", error.email);
+          }
+          
+          setTimeout(() => {
+            if (userRole === "doctor") {
+              navigate("/doctor");
+            } else {
+              navigate("/patient");
+            }
+          }, 1500);
+          return;
+        } else {
+          // Handle other login errors
+          const errorMessage = 
+            error?.error || 
+            error?.errors?.email?.[0] || 
+            error?.errors?.password?.[0] ||
+            error?.errors?.non_field_errors?.[0] ||
+            error?.message ||  
+            "Invalid email or password. Please try again.";
+          
+          showToast.error(errorMessage);
+          return;
+        }
+      }
+      
+      // ✅ Login successful with complete profile
       if (loginUser.fulfilled.match(resultAction)) {
         const payload = resultAction.payload;
         const userRole = payload.user?.role || payload.role;
         
-        showToast.dismiss(loadingToast);
         showToast.success("Login successful! Redirecting...");
         
         setTimeout(() => {
@@ -85,40 +123,12 @@ const LoginPage = () => {
             navigate("/patient/dashboard");
           }
         }, 1000);
-      } else {
-        throw resultAction.payload;
       }
       
     } catch (err) {
       showToast.dismiss(loadingToast);
-      console.error("Login error:", err);
-
-      if (err?.isIncompleteProfile || err?.is_profile_complete === false) {
-        showToast.error(err?.message || "Please complete your profile.");
-        
-        const userRole = err?.role;
-        if (err?.email) {
-          localStorage.setItem("signupEmail", err.email);
-        }
-        
-        setTimeout(() => {
-          if (userRole === "doctor") {
-            navigate("/doctor");
-          } else {
-            navigate("/patient");
-          }
-        }, 1500);
-      } else {
-        const errorMessage = 
-          err?.error || 
-          err?.errors?.email?.[0] || 
-          err?.errors?.password?.[0] ||
-          err?.errors?.non_field_errors?.[0] ||
-          err?.message ||  
-          "Invalid email or password. Please try again.";
-        
-        showToast.error(errorMessage);
-      }
+      console.error("Unexpected login error:", err);
+      showToast.error("An unexpected error occurred. Please try again.");
     } finally {
       setLoading(false);
     }

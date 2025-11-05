@@ -1,22 +1,50 @@
-const saveTokensToLocalStorage = (access, refresh) => {
-  if (access) localStorage.setItem("accessToken", access);
-  if (refresh) localStorage.setItem("refreshToken", refresh);
-};
-
-const getTokensFromLocalStorage = () => {
-  return {
-    accessToken: localStorage.getItem("accessToken") || null,
-    refreshToken: localStorage.getItem("refreshToken") || null,
-  };
-};
-
-const clearTokensFromLocalStorage = () => {
-  localStorage.removeItem("accessToken");
-  localStorage.removeItem("refreshToken");
-};
-
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import axiosInstance from "../../api/axiosInstance";
+
+// Helper functions for localStorage
+const saveAuthToStorage = (user, role, isAuthenticated, isProfileComplete) => {
+  try {
+    localStorage.setItem('medtrax_user', JSON.stringify(user));
+    localStorage.setItem('medtrax_role', role);
+    localStorage.setItem('medtrax_isAuthenticated', JSON.stringify(isAuthenticated));
+    localStorage.setItem('medtrax_isProfileComplete', JSON.stringify(isProfileComplete));
+  } catch (error) {
+    console.error('Error saving auth to storage:', error);
+  }
+};
+
+const clearAuthFromStorage = () => {
+  try {
+    localStorage.removeItem('medtrax_user');
+    localStorage.removeItem('medtrax_role');
+    localStorage.removeItem('medtrax_isAuthenticated');
+    localStorage.removeItem('medtrax_isProfileComplete');
+  } catch (error) {
+    console.error('Error clearing auth from storage:', error);
+  }
+};
+
+const loadAuthFromStorage = () => {
+  try {
+    const user = localStorage.getItem('medtrax_user');
+    const role = localStorage.getItem('medtrax_role');
+    const isAuthenticated = localStorage.getItem('medtrax_isAuthenticated');
+    const isProfileComplete = localStorage.getItem('medtrax_isProfileComplete');
+    
+    if (user && role && isAuthenticated) {
+      return {
+        user: JSON.parse(user),
+        role: role,
+        isAuthenticated: JSON.parse(isAuthenticated),
+        isProfileComplete: isProfileComplete ? JSON.parse(isProfileComplete) : false
+      };
+    }
+    return null;
+  } catch (error) {
+    console.error('Error loading auth from storage:', error);
+    return null;
+  }
+};
 
 export const selectRole = createAsyncThunk(
   "auth/selectRole",
@@ -130,7 +158,7 @@ export const loginUser = createAsyncThunk(
         password: credentials.password
       };
       const response = await axiosInstance.post("/login/", payload);
-      
+      console.log("Login Response:", response.data);
  
       if (response.data.success === false && response.data.is_profile_complete === false) {
         return rejectWithValue({
@@ -159,7 +187,6 @@ export const loginUser = createAsyncThunk(
         });
       }
       
-
       return rejectWithValue(
         errorData || { 
           message: error.message || 'Login failed',
@@ -169,6 +196,7 @@ export const loginUser = createAsyncThunk(
     }
   }
 );
+
 export const completeProfile = createAsyncThunk(
   "auth/completeProfile",
   async ({ formData, role }, { rejectWithValue }) => {
@@ -188,43 +216,48 @@ export const completeProfile = createAsyncThunk(
 const authSlice = createSlice({
   name: "auth",
   initialState: {
-  user: null,
-  role: null,
-  isProfileCompleted: false,
-  loading: false,
-  error: null,
-  message: "",
-},
-
- reducers: {
-  logout: (state) => {
-    state.user = null;
-    state.role = null;
-    state.isProfileCompleted = false;
-    state.loading = false;
-    state.error = null;
-    state.message = "";
-    
-    clearTokensFromLocalStorage();
+    user: null,
+    role: null,
+    isAuthenticated: false,  // ✅ Changed from isProfileCompleted
+    isProfileComplete: false, // ✅ Changed from isProfileCompleted
+    loading: false,
+    error: null,
+    message: "",
   },
-  hydrateAuth: (state, action) => {
-    const { accessToken, refreshToken } = getTokensFromLocalStorage();
-    
 
-    if (accessToken && refreshToken) {
-      state.isProfileCompleted = true;
-      state.user = action.payload?.user || state.user;
-      state.role = action.payload?.role || state.role;
-    }
+  reducers: {
+    logout: (state) => {
+      state.user = null;
+      state.role = null;
+      state.isAuthenticated = false;
+      state.isProfileComplete = false;
+      state.loading = false;
+      state.error = null;
+      state.message = "";
+      clearAuthFromStorage();
+    },
+    
+    hydrateAuth: (state) => {
+      console.log("🔄 Hydrating auth from localStorage...");
+      const savedAuth = loadAuthFromStorage();
+      if (savedAuth) {
+        console.log("✅ Auth data found in localStorage:", savedAuth);
+        state.user = savedAuth.user;
+        state.role = savedAuth.role;
+        state.isAuthenticated = savedAuth.isAuthenticated;
+        state.isProfileComplete = savedAuth.isProfileComplete;
+      } else {
+        console.log("❌ No auth data found in localStorage");
+      }
+    },
   },
-},
 
   extraReducers: (builder) => {
     builder
-
       .addCase(selectRole.fulfilled, (state, action) => {
-  state.role = action.payload;
-})
+        state.role = action.payload;
+      })
+      
       .addCase(registerUser.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -238,24 +271,25 @@ const authSlice = createSlice({
         state.error = action.payload;
       })
 
- 
       .addCase(verifyOtp.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
       .addCase(verifyOtp.fulfilled, (state, action) => {
-  state.loading = false;
-  state.user = {
-    email: action.payload.email,
-    role: action.payload.role
-  };
-  state.role = action.payload.role;
-  state.message = action.payload.message || "OTP verified successfully";
-})
+        state.loading = false;
+        state.user = {
+          email: action.payload.email,
+          role: action.payload.role
+        };
+        state.role = action.payload.role;
+        state.isAuthenticated = true;
+        state.message = action.payload.message || "OTP verified successfully";
+      })
       .addCase(verifyOtp.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
       })
+      
       .addCase(resendSignupOtp.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -274,115 +308,125 @@ const authSlice = createSlice({
         state.error = null;
       })
       .addCase(loginUser.fulfilled, (state, action) => {
-   state.loading = false;
-   state.role = action.payload.role;
-   state.isProfileCompleted = action.payload.is_profile_complete !== false;
-
-
-   if (action.payload.access_token && action.payload.refresh_token) {
-     saveTokensToLocalStorage(action.payload.access_token, action.payload.refresh_token);
-     state.isProfileCompleted = true;
-   }
-
-   state.user = action.payload.user || {
-     email: action.payload.email,
-     role: action.payload.role
-   };
-   state.message = action.payload.message || "Login successful";
-})
-     .addCase(loginUser.rejected, (state, action) => {
-  state.loading = false;
-  
-  if (action.payload?.isIncompleteProfile === true || 
-      action.payload?.is_profile_complete === false) {
-    state.isProfileCompleted = false;
-    state.role = action.payload.role;
-    state.user = {
-      email: action.payload.email,
-      role: action.payload.role
-    };
-    state.message = action.payload.message;
-    state.error = null; 
-  } else {
-   
-    state.error = action.payload;
-    state.message = action.payload?.message || action.payload?.error || "Login failed";
-  }
-})
+        state.loading = false;
+        state.role = action.payload.role;
+        state.isAuthenticated = true;  // ✅ Set to true
+        state.isProfileComplete = true; // ✅ Set to true
+        state.user = action.payload.user || {
+          email: action.payload.email,
+          role: action.payload.role
+        };
+        state.message = action.payload.message || "Login successful";
+        
+        console.log("💾 Saving auth to localStorage:", {
+          user: state.user,
+          role: state.role,
+          isAuthenticated: state.isAuthenticated,
+          isProfileComplete: state.isProfileComplete
+        });
+        
+        // ✅ SAVE TO LOCALSTORAGE
+        saveAuthToStorage(state.user, state.role, state.isAuthenticated, state.isProfileComplete);
+      })
+      .addCase(loginUser.rejected, (state, action) => {
+        state.loading = false;
+        if (action.payload?.isIncompleteProfile === true || 
+            action.payload?.is_profile_complete === false) {
+          state.isAuthenticated = true; // User is authenticated
+          state.isProfileComplete = false; // But profile is not complete
+          state.role = action.payload.role;
+          state.user = {
+            email: action.payload.email,
+            role: action.payload.role
+          };
+          state.message = action.payload.message;
+          state.error = null;
+          
+          // Save incomplete profile state
+          saveAuthToStorage(state.user, state.role, true, false);
+        } else {
+          state.isAuthenticated = false;
+          state.isProfileComplete = false;
+          state.error = action.payload;
+          state.message = action.payload?.message || action.payload?.error || "Login failed";
+          clearAuthFromStorage();
+        }
+      })
 
       .addCase(forgotPassword.pending, (state) => {
-  state.loading = true;
-  state.error = null;
-})
-.addCase(forgotPassword.fulfilled, (state, action) => {
-  state.loading = false;
-  state.message = action.payload.message || "Password reset email sent";
-})
-.addCase(forgotPassword.rejected, (state, action) => {
-  state.loading = false;
-  state.error = action.payload;
-})
-.addCase(completeProfile.pending, (state) => {
-  state.loading = true;
-  state.error = null;
-})
-.addCase(completeProfile.fulfilled, (state, action) => {
-  state.loading = false;
-  state.isProfileCompleted = true;
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(forgotPassword.fulfilled, (state, action) => {
+        state.loading = false;
+        state.message = action.payload.message || "Password reset email sent";
+      })
+      .addCase(forgotPassword.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+      
+      .addCase(completeProfile.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(completeProfile.fulfilled, (state, action) => {
+        state.loading = false;
+        state.isAuthenticated = true;
+        state.isProfileComplete = true;
+        state.user = action.payload.user || {
+          email: action.payload.user?.email,
+          role: action.payload.user?.role,
+          username: action.payload.user?.username
+        };
+        state.message = action.payload.message || "Profile completed successfully";
+        
+        // ✅ SAVE TO LOCALSTORAGE
+        saveAuthToStorage(state.user, state.role, state.isAuthenticated, state.isProfileComplete);
+      })
+      .addCase(completeProfile.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
 
-  saveTokensToLocalStorage(action.payload.access_token, action.payload.refresh_token);
-  
-  state.user = action.payload.user || {
-    email: action.payload.user?.email,
-    role: action.payload.user?.role,
-    username: action.payload.user?.username
-  };
-  state.message = action.payload.message || "Profile completed successfully";
-})
-.addCase(completeProfile.rejected, (state, action) => {
-  state.loading = false;
-  state.error = action.payload;
-})
+      .addCase(verifyPasswordResetOtp.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(verifyPasswordResetOtp.fulfilled, (state, action) => {
+        state.loading = false;
+        state.message = action.payload.message || "OTP verified successfully";
+      })
+      .addCase(verifyPasswordResetOtp.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
 
-.addCase(verifyPasswordResetOtp.pending, (state) => {
-  state.loading = true;
-  state.error = null;
-})
-.addCase(verifyPasswordResetOtp.fulfilled, (state, action) => {
-  state.loading = false;
-  state.message = action.payload.message || "OTP verified successfully";
-})
-.addCase(verifyPasswordResetOtp.rejected, (state, action) => {
-  state.loading = false;
-  state.error = action.payload;
-})
+      .addCase(resendPasswordResetOtp.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(resendPasswordResetOtp.fulfilled, (state, action) => {
+        state.loading = false;
+        state.message = action.payload.message || "OTP resent successfully";
+      })
+      .addCase(resendPasswordResetOtp.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
 
-.addCase(resendPasswordResetOtp.pending, (state) => {
-  state.loading = true;
-  state.error = null;
-})
-.addCase(resendPasswordResetOtp.fulfilled, (state, action) => {
-  state.loading = false;
-  state.message = action.payload.message || "OTP resent successfully";
-})
-.addCase(resendPasswordResetOtp.rejected, (state, action) => {
-  state.loading = false;
-  state.error = action.payload;
-})
-
-.addCase(resetPassword.pending, (state) => {
-  state.loading = true;
-  state.error = null;
-})
-.addCase(resetPassword.fulfilled, (state, action) => {
-  state.loading = false;
-  state.message = action.payload.message || "Password reset successfully";
-})
-.addCase(resetPassword.rejected, (state, action) => {
-  state.loading = false;
-  state.error = action.payload;
-});
-
+      .addCase(resetPassword.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(resetPassword.fulfilled, (state, action) => {
+        state.loading = false;
+        state.message = action.payload.message || "Password reset successfully";
+      })
+      .addCase(resetPassword.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      });
   },
 });
 
