@@ -32,7 +32,7 @@ const DashboardLayout = ({ sidebarItems = [], children, role = "patient" }) => {
       >
         <div className="flex items-center p-4 h-16 border-b">
           <img src={logo} alt="Med-Trax" className="w-8 h-8 mr-2" />
-          <h1 className="text-xl font-bold text-gray-800">Med-Trax</h1>
+          {/* <h1 className="text-xl font-bold text-gray-800">Med-Trax</h1> */}
         </div>
         
         <nav className="p-4 space-y-2">

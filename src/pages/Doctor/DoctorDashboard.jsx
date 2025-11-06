@@ -11,7 +11,7 @@ const profileIcon = '⚙️';
 const doctorSidebarItems = [
   { label: 'Home', to: '/doctor/dashboard', icon: homeIcon },
   { label: 'Appointments', to: '/doctor/appointments', icon: appointmentIcon },
-  { label: 'Chats', to: '/doctor/chats', icon: chatsIcon },
+  { label: 'Chats', to: '/doctor/chat', icon: chatsIcon },
   { label: 'Community', to: '/doctor/community', icon: communityIcon },
   { label: 'Profile', to: '/doctor/profile', icon: profileIcon },
 ];

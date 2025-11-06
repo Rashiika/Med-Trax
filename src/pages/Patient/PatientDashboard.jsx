@@ -22,7 +22,7 @@ const patientSidebarItems = [
   { label: 'Contact', to: '/patient/contact', icon: contactIcon },
   { label: 'Lab Result', to: '/patient/lab-result', icon: labIcon },
   { label: 'View Prescriptions', to: '/patient/prescriptions', icon: viewPrescriptionIcon },
-  { label: 'Chats', to: '/patient/chats', icon: chatsIcon },
+  { label: 'Chats', to: '/patient/chat', icon: chatsIcon },
 ];
 
 const PatientDashboard = () => {

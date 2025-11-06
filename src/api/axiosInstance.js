@@ -18,7 +18,7 @@ axiosInstance.interceptors.response.use(
       
       try {
         console.log("Attempting to refresh token...");
-        await axios.post(
+        const refreshResponse = await axios.post(
           "https://medtrax.me/api/refresh-token/",
           {},
           { withCredentials: true }
@@ -27,7 +27,8 @@ axiosInstance.interceptors.response.use(
         return axiosInstance(originalRequest);
       } catch (refreshError) {
         console.error("Refresh token FAILED:", refreshError.response || refreshError); // Log the refresh error
-        window.location.href = "/login";
+        // Don't automatically redirect here - let ProtectedRoute handle it
+        console.log("⚠️ Token refresh failed, but letting ProtectedRoute handle auth redirect");
         return Promise.reject(refreshError);
       }
     }

@@ -223,6 +223,7 @@ const authSlice = createSlice({
     loading: false,
     error: null,
     message: "",
+    isHydrating: true, // Add this to track hydration state
   },
 
   reducers: {
@@ -234,6 +235,7 @@ const authSlice = createSlice({
       state.loading = false;
       state.error = null;
       state.message = "";
+      state.isHydrating = false;
       clearAuthFromStorage();
     },
     
@@ -249,6 +251,7 @@ const authSlice = createSlice({
       } else {
         console.log("❌ No auth data found in localStorage");
       }
+      state.isHydrating = false; // Mark hydration as complete
     },
   },
 
