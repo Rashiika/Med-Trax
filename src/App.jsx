@@ -17,6 +17,8 @@ import PatientAppointment from "./pages/Patient/PatientAppointment";
 import DoctorAppointment from "./pages/Doctor/DoctorAppointment";
 import PatientChat from "./pages/Patient/PatientChat";
 import DoctorChat from "./pages/Doctor/DoctorChat";
+import PatientCommunity from "./pages/Patient/PatientCommunity";
+import DoctorCommunity from "./pages/Doctor/DoctorCommunity";
 import ProtectedRoute from "./components/ProtectedRoute";
 import { Toaster } from 'react-hot-toast';
 
@@ -82,6 +84,14 @@ function App() {
               </ProtectedRoute>
             } 
           />
+          <Route 
+            path="/patient/community" 
+            element={
+              <ProtectedRoute requiredRole="patient">
+                <PatientCommunity />
+              </ProtectedRoute>
+            } 
+          />
           
           {/* --- Protected Doctor Routes --- */}
           <Route 
@@ -105,6 +115,14 @@ function App() {
             element={
               <ProtectedRoute requiredRole="doctor">
                 <DoctorChat />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/doctor/community" 
+            element={
+              <ProtectedRoute requiredRole="doctor">
+                <DoctorCommunity />
               </ProtectedRoute>
             } 
           />

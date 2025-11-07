@@ -3,6 +3,8 @@ import authReducer from "./features/authSlice";
 import userReducer from "./features/userSlice";
 import communityReducer from "./features/communitySlice";
 import appointmentReducer from "./features/appointmentSlice";
+import chatReducer from "./features/chatSlice";
+import socketReducer from "./features/socketSlice";
 
 const store = configureStore({
   reducer: {
@@ -10,6 +12,8 @@ const store = configureStore({
     user: userReducer,
     community: communityReducer,
     appointment: appointmentReducer,
+    chat: chatReducer,
+    socket: socketReducer,
   },
 });
 
