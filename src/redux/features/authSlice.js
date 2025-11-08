@@ -24,7 +24,7 @@ export const registerUser = createAsyncThunk(
         role: role, 
       };
 
-      const response = await axiosInstance.post("/signup/", payload);
+      const response = await axiosInstance.post("/auth/signup/", payload);
       return response.data; 
     } catch (error) {
       return rejectWithValue(error.response?.data || "Signup failed");
@@ -36,7 +36,7 @@ export const verifyOtp = createAsyncThunk(
   "auth/verifyOtp",
   async (otpData, { rejectWithValue }) => {
     try {
-      const response = await axiosInstance.post("/verify-signup-otp/", otpData);
+      const response = await axiosInstance.post("/auth/verify-signup-otp/", otpData);
       return response.data; 
     } catch (error) {
       return rejectWithValue(error.response?.data || "OTP verification failed");
@@ -48,7 +48,7 @@ export const resendSignupOtp = createAsyncThunk(
   "auth/resendSignupOtp",
   async ({ email }, { rejectWithValue }) => {
     try {
-      const response = await axiosInstance.post("/resend-signup-otp/", { email });
+      const response = await axiosInstance.post("/auth/resend-signup-otp/", { email });
       return response.data;
     } catch (error) {
       return rejectWithValue(error.response?.data || "Failed to resend OTP");
@@ -60,7 +60,7 @@ export const forgotPassword = createAsyncThunk(
   "auth/forgotPassword",
   async ({ email }, { rejectWithValue }) => {
     try {
-      const response = await axiosInstance.post("/forgot-password/", { email });
+      const response = await axiosInstance.post("/auth/forgot-password/", { email });
       return response.data;
     } catch (error) {
       return rejectWithValue(error.response?.data || "Failed to send reset email");
@@ -72,7 +72,7 @@ export const verifyPasswordResetOtp = createAsyncThunk(
   "auth/verifyPasswordResetOtp",
   async (otpData, { rejectWithValue }) => {
     try {
-      const response = await axiosInstance.post("/verify-password-reset-otp/", otpData);
+      const response = await axiosInstance.post("/auth/verify-password-reset-otp/", otpData);
       return response.data;
     } catch (error) {
       return rejectWithValue(error.response?.data || "OTP verification failed");
@@ -84,7 +84,7 @@ export const resendPasswordResetOtp = createAsyncThunk(
   "auth/resendPasswordResetOtp",
   async ({ email }, { rejectWithValue }) => {
     try {
-      const response = await axiosInstance.post("/resend-password-reset-otp/", { email });
+      const response = await axiosInstance.post("/auth/resend-password-reset-otp/", { email });
       return response.data;
     } catch (error) {
       return rejectWithValue(error.response?.data || "Failed to resend OTP");
@@ -96,7 +96,7 @@ export const resetPassword = createAsyncThunk(
   "auth/resetPassword",
   async ({ data }, { rejectWithValue }) => {
     try {
-      const response = await axiosInstance.post("/reset-password/", data);
+      const response = await axiosInstance.post("/auth/reset-password/", data);
       return response.data;
     } catch (error) {
       return rejectWithValue(error.response?.data || "Password reset failed");
@@ -112,7 +112,7 @@ export const loginUser = createAsyncThunk(
         email: credentials.email,
         password: credentials.password
       };
-      const response = await axiosInstance.post("/login/", payload);
+      const response = await axiosInstance.post("/auth/login/", payload);
       console.log(response)
  
       if (response.data.success === false && response.data.is_profile_complete === false) {
@@ -156,7 +156,7 @@ export const completeProfile = createAsyncThunk(
   "auth/completeProfile",
   async ({ formData, role }, { rejectWithValue }) => {
     try {
-      const endpoint = role === "doctor" ? "/complete-doctor-profile/" : "/complete-patient-profile/";
+      const endpoint = role === "doctor" ? "/auth/complete-doctor-profile/" : "/auth/complete-patient-profile/";
       const response = await axiosInstance.post(endpoint, formData);
       return {
         ...response.data,

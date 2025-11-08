@@ -1,11 +1,11 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import axiosInstance from "../../api/axiosInstance";
 
-export const fetchUserProfile = createAsyncThunk(
-    "user/fetchUserProfile",
+export const fetchPatientProfile = createAsyncThunk(
+    "user/fetchPatientProfile",
     async (_, { rejectWithValue }) => {
         try {
-            const response = await axiosInstance.get(`/patient/dashboard/profile/`);
+            const response = await axiosInstance.get(`/patient/dashboard/profile/complete/`);
             console.log(response)
             return response.data;
         } catch (error) {
@@ -56,17 +56,17 @@ const userSlice = createSlice({
     extraReducers: (builder) => {
         builder
             // --- General Loading/Error Cases ---
-            .addCase(fetchUserProfile.pending, (state) => { state.loading = true; state.error = null; })
+            .addCase(fetchPatientProfile.pending, (state) => { state.loading = true; state.error = null; })
             .addCase(fetchRecentReviews.pending, (state) => { state.loading = true; state.error = null; })
             .addCase(fetchDoctorProfile.pending, (state) => { state.loading = true; state.error = null; })
 
-            .addCase(fetchUserProfile.rejected, (state, action) => { state.loading = false; state.error = action.payload; })
+            .addCase(fetchPatientProfile.rejected, (state, action) => { state.loading = false; state.error = action.payload; })
             .addCase(fetchRecentReviews.rejected, (state, action) => { state.loading = false; state.error = action.payload; })
             .addCase(fetchDoctorProfile.rejected, (state, action) => { state.loading = false; state.error = action.payload; })
             
             // --- Fulfillment Cases ---
 
-            .addCase(fetchUserProfile.fulfilled, (state, action) => {
+            .addCase(fetchPatientProfile.fulfilled, (state, action) => {
                 state.loading = false;
                 state.patientProfile = action.payload;
             })

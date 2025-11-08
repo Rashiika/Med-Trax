@@ -15,32 +15,22 @@ import PatientDashboard from "./pages/Patient/PatientDashboard";
 import DoctorDashboard from "./pages/Doctor/DoctorDashboard";
 import PatientAppointment from "./pages/Patient/PatientAppointment";
 import DoctorAppointment from "./pages/Doctor/DoctorAppointment";
-import PatientChat from "./pages/Patient/PatientChat";
-import DoctorChat from "./pages/Doctor/DoctorChat";
-import PatientCommunity from "./pages/Patient/PatientCommunity";
-import DoctorCommunity from "./pages/Doctor/DoctorCommunity";
-import ProtectedRoute from "./components/ProtectedRoute";
 import { Toaster } from 'react-hot-toast';
+import ProtectedRoute from "./components/ProtectedRoute";
+import BlogsPage from "./pages/BlogsPage";
+import SingleBlogView from "./components/SingleBlogView";
+import BlogCreationForm from "./components/BlogCreationForm";
+import PatientProfile from "./pages/Patient/PatientProfile";
+import PatientChat from "./pages/Patient/PatientChat";
 
 function App() {
   const dispatch = useDispatch();
-  const { isHydrating } = useSelector(state => state.auth);
+  const authState = useSelector(state => state.auth);
 
   useEffect(() => {
     dispatch(hydrateAuth());
+    console.log("App - Auth State:", authState);
   }, [dispatch]);
-
-  // Show loading screen while hydrating auth state
-  if (isHydrating) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading MedTrax...</p>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <Router>
@@ -50,16 +40,14 @@ function App() {
           <Route path="/" element={<Home />} />
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
+          <Route path="/patient" element={<PatientForm />} />
+          <Route path="/doctor" element={<DoctorForm />} />
           <Route path="/emailOtp" element={<EmailOtp />} />
           <Route path="/verifyOtp" element={<VerifyOtp />} />
           <Route path="/resetPassword" element={<ResetPassword />} />
           <Route path="/verifyPasswordResetOtp" element={<VerifyPasswordResetOtp />} />
           
-          {/* --- Profile Completion Routes (Semi-protected) --- */}
-          <Route path="/patient" element={<PatientForm />} />
-          <Route path="/doctor" element={<DoctorForm />} />
-          
-          {/* --- Protected Patient Routes --- */}
+          {/* --- PROTECTED PATIENT ROUTES --- */}
           <Route 
             path="/patient/dashboard" 
             element={
@@ -77,23 +65,66 @@ function App() {
             } 
           />
           <Route 
-            path="/patient/chat" 
+            path="/patient/blogs" 
+            element={<ProtectedRoute requiredRole="patient"><BlogsPage /></ProtectedRoute>} 
+          />
+          <Route 
+            path="/patient/profile" 
+            element={<ProtectedRoute requiredRole="patient"><PatientProfile /></ProtectedRoute>} 
+          />
+          <Route 
+            path="/patient/blogs/:slug" 
+            element={<ProtectedRoute requiredRole="patient"><SingleBlogView /></ProtectedRoute>} 
+          />
+          {/* <Route 
+            path="/patient/contact" 
+            element={
+              <ProtectedRoute requiredRole="patient">
+                <div className="flex items-center justify-center min-h-screen bg-gray-100">
+                  <div className="text-center">
+                    <h1 className="text-2xl font-bold text-gray-800 mb-4">Patient Contact</h1>
+                    <p className="text-gray-600">Coming Soon</p>
+                  </div>
+                </div>
+              </ProtectedRoute>
+            } 
+          /> */}
+          {/* <Route 
+            path="/patient/lab-result" 
+            element={
+              <ProtectedRoute requiredRole="patient">
+                <div className="flex items-center justify-center min-h-screen bg-gray-100">
+                  <div className="text-center">
+                    <h1 className="text-2xl font-bold text-gray-800 mb-4">Lab Results</h1>
+                    <p className="text-gray-600">Coming Soon</p>
+                  </div>
+                </div>
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/patient/prescriptions" 
+            element={
+              <ProtectedRoute requiredRole="patient">
+                <div className="flex items-center justify-center min-h-screen bg-gray-100">
+                  <div className="text-center">
+                    <h1 className="text-2xl font-bold text-gray-800 mb-4">Prescriptions</h1>
+                    <p className="text-gray-600">Coming Soon</p>
+                  </div>
+                </div>
+              </ProtectedRoute>
+            } 
+          /> */}
+          <Route 
+            path="/patient/chats" 
             element={
               <ProtectedRoute requiredRole="patient">
                 <PatientChat />
               </ProtectedRoute>
             } 
           />
-          <Route 
-            path="/patient/community" 
-            element={
-              <ProtectedRoute requiredRole="patient">
-                <PatientCommunity />
-              </ProtectedRoute>
-            } 
-          />
           
-          {/* --- Protected Doctor Routes --- */}
+          {/* --- PROTECTED DOCTOR ROUTES --- */}
           <Route 
             path="/doctor/dashboard" 
             element={
@@ -111,10 +142,27 @@ function App() {
             } 
           />
           <Route 
-            path="/doctor/chat" 
+            path="/doctor/blogs" 
+            element={<ProtectedRoute requiredRole="doctor"><BlogsPage /></ProtectedRoute>} 
+          />
+          <Route 
+            path="/doctor/blogs/:slug" 
+            element={<ProtectedRoute requiredRole="doctor"><SingleBlogView /></ProtectedRoute>} 
+          />
+          <Route 
+            path="/doctor/blogs/create" 
+            element={<ProtectedRoute requiredRole="doctor"><BlogCreationForm /></ProtectedRoute>} 
+          />
+          <Route 
+            path="/doctor/chats" 
             element={
               <ProtectedRoute requiredRole="doctor">
-                <DoctorChat />
+                <div className="flex items-center justify-center min-h-screen bg-gray-100">
+                  <div className="text-center">
+                    <h1 className="text-2xl font-bold text-gray-800 mb-4">Doctor Chats</h1>
+                    <p className="text-gray-600">Coming Soon</p>
+                  </div>
+                </div>
               </ProtectedRoute>
             } 
           />
@@ -122,12 +170,98 @@ function App() {
             path="/doctor/community" 
             element={
               <ProtectedRoute requiredRole="doctor">
-                <DoctorCommunity />
+                <div className="flex items-center justify-center min-h-screen bg-gray-100">
+                  <div className="text-center">
+                    <h1 className="text-2xl font-bold text-gray-800 mb-4">Doctor Community</h1>
+                    <p className="text-gray-600">Coming Soon</p>
+                  </div>
+                </div>
               </ProtectedRoute>
             } 
           />
+          <Route 
+            path="/doctor/profile" 
+            element={
+              <ProtectedRoute requiredRole="doctor">
+                <div className="flex items-center justify-center min-h-screen bg-gray-100">
+                  <div className="text-center">
+                    <h1 className="text-2xl font-bold text-gray-800 mb-4">Doctor Profile</h1>
+                    <p className="text-gray-600">Coming Soon</p>
+                  </div>
+                </div>
+              </ProtectedRoute>
+            } 
+          />
+
+          {/* --- 404 Route --- */}
+          <Route 
+            path="*" 
+            element={
+              <div className="flex items-center justify-center min-h-screen bg-gray-100">
+                <div className="text-center">
+                  <h1 className="text-4xl font-bold text-gray-800 mb-4">404</h1>
+                  <p className="text-gray-600 mb-4">Page not found</p>
+                  <p className="text-sm text-gray-500 mb-4">
+                    Current path: {window.location.pathname}
+                  </p>
+                  <a href="/" className="text-blue-600 hover:underline">Go back to home</a>
+                </div>
+              </div>
+            } 
+          />
         </Routes>
-        <Toaster />
+
+        <Toaster
+          position="top-right"
+          reverseOrder={false}
+          gutter={8}
+          toastOptions={{
+            duration: 4000,
+            style: {
+              background: '#fff',
+              color: '#363636',
+              padding: '16px 20px',
+              borderRadius: '12px',
+              boxShadow: '0 10px 25px rgba(0, 0, 0, 0.15)',
+              fontFamily: 'Poppins, sans-serif',
+              fontSize: '14px',
+              fontWeight: '500',
+              maxWidth: '500px',
+            },
+            success: {
+              duration: 3000,
+              style: {
+                background: '#10B981',
+                color: '#fff',
+              },
+              iconTheme: {
+                primary: '#fff',
+                secondary: '#10B981',
+              },
+            },
+            error: {
+              duration: 4000,
+              style: {
+                background: '#EF4444',
+                color: '#fff',
+              },
+              iconTheme: {
+                primary: '#fff',
+                secondary: '#EF4444',
+              },
+            },
+            loading: {
+              style: {
+                background: '#3B82F6',
+                color: '#fff',
+              },
+              iconTheme: {
+                primary: '#fff',
+                secondary: '#3B82F6',
+              },
+            },
+          }}
+        />
       </div>
     </Router>
   );

@@ -30,9 +30,8 @@ const DashboardLayout = ({ sidebarItems = [], children, role = "patient" }) => {
         className={`w-64 bg-white border-r fixed md:static h-full transition-transform duration-300 ease-in-out 
           ${isSidebarOpen ? 'translate-x-0 z-20' : '-translate-x-full'} md:translate-x-0 z-10`}
       >
-        <div className="flex items-center p-4 h-16 border-b">
-          <img src={logo} alt="Med-Trax" className="w-8 h-8 mr-2" />
-          {/* <h1 className="text-xl font-bold text-gray-800">Med-Trax</h1> */}
+        <div className="flex items-center justify-center p-4 border-b">
+          <img src={logo} alt="Med-Trax" className="h-14 mr-2" />
         </div>
         
         <nav className="p-4 space-y-2">

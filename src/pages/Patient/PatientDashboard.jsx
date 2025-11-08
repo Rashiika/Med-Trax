@@ -3,12 +3,6 @@ import { useSelector, useDispatch } from "react-redux";
 import DashboardLayout from "../../components/Layout/DashboardLayout";
 
 // Define icons
-const homeIcon = '🏠';
-const appointmentIcon = '📅';
-const contactIcon = '📞';
-const labIcon = '🧪';
-const viewPrescriptionIcon = '📄';
-const chatsIcon = '💬';
 
 import { 
     fetchPatientStats,
@@ -16,14 +10,20 @@ import {
     fetchPatientRecentAppointments,
 } from "../../redux/features/appointmentSlice"; 
 
+const DashboardIcon = '🏠';
+const AppointmentsIcon = '📅';
+const ChatsIcon = '💬';
+const BlogsIcon = '📝';
+const ProfileIcon = '👤';
+
 const patientSidebarItems = [
-  { label: 'Home', to: '/patient/dashboard', icon: homeIcon },
-  { label: 'Appointments', to: '/patient/appointments', icon: appointmentIcon },
-  { label: 'Contact', to: '/patient/contact', icon: contactIcon },
-  { label: 'Lab Result', to: '/patient/lab-result', icon: labIcon },
-  { label: 'View Prescriptions', to: '/patient/prescriptions', icon: viewPrescriptionIcon },
-  { label: 'Chats', to: '/patient/chat', icon: chatsIcon },
+    { label: "Dashboard", to: "/patient/dashboard", icon: DashboardIcon },
+    { label: "Appointments", to: "/patient/appointments", icon: AppointmentsIcon },
+    { label: "Chats", to: "/patient/chats", icon: ChatsIcon },
+    { label: "Blogs", to: "/patient/blogs", icon: BlogsIcon },
+    { label: "Profile", to: "/patient/profile", icon: ProfileIcon },
 ];
+
 
 const PatientDashboard = () => {
     const dispatch = useDispatch();

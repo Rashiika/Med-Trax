@@ -35,7 +35,7 @@ export const deletePost = createAsyncThunk(
         try {
             await axiosInstance.delete(`/community/posts/${slug}/`);
             console.log(`Post deleted: ${slug}`);
-            return slug; // Return the slug to identify the deleted post
+            return slug; 
         } catch (error) {
             console.log(error);
             return rejectWithValue(error.response?.data || "Failed to delete post");
@@ -49,7 +49,7 @@ export const deleteComment = createAsyncThunk(
         try {
             await axiosInstance.delete(`/chat/messages/${message_id}/delete/`);
             console.log(`Comment deleted: ${message_id}`);
-            return message_id; // Return the ID to identify the deleted comment/message
+            return message_id; 
         } catch (error) {
             console.log(error);
             return rejectWithValue(error.response?.data || "Failed to delete comment");
@@ -63,7 +63,7 @@ export const fetchPosts = createAsyncThunk(
         try {
             const response = await axiosInstance.get(`/community/posts/`);
             console.log(response);
-            return response.data;
+            return response.data.results;
         } catch (error) {
             console.log(error);
             return rejectWithValue(error.response?.data || "Failed to fetch posts");
@@ -75,7 +75,7 @@ export const createPost = createAsyncThunk(
     "community/createPost",
     async (postData, { rejectWithValue }) => {
         try {
-            const response = await axiosInstance.post(`/community/posts/create/`, postData);
+            const response = await axiosInstance.post("/community/posts/create/", postData);
             console.log(response);
             return response.data;
         } catch (error) {
@@ -119,7 +119,7 @@ export const createComment = createAsyncThunk(
         try {
             const response = await axiosInstance.post(`/community/posts/${slug}/comments/create/`, commentData);
             console.log(response);
-            return { slug, comment: response.data }; // Return slug to update the correct post
+            return { slug, comment: response.data }; 
         } catch (error) {
             console.log(error);
             return rejectWithValue(error.response?.data || "Failed to create comment");
@@ -131,10 +131,9 @@ export const toggleLikePost = createAsyncThunk(
     "community/toggleLikePost",
     async (slug, { rejectWithValue }) => {
         try {
-            // Assuming the backend returns the updated post object or a success status
             const response = await axiosInstance.post(`/community/posts/${slug}/like/`);
             console.log(response);
-            return { slug, data: response.data }; // Return slug and any updated data
+            return { slug, data: response.data }; 
         } catch (error) {
             console.log(error);
             return rejectWithValue(error.response?.data || "Failed to toggle like");
@@ -147,10 +146,11 @@ const communitySlice = createSlice({
     name: "community",
     initialState: {
         posts: [],
-        myPosts: [], // Added state for user's posts
-        currentPost: null, // For single post view
+        myPosts: [], 
+        currentPost: null, 
         categories: [],
         loading: false,
+        detailLoading: false,
         error: null,
     },
     reducers: {
@@ -161,10 +161,9 @@ const communitySlice = createSlice({
     extraReducers: (builder) => {
         builder
     
-            // --- Fullfilled Handlers ---
             .addCase(fetchPosts.fulfilled, (state, action) => {
                 state.loading = false;
-                state.posts = action.payload; // Assuming payload is the list of posts
+                state.posts = action.payload;
             })
             .addCase(fetchMyPosts.fulfilled, (state, action) => {
                 state.loading = false;
@@ -176,24 +175,21 @@ const communitySlice = createSlice({
             })
             .addCase(createPost.fulfilled, (state, action) => {
                 state.loading = false;
-                // Add the new post to the beginning of the list
                 state.posts.unshift(action.payload);
             })
             .addCase(fetchPostDetail.fulfilled, (state, action) => {
-                state.loading = false;
-                state.currentPost = action.payload; // Set the detailed post
+                state.detailLoading = false;
+                state.currentPost = action.payload; 
             })
             .addCase(fetchPostComments.fulfilled, (state, action) => {
                 state.loading = false;
                 if (state.currentPost) {
-                    // Assuming comments should be attached to the currentPost object
                     state.currentPost.comments = action.payload; 
                 }
             })
             .addCase(createComment.fulfilled, (state, action) => {
                 state.loading = false;
                 const { comment } = action.payload;
-                // Add the new comment to the current post's comments list
                 if (state.currentPost) {
                     state.currentPost.comments.push(comment);
                 }
@@ -202,12 +198,10 @@ const communitySlice = createSlice({
                 state.loading = false;
                 const { slug } = action.payload;
 
-                // Update the post in the main list
                 state.posts = state.posts.map(post => 
                     post.slug === slug ? { ...post, ...action.payload.data } : post
                 );
                 
-                // Update the current detailed post if it matches
                 if (state.currentPost?.slug === slug) {
                     state.currentPost = { ...state.currentPost, ...action.payload.data };
                 }
@@ -215,7 +209,6 @@ const communitySlice = createSlice({
             .addCase(deletePost.fulfilled, (state, action) => {
                 state.loading = false;
                 const slugToDelete = action.payload;
-                // Remove the deleted post from the main list
                 state.posts = state.posts.filter(post => post.slug !== slugToDelete);
                 state.myPosts = state.myPosts.filter(post => post.slug !== slugToDelete);
                 
@@ -223,7 +216,6 @@ const communitySlice = createSlice({
                     state.currentPost = null;
                 }
             })
-            // You might need to refine deleteComment depending on the exact API response
             .addCase(deleteComment.fulfilled, (state, action) => {
                 state.loading = false;
                 const messageIdToDelete = action.payload;
@@ -235,11 +227,11 @@ const communitySlice = createSlice({
                 }
             })
 
-             // --- Loading/Error Handlers ---
             .addMatcher(
                 (action) => action.type.endsWith('/pending'),
                 (state) => {
                     state.loading = true;
+                    state.detailLoading = true;
                     state.error = null;
                 }
             )
@@ -247,6 +239,7 @@ const communitySlice = createSlice({
                 (action) => action.type.endsWith('/rejected'),
                 (state, action) => {
                     state.loading = false;
+                    state.detailLoading = false;
                     state.error = action.payload;
                 }
             )
