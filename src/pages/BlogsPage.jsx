@@ -2,7 +2,8 @@ import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom'; 
 import { useDispatch, useSelector } from 'react-redux';
 import DashboardLayout from '../components/Layout/DashboardLayout'; 
-import { fetchPosts, toggleLikePost } from '../redux/features/communitySlice'; 
+import { fetchPosts, toggleLikePost } from '../redux/features/communitySlice';
+import { showToast } from '../components/Toast'; 
 
 const homeIcon = '🏠';
 const appointmentIcon = '📅';
@@ -10,13 +11,6 @@ const chatsIcon = '💬';
 const profileIcon = '⚙'; 
 const blogIcon = '📝'; 
 
-const sidebarItems = [
-    { label: 'Dashboard', to: '/dashboard', icon: homeIcon },
-    { label: 'Appointment', to: '/appointments', icon: appointmentIcon },
-    { label: 'Chat', to: '/chats', icon: chatsIcon },
-    { label: 'Blogs', to: '/blogs', icon: blogIcon },
-    { label: 'Profile', to: '/profile', icon: profileIcon },
-];
 
 const dummyPosts = Array(9).fill({
     id: 1,
@@ -40,14 +34,38 @@ const BlogsPage = () => {
     
     const { role } = useSelector((state) => state.auth); 
     useEffect(() => {
+        console.log("BlogsPage: Fetching posts...");
         dispatch(fetchPosts()); 
-    }, [dispatch]); 
+    }, [dispatch]);
+
+    useEffect(() => {
+        console.log("BlogsPage debug:", {
+            role,
+            posts,
+            postsLoading,
+            postsError,
+            displayedPosts
+        });
+        
+        if (postsError) {
+            showToast.error("Failed to load community posts. Please try again.");
+        }
+    }, [role, posts, postsLoading, postsError, displayedPosts]); 
 
     const rolePrefix = role === 'doctor' ? '/doctor' : '/patient';
 
     const handlePostClick = (slug) => {
         navigate(`${rolePrefix}/blogs/${slug}`);
     };
+
+    if (!role) {
+        return (
+            <div className="flex items-center justify-center h-64">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+                <span className="ml-3">Loading...</span>
+            </div>
+        );
+    }
     
     const handleAddBlog = () => {
         navigate('/doctor/blogs/create'); 
@@ -59,10 +77,13 @@ const BlogsPage = () => {
     };
 
     const getSidebarItems = () => {
-        return sidebarItems.map(item => ({
-            ...item,
-            to: `${rolePrefix}${item.to}`
-        }));
+        return [
+            { label: 'Dashboard', to: `${rolePrefix}/dashboard`, icon: homeIcon },
+            { label: 'Appointments', to: `${rolePrefix}/appointments`, icon: appointmentIcon },
+            { label: 'Chats', to: `${rolePrefix}/chats`, icon: chatsIcon },
+            { label: 'Blogs', to: `${rolePrefix}/blogs`, icon: blogIcon },
+            { label: 'Profile', to: `${rolePrefix}/profile`, icon: profileIcon },
+        ];
     };
 
     return (
@@ -94,7 +115,18 @@ const BlogsPage = () => {
                 )}
                 
                 {!postsLoading && postsError && (
-                    <div className="text-center py-10 text-red-600">Error loading posts: {postsError.message || JSON.stringify(postsError)}</div>
+                    <div className="text-center py-10">
+                        <div className="text-red-600 mb-2">Failed to load community posts</div>
+                        <div className="text-sm text-gray-500">
+                            {postsError.message || JSON.stringify(postsError)}
+                        </div>
+                        <button 
+                            onClick={() => dispatch(fetchPosts())}
+                            className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                        >
+                            Try Again
+                        </button>
+                    </div>
                 )}
 
                 {!postsLoading && displayedPosts.length === 0 && !postsError && (
