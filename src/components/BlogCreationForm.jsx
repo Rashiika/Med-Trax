@@ -2,62 +2,42 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import DashboardLayout from '../components/Layout/DashboardLayout'; 
-// import { createNewBlogPost } from '../../redux/features/blogSlice'; // Assuming you'll create this thunk
+import { createPost } from '../redux/features/communitySlice'; 
+import { Loader2 } from 'lucide-react'; 
 
-// --- Static Data & Configuration ---
-
-// Sidebar definitions (Ensure they match your overall structure)
 const homeIcon = '🏠';
 const appointmentIcon = '📅';
 const chatsIcon = '💬';
 const profileIcon = '⚙';
-const blogIcon = '📝';
+const blogIcon = '📝'; 
 
-const sidebarItems = [
-    { label: 'Dashboard', to: '/dashboard', icon: homeIcon },
-    { label: 'Appointment', to: '/appointments', icon: appointmentIcon },
-    { label: 'Chat', to: '/chats', icon: chatsIcon },
-    { label: 'Blogs', to: '/blogs', icon: blogIcon },
-    { label: 'Profile', to: '/profile', icon: profileIcon },
+const doctorSidebarItems = [
+    { label: 'Dashboard', to: '/doctor/dashboard', icon: homeIcon },
+    { label: 'Appointments', to: '/doctor/appointments', icon: appointmentIcon },
+    { label: 'Chats', to: '/doctor/chats', icon: chatsIcon },
+    { label: 'Blogs', to: '/doctor/blogs', icon: blogIcon },
+    { label: 'Profile', to: '/doctor/profile', icon: profileIcon },
 ];
 
-// Available status values from API
 const STATUS_OPTIONS = ['draft', 'published', 'archived'];
 
 const BlogCreationForm = () => {
     const navigate = useNavigate();
     const dispatch = useDispatch();
     
-    // Assuming the user is a doctor since only doctors can create posts
     const { role } = useSelector((state) => state.auth); 
     
     const [formData, setFormData] = useState({
         title: '',
-        category: '', // API expects integer (Category ID)
+        category: '',
         content: '',
         excerpt: '',
-        status: STATUS_OPTIONS[0], // Default to 'draft'
+        status: STATUS_OPTIONS[0],
     });
     const [featuredImage, setFeaturedImage] = useState(null);
     const [errors, setErrors] = useState({});
-    const [loading, setLoading] = useState(false); // For showing submission status
+    const [loading, setLoading] = useState(false); 
 
-    // Handle standard text, number, and select inputs
-    const handleChange = (e) => {
-        const { name, value } = e.target;
-        setFormData(prev => ({ ...prev, [name]: value }));
-        // Clear error if user starts typing
-        if (errors[name]) {
-             setErrors(prev => ({ ...prev, [name]: null }));
-        }
-    };
-
-    // Handle file input separately
-    const handleFileChange = (e) => {
-        setFeaturedImage(e.target.files[0]);
-    };
-    
-    // Basic Client-side Validation
     const validate = () => {
         const newErrors = {};
         if (!formData.title.trim()) {
@@ -71,28 +51,38 @@ const BlogCreationForm = () => {
         if (formData.excerpt.length > 300) {
             newErrors.excerpt = "Excerpt cannot exceed 300 characters.";
         }
-        // Basic check for category ID (optional, depending on your UI/API setup)
         if (formData.category && isNaN(parseInt(formData.category))) {
-             newErrors.category = "Category must be a number (ID).";
+            newErrors.category = "Category must be a number (ID).";
         }
         setErrors(newErrors);
         return Object.keys(newErrors).length === 0;
     };
+    
+    const handleChange = (e) => {
+        const { name, value } = e.target;
+        
+        setFormData(prev => ({ ...prev, [name]: value }));
+    };
+
+    const handleFileChange = (e) => {
+        setFeaturedImage(e.target.files[0]);
+    };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+
         if (!validate()) {
-            // Scroll to the first error if validation fails
-            const firstErrorField = Object.keys(errors).find(key => errors[key]);
-            if (firstErrorField) {
-                document.getElementsByName(firstErrorField)?.[0].focus();
+           
+            const validationPassed = validate(); 
+            if (!validationPassed) {
+
+                window.scrollTo(0, 0); 
             }
             return;
         }
-
+        
         setLoading(true);
 
-        // API expects formData object for file uploads
         const apiFormData = new FormData();
         apiFormData.append('title', formData.title);
         apiFormData.append('category', formData.category);
@@ -103,34 +93,29 @@ const BlogCreationForm = () => {
         if (featuredImage) {
             apiFormData.append('featured_image', featuredImage);
         }
-
-        // --- Replace this with your Redux Thunk dispatch ---
         try {
-            // Example dispatch:
-            // await dispatch(createNewBlogPost(apiFormData)).unwrap();
+            await dispatch(createPost(apiFormData)).unwrap();
             
-            // Success logic
             alert('Blog post created successfully!');
-            navigate('/doctor/blogs'); // Redirect back to the blog list
+            navigate('/doctor/blogs'); 
         } catch (error) {
-            // Error handling (e.g., from rejectWithValue in your thunk)
             console.error("API Submission Error:", error);
             alert(`Failed to create post: ${error.message || JSON.stringify(error)}`);
         } finally {
             setLoading(false);
         }
-        // ----------------------------------------------------
     };
 
     return (
-        <DashboardLayout sidebarItems={sidebarItems} role={role}>
+        <DashboardLayout sidebarItems={doctorSidebarItems} role={role}>
             <div className="max-w-4xl mx-auto p-4 md:p-8">
-                <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-100">
-                    <h2 className="text-2xl font-bold text-gray-800 mb-6 border-b pb-2">Create New Blog Post</h2>
+                <div className="bg-white rounded-2xl shadow-lg p-6 border border-gray-100">
+                    <h2 className="text-3xl font-extrabold text-gray-900 mb-6 border-b pb-4">
+                        Create New Blog Post
+                    </h2>
                     
                     <form onSubmit={handleSubmit} className="space-y-6">
                         
-                        {/* Title (max 200 characters) */}
                         <div>
                             <label htmlFor="title" className="block text-sm font-medium text-gray-700">
                                 Title <span className="text-red-500">* required (max 200)</span>
@@ -145,10 +130,9 @@ const BlogCreationForm = () => {
                                 className={`mt-1 block w-full border ${errors.title ? 'border-red-500' : 'border-gray-300'} rounded-md shadow-sm p-3 focus:ring-blue-500 focus:border-blue-500`}
                                 required
                             />
-                             {errors.title && <p className="mt-1 text-sm text-red-600">{errors.title}</p>}
+                            {errors.title && <p className="mt-1 text-sm text-red-600">{errors.title}</p>}
                         </div>
 
-                        {/* Category ID (integer) */}
                         <div>
                             <label htmlFor="category" className="block text-sm font-medium text-gray-700">
                                 Category ID (integer)
@@ -162,10 +146,9 @@ const BlogCreationForm = () => {
                                 placeholder="Category ID for the post"
                                 className={`mt-1 block w-full border ${errors.category ? 'border-red-500' : 'border-gray-300'} rounded-md shadow-sm p-3 focus:ring-blue-500 focus:border-blue-500`}
                             />
-                             {errors.category && <p className="mt-1 text-sm text-red-600">{errors.category}</p>}
+                            {errors.category && <p className="mt-1 text-sm text-red-600">{errors.category}</p>}
                         </div>
                         
-                        {/* Content (supports markdown, required) */}
                         <div>
                             <label htmlFor="content" className="block text-sm font-medium text-gray-700">
                                 Content <span className="text-red-500">* required (supports markdown)</span>
@@ -182,7 +165,6 @@ const BlogCreationForm = () => {
                             {errors.content && <p className="mt-1 text-sm text-red-600">{errors.content}</p>}
                         </div>
 
-                        {/* Excerpt (max 300 characters) */}
                         <div>
                             <label htmlFor="excerpt" className="block text-sm font-medium text-gray-700">
                                 Excerpt (Brief summary, max 300 characters)
@@ -201,8 +183,7 @@ const BlogCreationForm = () => {
                                 {formData.excerpt.length} / 300 characters
                             </p>
                         </div>
-                        
-                        {/* Featured Image (file) */}
+      
                         <div>
                             <label htmlFor="featured_image" className="block text-sm font-medium text-gray-700 mb-2">
                                 Featured Image (Main image for the post)
@@ -218,7 +199,6 @@ const BlogCreationForm = () => {
                             {featuredImage && <p className="mt-2 text-sm text-gray-600">Selected: {featuredImage.name}</p>}
                         </div>
 
-                        {/* Status (dropdown) */}
                         <div>
                             <label htmlFor="status" className="block text-sm font-medium text-gray-700">
                                 Status
@@ -238,11 +218,10 @@ const BlogCreationForm = () => {
                             </select>
                         </div>
 
-                        {/* Submit Button */}
                         <div className="pt-4 flex justify-end space-x-3">
                             <button
                                 type="button"
-                                onClick={() => navigate('/doctor/blogs')}
+                                onClick={() => navigate('/doctor/community')}
                                 className="px-6 py-2 border border-gray-300 text-gray-700 rounded-md shadow-sm hover:bg-gray-50 transition-colors"
                             >
                                 Cancel
@@ -250,9 +229,13 @@ const BlogCreationForm = () => {
                             <button
                                 type="submit"
                                 disabled={loading}
-                                className="px-6 py-2 bg-blue-600 text-white font-semibold rounded-md shadow-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
+                                className="px-6 py-2 bg-blue-600 text-white font-semibold rounded-md shadow-lg hover:bg-blue-700 transition-colors disabled:opacity-50 flex items-center gap-2"
                             >
-                                {loading ? 'Saving...' : 'Create Post'}
+                                {loading ? (
+                                    <>
+                                        <Loader2 className="w-5 h-5 animate-spin" /> Saving...
+                                    </>
+                                ) : 'Create Post'}
                             </button>
                         </div>
                     </form>

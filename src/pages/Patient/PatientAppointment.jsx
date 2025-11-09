@@ -1,13 +1,11 @@
 import React, { useState, useEffect } from "react";
-// Removed unnecessary Lucide icon imports since DashboardLayout handles the main frame
 import { Calendar, User, X } from "lucide-react"; 
 import { useSelector, useDispatch } from "react-redux";
 import axiosInstance from "../../api/axiosInstance"; 
 import { useNavigate } from "react-router-dom";
 import { fetchAvailableDoctors ,bookAppointment} from "../../redux/features/appointmentSlice";
-// Import the shared DashboardLayout component
-import DashboardLayout from "../../components/Layout/DashboardLayout"; 
-// Import custom icons for the sidebar items
+import DashboardLayout from "../../components/Layout/DashboardLayout";
+import { showToast } from "../../components/Toast"; 
 
 
 const DashboardIcon = '🏠';
@@ -16,7 +14,6 @@ const ChatsIcon = '💬';
 const BlogsIcon = '📝';
 const ProfileIcon = '👤';
 
-// Define the sidebar items structure required by DashboardLayout
 const patientSidebarItems = [
     { label: "Dashboard", to: "/patient/dashboard", icon: DashboardIcon },
     { label: "Appointments", to: "/patient/appointments", icon: AppointmentsIcon },
@@ -35,8 +32,6 @@ const PatientAppointment = () => {
         error: reduxError,
     } = useSelector((state) => state.appointment);
 
-    // Removed local state: isSidebarOpen, activeTab, navigate (handled by NavLink/DashboardLayout)
-    
     const [selectedDoctor, setSelectedDoctor] = useState(null);
     const [showBookingModal, setShowBookingModal] = useState(false);
     const [selectedDate, setSelectedDate] = useState("");
@@ -72,7 +67,7 @@ const PatientAppointment = () => {
 
     const handleBookAppointment = async () => {
         if (!selectedDate || !selectedSlot || !reason.trim()) {
-            alert("Please fill all fields");
+            showToast.error("Please fill all fields");
             return;
         }
 
@@ -89,7 +84,7 @@ const PatientAppointment = () => {
             const resultAction = await dispatch(bookAppointment(appointmentData)).unwrap(); 
 
             console.log("Booking success:", resultAction);
-            alert(resultAction.message || "Appointment request sent successfully! The doctor will review your request.");
+            showToast.success(resultAction.message || "Appointment request sent successfully! The doctor will review your request.");
             setShowBookingModal(false);
             resetBookingForm();
         } catch (error) {
@@ -99,7 +94,7 @@ const PatientAppointment = () => {
                 || error.message 
                 || "Failed to book appointment. Please try again.";
 
-            alert(errorMessage);
+            showToast.error(errorMessage);
         } finally {
             setBookingLoading(false);
         }
@@ -113,7 +108,6 @@ const PatientAppointment = () => {
         setReason("");
     };
 
-    // Removed handleTabClick function entirely since navigation is handled by NavLink in DashboardLayout
 
     const openBookingModal = (doctor) => {
         setSelectedDoctor(doctor);
@@ -129,9 +123,7 @@ const PatientAppointment = () => {
         return new Date().toISOString().split("T")[0];
     };
 
-    // --- Loading and Error Handling (Now renders the content inside DashboardLayout) ---
     if (reduxLoading) {
-        // Render a simple spinner which will be centered in the main area of DashboardLayout
         return (
              <DashboardLayout sidebarItems={patientSidebarItems} role="patient">
                 <div className="flex items-center justify-center h-full min-h-[400px]">
@@ -163,7 +155,7 @@ const PatientAppointment = () => {
             </DashboardLayout>
         );
     }
-    // --- End Loading and Error Handling ---
+
 
 
     return (

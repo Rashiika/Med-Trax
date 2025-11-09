@@ -1,61 +1,78 @@
-import React, { useState } from "react";
-import { Search, Edit2, MessageSquare, X } from "lucide-react";
+import React, { useMemo, useState } from "react";
 
-const ChatLayout = ({ role, userName }) => {
+const ChatLayout = ({
+  role = "patient",
+  userName = "",
+  doctors = [],
+  patients = [],
+  conversations = [],
+  currentChat = [],
+  liveMessages = [],
+  loading = false,
+  onSelectChat = () => {},
+  onSendMessage = () => {},
+  onOpenDoctorDirectory = () => {},
+  onOpenAiChat = () => {},
+}) => {
   const [activeTab, setActiveTab] = useState(role === "doctor" ? "patients" : "doctors");
-  const [selectedChat, setSelectedChat] = useState(null);
-  const [showModal, setShowModal] = useState(false);
+  const [search, setSearch] = useState("");
+  const [selected, setSelected] = useState(null);
+  const [messageText, setMessageText] = useState("");
 
-  // Fake Chat Data
-  const patients = [
-    { id: 1, name: "Naina", lastMessage: "Hi", unread: true },
-    { id: 2, name: "Arohi", lastMessage: "I’m having some issues with prescription", unread: false },
-    { id: 3, name: "Riya", lastMessage: "Hello Doctor!", unread: false },
-  ];
+  const list = useMemo(
+    () => (activeTab === "patients" ? patients : doctors),
+    [activeTab, patients, doctors]
+  );
 
-  const doctors = [
-    { id: 4, name: "Dr. Aarav", specialization: "Cardiologist", lastMessage: "Hi!", unread: true },
-    { id: 5, name: "Dr. Meera", specialization: "Neurologist", lastMessage: "See you at 4 PM", unread: false },
-    { id: 6, name: "Dr. Karan", specialization: "Dermatologist", lastMessage: "Thanks!", unread: false },
-  ];
+  const filtered = useMemo(() => {
+    if (!search.trim()) return list;
+    return list.filter((l) =>
+      (l.full_name || l.name || "")
+        .toLowerCase()
+        .includes(search.toLowerCase())
+    );
+  }, [list, search]);
 
-  const selectedTabData = activeTab === "patients" ? patients : doctors;
+  const handleSelect = (item) => {
+    setSelected(item);
+    onSelectChat(item);
+  };
 
-  // Dummy Messages
-  const messages = [
-    { id: 1, sender: "me", text: "Hello! How are you feeling today?" },
-    { id: 2, sender: "them", text: "Hi Doctor, feeling better but still have a cough." },
-    { id: 3, sender: "me", text: "Alright, continue the medicine for two more days." },
-  ];
+  const handleSend = () => {
+    if (!selected || !messageText.trim()) return;
+    onSendMessage(messageText.trim(), selected.other_participant_id || selected.id);
+    setMessageText("");
+  };
 
   return (
-    <div className="flex h-[90vh] bg-white shadow-md rounded-2xl overflow-hidden">
-      {/* Left Sidebar */}
-      <div className="w-[28%] border-r border-gray-200 flex flex-col">
-        {/* Header */}
-        <div className="flex items-center justify-between px-4 py-3 border-b">
-          <h2 className="font-semibold text-lg text-gray-800">Dr. {userName}</h2>
-          <Edit2 size={18} className="text-gray-500 cursor-pointer" />
+    <div className="flex h-full bg-white">
+      <div className="w-80 border-r border-gray-200 flex flex-col bg-white">
+        <div className="p-4">
+          <div className="relative">
+            <input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search"
+              className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md text-sm bg-gray-50"
+            />
+            <svg
+              className="absolute left-3 top-2.5 w-4 h-4 text-gray-400"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+          </div>
         </div>
 
-        {/* Search Bar */}
-        <div className="relative p-3">
-          <Search className="absolute left-6 top-6 text-gray-400" size={16} />
-          <input
-            type="text"
-            placeholder="Search"
-            className="pl-8 pr-3 py-2 w-full text-sm border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#2A87D7] bg-gray-50 text-gray-700"
-          />
-        </div>
-
-        {/* Tabs */}
-        <div className="flex justify-around border-b">
+        <div className="flex bg-gray-100 mx-4 rounded-lg p-1">
           {role === "doctor" && (
             <button
-              className={`w-1/2 py-2 font-medium text-sm ${
+              className={`flex-1 py-2 px-3 text-sm font-medium rounded-md transition-colors ${
                 activeTab === "patients"
-                  ? "border-b-2 border-[#2A87D7] text-[#2A87D7]"
-                  : "text-gray-500"
+                  ? "bg-blue-500 text-white"
+                  : "text-gray-600 hover:text-gray-800"
               }`}
               onClick={() => setActiveTab("patients")}
             >
@@ -63,10 +80,10 @@ const ChatLayout = ({ role, userName }) => {
             </button>
           )}
           <button
-            className={`w-1/2 py-2 font-medium text-sm ${
+            className={`flex-1 py-2 px-3 text-sm font-medium rounded-md transition-colors ${
               activeTab === "doctors"
-                ? "border-b-2 border-[#2A87D7] text-[#2A87D7]"
-                : "text-gray-500"
+                ? "bg-blue-500 text-white"
+                : "text-gray-600 hover:text-gray-800"
             }`}
             onClick={() => setActiveTab("doctors")}
           >
@@ -74,147 +91,148 @@ const ChatLayout = ({ role, userName }) => {
           </button>
         </div>
 
-        {/* Chat List */}
-        <div className="flex-1 overflow-y-auto p-2">
-          {selectedTabData.map((item) => (
+        <div className="flex-1 overflow-y-auto px-4 pt-4">
+          {filtered.map((item) => (
             <div
               key={item.id}
-              onClick={() => setSelectedChat(item)}
-              className={`p-3 rounded-lg flex justify-between items-center cursor-pointer mb-1 ${
-                selectedChat?.id === item.id
-                  ? "bg-blue-50 border-l-4 border-[#2A87D7]"
+              onClick={() => handleSelect(item)}
+              className={`flex items-center p-3 cursor-pointer mb-2 rounded-lg transition-colors ${
+                selected?.id === item.id
+                  ? "bg-blue-50"
                   : "hover:bg-gray-50"
               }`}
             >
-              <div>
-                <p className="font-medium text-gray-800 text-sm">{item.name}</p>
-                <p className="text-xs text-gray-500 truncate w-[150px]">
-                  {item.lastMessage}
+              <div className="flex items-center justify-center w-10 h-10 rounded-full bg-gray-200 mr-3 flex-shrink-0">
+                <span className="text-gray-600 font-medium text-sm">
+                  {(item.full_name || item.name || "?").charAt(0).toUpperCase()}
+                </span>
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center justify-between">
+                  <p className="font-medium text-sm text-gray-900 truncate">
+                    {item.full_name || item.name}
+                  </p>
+                  {item.unread_count > 0 && (
+                    <span className="bg-blue-500 text-white text-xs rounded-full px-2 py-0.5 ml-2">
+                      {item.unread_count}
+                    </span>
+                  )}
+                </div>
+                <p className="text-xs text-gray-500 truncate">
+                  {item.last_message || "No messages yet"}
                 </p>
               </div>
-              {item.unread && (
-                <span className="w-2 h-2 bg-[#2A87D7] rounded-full"></span>
-              )}
             </div>
           ))}
         </div>
-
-        {/* Chat with Doctor Button */}
-        {role === "doctor" && (
-          <div className="p-3 border-t">
-            <button
-              onClick={() => setShowModal(true)}
-              className="w-full flex justify-center items-center gap-2 text-white bg-[#2A87D7] hover:bg-blue-600 py-2 rounded-md text-sm font-medium"
-            >
-              <MessageSquare size={16} /> Chat with a Doctor
-            </button>
-          </div>
-        )}
       </div>
 
-      {/* Right Chat Window */}
-      <div className="flex-1 flex flex-col">
-        {selectedChat ? (
+      <div className="flex-1 flex flex-col bg-gray-50">
+        {selected ? (
           <>
-            {/* Chat Header */}
-            <div className="border-b p-4 font-medium text-gray-800 flex justify-between items-center">
-              {selectedChat.name}
-              {selectedChat.specialization && (
-                <span className="text-sm text-gray-500">
-                  {selectedChat.specialization}
-                </span>
+            <div className="bg-white border-b border-gray-200 p-4 flex justify-between items-center">
+              <div className="flex items-center">
+                <div className="w-10 h-10 rounded-full bg-gray-200 mr-3 flex items-center justify-center">
+                  <span className="text-gray-600 font-medium">
+                    {(selected.full_name || selected.name || "?").charAt(0).toUpperCase()}
+                  </span>
+                </div>
+                <div>
+                  <div className="font-semibold text-gray-900">
+                    {selected.full_name || selected.name}
+                  </div>
+                  <div className="text-xs text-gray-500">
+                    {activeTab === "patients" ? "Patient" : "Doctor"}
+                  </div>
+                </div>
+              </div>
+              <div className="flex gap-2">
+                <button className="p-2 rounded-full hover:bg-gray-100 text-gray-600">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                  </svg>
+                </button>
+                <button className="p-2 rounded-full hover:bg-gray-100 text-gray-600">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+
+            <div className="flex-1 p-4 overflow-y-auto space-y-4">
+              {currentChat && currentChat.length > 0 ? (
+                currentChat.map((message, index) => (
+                  <div
+                    key={message.id || index}
+                    className={`flex ${
+                      message.sender_id !== selected.id ? "justify-end" : "justify-start"
+                    }`}
+                  >
+                    <div
+                      className={`px-4 py-2 rounded-2xl text-sm max-w-xs ${
+                        message.sender_id !== selected.id
+                          ? "bg-blue-500 text-white"
+                          : "bg-white text-gray-800 border border-gray-200"
+                      }`}
+                    >
+                      <p>{message.content || message.text}</p>
+                      {message.timestamp && (
+                        <p className="text-xs opacity-70 mt-1">
+                          {new Date(message.timestamp).toLocaleTimeString([], {
+                            hour: '2-digit',
+                            minute: '2-digit'
+                          })}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div className="text-center text-gray-500 mt-8">
+                  <p>No messages yet. Start the conversation!</p>
+                </div>
               )}
             </div>
 
-            {/* Messages */}
-            <div className="flex-1 p-4 overflow-y-auto space-y-3">
-              {messages.map((msg) => (
-                <div
-                  key={msg.id}
-                  className={`flex ${
-                    msg.sender === "me" ? "justify-end" : "justify-start"
-                  }`}
+            <div className="bg-white border-t border-gray-200 p-4">
+              <div className="flex items-center gap-3">
+                <button className="p-2 text-gray-400 hover:text-gray-600">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
+                  </svg>
+                </button>
+                <input
+                  type="text"
+                  value={messageText}
+                  onChange={(e) => setMessageText(e.target.value)}
+                  onKeyPress={(e) => e.key === 'Enter' && handleSend()}
+                  placeholder="Message"
+                  className="flex-1 px-4 py-2 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+                <button
+                  onClick={handleSend}
+                  disabled={!messageText.trim()}
+                  className="p-2 bg-blue-500 text-white rounded-full hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  <div
-                    className={`px-3 py-2 rounded-lg text-sm max-w-xs ${
-                      msg.sender === "me"
-                        ? "bg-[#2A87D7] text-white"
-                        : "bg-gray-100 text-gray-700"
-                    }`}
-                  >
-                    {msg.text}
-                  </div>
-                </div>
-              ))}
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                  </svg>
+                </button>
+              </div>
             </div>
-
-<div className="border-t p-3 flex items-center gap-2">
-  <input
-    type="text"
-    value={messageText}
-    onChange={(e) => setMessageText(e.target.value)}
-    placeholder="Type a message..."
-    className="flex-1 px-3 py-2 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-[#2A87D7]"
-  />
-  <button
-    onClick={() => {
-      if (selectedChat && messageText.trim()) {
-        onSendMessage?.(messageText, selectedChat.id);
-        setMessageText("");
-      }
-    }}
-    className="px-4 py-2 bg-[#2A87D7] text-white rounded-md text-sm hover:bg-blue-600"
-  >
-    Send
-  </button>
-</div>
-
           </>
         ) : (
           <div className="flex-1 flex flex-col items-center justify-center text-gray-500">
-            <MessageSquare size={48} className="text-[#2A87D7] mb-2" />
-            <p>Your messages will be displayed here</p>
+            <div className="text-6xl mb-4">💬</div>
+            <h3 className="text-xl font-semibold text-gray-600 mb-2">Hello Doctor</h3>
+            <p className="text-gray-500 text-center px-8">
+              I am having some issues with prescription
+            </p>
+            <p className="text-xs text-gray-400 mt-2">15 min ago</p>
           </div>
         )}
       </div>
-
-      {/* Modal Popup */}
-      {showModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
-          <div className="bg-white p-5 rounded-lg w-[400px] shadow-lg relative">
-            <button
-              onClick={() => setShowModal(false)}
-              className="absolute top-3 right-3 text-gray-500 hover:text-gray-700"
-            >
-              <X size={18} />
-            </button>
-            <h3 className="text-lg font-semibold mb-3 text-gray-800">
-              Select a Doctor
-            </h3>
-            <input
-              type="text"
-              placeholder="Search doctor..."
-              className="w-full border border-gray-200 rounded-md px-3 py-2 mb-3 text-sm focus:outline-none focus:ring-1 focus:ring-[#2A87D7]"
-            />
-            <div className="max-h-60 overflow-y-auto space-y-2">
-              {doctors.map((doc) => (
-                <div
-                  key={doc.id}
-                  className="p-3 border border-gray-100 rounded-md hover:bg-gray-50 flex justify-between items-center cursor-pointer"
-                >
-                  <div>
-                    <p className="font-medium text-gray-800 text-sm">{doc.name}</p>
-                    <p className="text-xs text-gray-500">{doc.specialization}</p>
-                  </div>
-                  <button className="text-[#2A87D7] text-sm font-medium">
-                    Request Chat
-                  </button>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };

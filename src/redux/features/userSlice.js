@@ -33,7 +33,7 @@ export const fetchDoctorProfile = createAsyncThunk(
     "user/fetchDoctorProfile",
     async (_, { rejectWithValue }) => {
         try {
-            const response = await axiosInstance.get(`/doctor/dashboard/profile/`);
+            const response = await axiosInstance.get(`/doctor/dashboard/profile/complete/`);
             console.log(response)
             return response.data;
         } catch (error) {
@@ -55,7 +55,6 @@ const userSlice = createSlice({
   reducers: {},
     extraReducers: (builder) => {
         builder
-            // --- General Loading/Error Cases ---
             .addCase(fetchPatientProfile.pending, (state) => { state.loading = true; state.error = null; })
             .addCase(fetchRecentReviews.pending, (state) => { state.loading = true; state.error = null; })
             .addCase(fetchDoctorProfile.pending, (state) => { state.loading = true; state.error = null; })
@@ -63,8 +62,6 @@ const userSlice = createSlice({
             .addCase(fetchPatientProfile.rejected, (state, action) => { state.loading = false; state.error = action.payload; })
             .addCase(fetchRecentReviews.rejected, (state, action) => { state.loading = false; state.error = action.payload; })
             .addCase(fetchDoctorProfile.rejected, (state, action) => { state.loading = false; state.error = action.payload; })
-            
-            // --- Fulfillment Cases ---
 
             .addCase(fetchPatientProfile.fulfilled, (state, action) => {
                 state.loading = false;

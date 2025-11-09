@@ -1,9 +1,8 @@
 import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom'; 
 import { useDispatch, useSelector } from 'react-redux';
-import DashboardLayout from '../components/Layout/DashboardLayout'; // Adjust path as necessary
-// Assuming your Redux Thunk for fetching posts is defined here:
-import { fetchPosts, toggleLikePost } from '../redux/features/communitySlice'; // 👈 Import the actual Thunk
+import DashboardLayout from '../components/Layout/DashboardLayout'; 
+import { fetchPosts, toggleLikePost } from '../redux/features/communitySlice'; 
 
 const homeIcon = '🏠';
 const appointmentIcon = '📅';
@@ -69,8 +68,6 @@ const BlogsPage = () => {
     return (
         <DashboardLayout sidebarItems={getSidebarItems()} role={role}>
             <div className="p-4 md:p-6">
-                
-                {/* Search & Add Button Section (Unchanged) */}
                 <div className="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
                     <div className="relative w-full max-w-lg order-2 sm:order-1">
                         <input
@@ -92,8 +89,6 @@ const BlogsPage = () => {
                         </button>
                     )}
                 </div>
-
-                {/* Loading, Error, Empty States (Unchanged) */}
                 {postsLoading && (
                     <div className="text-center py-10 text-gray-500">Fetching community posts...</div>
                 )}
@@ -106,7 +101,6 @@ const BlogsPage = () => {
                     <div className="text-center py-10 text-gray-600">No community posts found yet.</div>
                 )}
                 
-                {/* Blog Grid */}
                 {!postsLoading && displayedPosts.length > 0 && (
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                         {displayedPosts.map((post) => (
@@ -122,8 +116,7 @@ const BlogsPage = () => {
                                         "Placeholder"
                                     )}
                                 </div>
-                                
-                                {/* Like Button and Count (NEW) */}
+
                                 <div className="absolute top-3 right-3 flex items-center bg-white/90 backdrop-blur-sm rounded-full px-3 py-1 shadow-md border border-gray-100">
                                     <span className="text-sm font-semibold text-red-600 mr-1">
                                         {post.total_likes || 0}
@@ -133,7 +126,7 @@ const BlogsPage = () => {
                                         aria-label={`Like post ${post.title}`}
                                         className="text-gray-500 hover:text-red-500 transition-colors focus:outline-none"
                                     >
-                                        {/* Use a filled heart if the user has liked it, otherwise use an outline heart */}
+
                                         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 fill-current" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
                                             <path 
                                                 strokeLinecap="round" 
@@ -146,7 +139,6 @@ const BlogsPage = () => {
                                     </button>
                                 </div>
                                 
-                                {/* Post Details */}
                                 <div className="p-4">
                                     <h3 className="text-lg font-semibold text-gray-800 mb-1">{post.title}</h3>
                                     <p className="text-sm text-gray-500 mb-2 line-clamp-2">{post.excerpt}</p>

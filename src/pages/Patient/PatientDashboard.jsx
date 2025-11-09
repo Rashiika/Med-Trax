@@ -1,9 +1,6 @@
 import React, { useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import DashboardLayout from "../../components/Layout/DashboardLayout";
-
-// Define icons
-
 import { 
     fetchPatientStats,
     fetchPatientAppointments,
@@ -71,7 +68,6 @@ const PatientDashboard = () => {
     return (
         <DashboardLayout sidebarItems={patientSidebarItems} role="patient">
             <div className="max-w-7xl mx-auto">
-                {/* Rest of your existing content remains the same */}
                 {isNewUser ? (
                     <div className="bg-white rounded-lg shadow-lg p-12 text-center border-l-4 border-teal-500">
                         <h2 className="text-3xl font-bold text-gray-800 mb-4">

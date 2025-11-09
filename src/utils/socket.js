@@ -1,9 +1,6 @@
-// socket.js — handles creating and managing WebSocket connections
-
 let socketInstance = null;
 
 export const connectSocket = (userId) => {
-  // TODO: Replace with your backend WebSocket endpoint later
   const socketUrl = `ws://localhost:8000/ws/chat/${userId}/`;
 
   socketInstance = new WebSocket(socketUrl);

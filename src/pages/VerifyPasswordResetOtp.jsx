@@ -63,8 +63,7 @@ const VerifyPasswordResetOtp = () => {
     
     try {
       await dispatch(verifyPasswordResetOtp(formData)).unwrap();
-      
-      //showToast.dismiss(loadingToast); 
+ 
       showToast.success("OTP Verified Successfully! You can now reset your password."); 
       
       setTimeout(() => {
@@ -105,8 +104,7 @@ const VerifyPasswordResetOtp = () => {
         resendPasswordResetOtp({ email: formData.email })
       ).unwrap();
       setTimer(180);
-      
-      //showToast.dismiss(loadingToast); 
+
       showToast.success("A new OTP has been sent!"); 
     } catch (error) {
       showToast.dismiss(loadingToast);
@@ -125,11 +123,6 @@ const VerifyPasswordResetOtp = () => {
       <h2 className="text-3xl font-semibold text-center mb-8 text-gray-800">
         Verify OTP
       </h2>
-      {initialEmail && (
-        <p className="text-center text-gray-600 mb-6">
-          A 6-digit code has been sent to **{initialEmail}**
-        </p>
-      )}
       <form
         onSubmit={handleSubmit}
         className="space-y-4 w-full max-w-md mx-auto px-4 sm:px-8"

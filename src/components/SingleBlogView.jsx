@@ -70,7 +70,6 @@ const SingleBlogView = () => {
         <DashboardLayout sidebarItems={getSidebarItems()} role={role}>
             <div className="p-4 md:p-6">
                 <div className="flex justify-between items-center mb-6">
-                    {/* Search Bar (kept in place) */}
                     <div className="relative w-full max-w-lg">
                         <input
                             type="text"
@@ -84,7 +83,6 @@ const SingleBlogView = () => {
                 </div>
 
                 <div className="flex flex-col lg:flex-row gap-6">
-                    {/* Main Blog Content Area */}
                     <div className="flex-1 bg-white rounded-xl shadow-lg p-6 border border-gray-100">
                         
                         <div className="bg-gray-200 h-64 w-full mb-6 rounded-lg flex items-center justify-center text-gray-500 overflow-hidden">
@@ -95,9 +93,7 @@ const SingleBlogView = () => {
                             )}
                         </div>
 
-                        {/* 🔑 FIX 2: Restructure Title and Like Button into a single Flex Container */}
                         <div className="flex items-start justify-between mb-4">
-                            {/* Title and Metadata */}
                             <div>
                                 <h1 className="text-3xl font-bold text-gray-800">{currentPost.title}</h1>
                                 <p className="text-sm text-gray-500 mt-1">
@@ -105,7 +101,6 @@ const SingleBlogView = () => {
                                 </p>
                             </div>
 
-                            {/* Like Button and Count (Positioned inline next to the title) */}
                             <div className="flex flex-col items-center pt-1 ml-4">
                                 <button
                                     onClick={handleLikeClick}
@@ -122,20 +117,17 @@ const SingleBlogView = () => {
                                         />
                                     </svg>
                                 </button>
-                                {/* Total Likes */}
                                 <span className="text-xs font-semibold text-gray-600 mt-1">
                                     {currentPost.total_likes || 0} Likes
                                 </span>
                             </div>
                         </div>
                         
-                        {/* Blog Content */}
                         <div className="text-gray-700 space-y-4 leading-relaxed" 
                             dangerouslySetInnerHTML={{ __html: currentPost.content || currentPost.excerpt }} 
                         />
                     </div>
 
-                    {/* Sidebar for Related Blogs (Unchanged) */}
                     <div className="w-full lg:w-72">
                         <div className="bg-white rounded-xl shadow-md p-4 border border-gray-100">
                             <h3 className="text-xl font-bold text-gray-800 mb-4">More blogs like this</h3>

@@ -6,17 +6,16 @@ const ProtectedRoute = ({ children, requiredRole }) => {
     const { user, isAuthenticated, isProfileComplete, role, isHydrating } = useSelector(state => state.auth);
     const location = useLocation();
     
-    // Debug logging
-    console.log("ProtectedRoute Debug:", { 
-        isAuthenticated, 
-        isProfileComplete, 
-        role, 
-        requiredRole, 
-        isHydrating,
-        currentPath: location.pathname 
-    });
+
+    // console.log("ProtectedRoute Debug:", { 
+    //     isAuthenticated, 
+    //     isProfileComplete, 
+    //     role, 
+    //     requiredRole, 
+    //     isHydrating,
+    //     currentPath: location.pathname 
+    // });
     
-    // Show loading while hydrating
     if (isHydrating) {
         return (
             <div className="min-h-screen flex items-center justify-center bg-gray-50">
@@ -28,12 +27,10 @@ const ProtectedRoute = ({ children, requiredRole }) => {
         );
     }
     
-    // Check if user is authenticated and profile is complete
     if (!isAuthenticated || !isProfileComplete) {
         return <Navigate to="/login" state={{ from: location }} replace />;
     }
-    
-    // Check role requirements
+
     if (requiredRole && role !== requiredRole) {
         const redirectTo = role === 'doctor' ? '/doctor/dashboard' : '/patient/dashboard';
         return <Navigate to={redirectTo} replace />;

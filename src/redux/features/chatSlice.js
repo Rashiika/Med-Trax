@@ -98,8 +98,6 @@ export const fetchUnreadCount = createAsyncThunk(
   }
 );
 
-// --- Slice ---
-
 const chatSlice = createSlice({
   name: "chat",
   initialState: {
@@ -120,7 +118,6 @@ const chatSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
-      // --- Fulfilled States ---
       .addCase(fetchConversations.fulfilled, (state, action) => {
         state.loading = false;
         state.conversations = action.payload;
@@ -156,7 +153,6 @@ const chatSlice = createSlice({
         state.unreadCount = action.payload.count || 0;
       })
 
-      // --- Pending / Error Handling ---
       .addMatcher(
         (action) => action.type.startsWith("chat/") && action.type.endsWith("/pending"),
         (state) => {

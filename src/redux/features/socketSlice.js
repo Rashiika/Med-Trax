@@ -26,7 +26,7 @@ const socketSlice = createSlice({
       const socket = getSocket();
       if (socket && socket.readyState === WebSocket.OPEN) {
         socket.send(JSON.stringify(action.payload));
-        state.liveMessages.push(action.payload); // optimistic update
+        state.liveMessages.push(action.payload); 
       }
     },
     clearLiveMessages: (state) => {

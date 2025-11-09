@@ -21,7 +21,10 @@ import BlogsPage from "./pages/BlogsPage";
 import SingleBlogView from "./components/SingleBlogView";
 import BlogCreationForm from "./components/BlogCreationForm";
 import PatientProfile from "./pages/Patient/PatientProfile";
+import DoctorProfile from "./pages/Doctor/DoctorProfile";
+import DoctorChat from "./pages/Doctor/DoctorChat";
 import PatientChat from "./pages/Patient/PatientChat";
+
 
 function App() {
   const dispatch = useDispatch();
@@ -36,7 +39,6 @@ function App() {
     <Router>
       <div className="App">
         <Routes>
-          {/* --- Public Routes --- */}
           <Route path="/" element={<Home />} />
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
@@ -46,8 +48,7 @@ function App() {
           <Route path="/verifyOtp" element={<VerifyOtp />} />
           <Route path="/resetPassword" element={<ResetPassword />} />
           <Route path="/verifyPasswordResetOtp" element={<VerifyPasswordResetOtp />} />
-          
-          {/* --- PROTECTED PATIENT ROUTES --- */}
+
           <Route 
             path="/patient/dashboard" 
             element={
@@ -101,8 +102,8 @@ function App() {
                 </div>
               </ProtectedRoute>
             } 
-          />
-          <Route 
+          /> */}
+          {/* <Route 
             path="/patient/prescriptions" 
             element={
               <ProtectedRoute requiredRole="patient">
@@ -116,15 +117,14 @@ function App() {
             } 
           /> */}
           <Route 
-            path="/patient/chats" 
-            element={
-              <ProtectedRoute requiredRole="patient">
-                <PatientChat />
-              </ProtectedRoute>
-            } 
-          />
-          
-          {/* --- PROTECTED DOCTOR ROUTES --- */}
+  path="/patient/chats" 
+  element={
+    <ProtectedRoute requiredRole="patient">
+      <PatientChat /> 
+    </ProtectedRoute>
+  } 
+/>
+
           <Route 
             path="/doctor/dashboard" 
             element={
@@ -154,18 +154,13 @@ function App() {
             element={<ProtectedRoute requiredRole="doctor"><BlogCreationForm /></ProtectedRoute>} 
           />
           <Route 
-            path="/doctor/chats" 
-            element={
-              <ProtectedRoute requiredRole="doctor">
-                <div className="flex items-center justify-center min-h-screen bg-gray-100">
-                  <div className="text-center">
-                    <h1 className="text-2xl font-bold text-gray-800 mb-4">Doctor Chats</h1>
-                    <p className="text-gray-600">Coming Soon</p>
-                  </div>
-                </div>
-              </ProtectedRoute>
-            } 
-          />
+  path="/doctor/chats" 
+  element={
+    <ProtectedRoute requiredRole="doctor">
+      <DoctorChat />  
+    </ProtectedRoute>
+  } 
+/>
           <Route 
             path="/doctor/community" 
             element={
@@ -183,17 +178,10 @@ function App() {
             path="/doctor/profile" 
             element={
               <ProtectedRoute requiredRole="doctor">
-                <div className="flex items-center justify-center min-h-screen bg-gray-100">
-                  <div className="text-center">
-                    <h1 className="text-2xl font-bold text-gray-800 mb-4">Doctor Profile</h1>
-                    <p className="text-gray-600">Coming Soon</p>
-                  </div>
-                </div>
+                <DoctorProfile />
               </ProtectedRoute>
             } 
           />
-
-          {/* --- 404 Route --- */}
           <Route 
             path="*" 
             element={
