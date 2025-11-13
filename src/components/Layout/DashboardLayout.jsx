@@ -31,9 +31,9 @@ const SidebarItem = ({ icon, label, to, isLogout = false, onClick }) => {
       }
     >
       {typeof icon === "string" ? (
-        <span className="w-5 h-5 text-center">{icon}</span>
+        <img src={icon} alt={label} className="w-5 h-5" />
       ) : (
-        <span className="w-5 h-5 text-center">{icon}</span>
+        <span className="w-5 h-5 flex items-center justify-center">{icon}</span>
       )}
       <span>{label}</span>
     </NavLink>
@@ -56,12 +56,12 @@ const DashboardLayout = ({ sidebarItems = [], children, role = "patient" }) => {
     <div className="flex h-screen bg-gray-50">
       {/* Sidebar */}
       <div
-        className={`w-64 bg-white border-r fixed md:static h-full transition-transform duration-300 ease-in-out 
+        className={`w-82 bg-white border-r fixed md:static h-full transition-transform duration-300 ease-in-out 
           ${isSidebarOpen ? "translate-x-0 z-20" : "-translate-x-full"} md:translate-x-0 z-10`}
       >
         <div className="flex flex-col h-full">
           {/* Logo */}
-          <div className="flex items-center justify-center p-4 border-b">
+          <div className="flex items-center justify-center p-4 ">
             <img src={logo} alt="MedTrax" className="h-14" />
           </div>
 
@@ -89,7 +89,7 @@ const DashboardLayout = ({ sidebarItems = [], children, role = "patient" }) => {
 
       {/* Main Content */}
       <div className="flex-1 flex flex-col overflow-hidden">
-        <main className="flex-1 overflow-x-hidden overflow-y-auto p-6">
+        <main className="flex-1 overflow-hidden h-full">
           {children}
         </main>
       </div>

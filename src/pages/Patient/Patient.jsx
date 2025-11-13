@@ -1,4 +1,4 @@
-import React, { useState, forwardRef } from "react";
+import React, { useState, useEffect, forwardRef } from "react";
 import { useNavigate } from "react-router-dom";
 import DetailFormLayout from "../../components/Layout/DetailFormLayout";
 import DetailsInput from "../../components/Input/DetailsInput";
@@ -18,6 +18,7 @@ const PatientForm = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
+  const [medicalDetailsAutoFilled, setMedicalDetailsAutoFilled] = useState(false);
   const userEmail = useSelector((state) => state.auth.user?.email) || localStorage.getItem("signupEmail") || "";
 
   const [formData, setFormData] = useState({
@@ -88,8 +89,59 @@ const PatientForm = () => {
     newErrors.policyNumber = policyError;
   }
 
+  // Reset auto-fill flag if user manually edits any medical field
+  if (["allergies", "chronicDiseases", "surgeries", "familyHistory"].includes(name)) {
+    setMedicalDetailsAutoFilled(false);
+  }
+
   setErrors(newErrors);
 };
+
+  // Auto-fill medical details when all required fields are completed
+  useEffect(() => {
+    const checkAndAutoFillMedicalDetails = () => {
+      const requiredFields = [
+        "firstName", "lastName", "dob", "gender", "bloodGroup", 
+        "city", "email", "mobile", "insuranceStatus"
+      ];
+
+      if (formData.insuranceStatus === "Yes") {
+        requiredFields.push("insuranceCompany", "policyNumber");
+      }
+
+      // Check if all required fields are filled and have no errors
+      const allRequiredFieldsFilled = requiredFields.every(field => {
+        const fieldValue = formData[field];
+        const hasValue = fieldValue && fieldValue.toString().trim() !== "";
+        const hasNoError = !errors[field];
+        return hasValue && hasNoError;
+      });
+
+      // Only auto-fill once when all required fields are completed and medical fields are still empty
+      if (allRequiredFieldsFilled && !medicalDetailsAutoFilled) {
+        const allMedicalFieldsEmpty = (
+          formData.allergies === "" && 
+          formData.chronicDiseases === "" && 
+          formData.surgeries === "" && 
+          formData.familyHistory === ""
+        );
+        
+        if (allMedicalFieldsEmpty) {
+          setFormData(prev => ({
+            ...prev,
+            allergies: "N/A",
+            chronicDiseases: "N/A",
+            surgeries: "N/A",
+            familyHistory: "N/A"
+          }));
+          setMedicalDetailsAutoFilled(true);
+        }
+      }
+    };
+
+    checkAndAutoFillMedicalDetails();
+  }, [formData, errors, medicalDetailsAutoFilled]);
+
   const validateField = (name, value, currentFormData = formData) => {
   if (emojiRegex.test(value)) {
     return "Emojis are not allowed";
@@ -202,6 +254,7 @@ const PatientForm = () => {
     return;
   }
 
+  // Auto-fill medical details with N/A if empty and update state immediately
   const updatedFormData = {
     ...formData,
     allergies: formData.allergies || "N/A",
@@ -210,7 +263,11 @@ const PatientForm = () => {
     familyHistory: formData.familyHistory || "N/A"
   };
 
+  // Update the form data state immediately so sidebar turns green
   setFormData(updatedFormData);
+
+  // Add a small delay to ensure state update is processed before proceeding
+  await new Promise(resolve => setTimeout(resolve, 100));
 
   const finalFormData = {
     email: userEmail,
@@ -269,7 +326,7 @@ const PatientForm = () => {
     "Insurance Details": formData.insuranceStatus === "Yes" 
       ? ["insuranceStatus", "insuranceCompany", "policyNumber"] 
       : ["insuranceStatus"],
-    "Medical Details": [], 
+    "Medical Details": ["allergies", "chronicDiseases", "surgeries", "familyHistory"], 
   };
 
   return (

@@ -108,7 +108,38 @@ export const loginUser = createAsyncThunk(
   "auth/loginUser",
   async ({ credentials, role }, { rejectWithValue }) => {
     try {
-      const payload = {
+      // const USE_DUMMY = true;
+      // if (USE_DUMMY) {
+      //   console.log("🧠 Using dummy user — backend skipped");
+
+      //   // You can customize this fake user
+      //   const dummyUser = {
+      //     user: {
+      //       id: 1,
+      //       email: credentials.email || "doctor@example.com",
+      //       username: "Dr. Ritika",
+      //       role: role || "doctor",
+      //       full_name: "Dr. Ritika Sharma",
+      //     },
+      //     access: "fake-access-token-123",
+      //     refresh: "fake-refresh-token-xyz",
+      //     success: true,
+      //     is_profile_complete: true,
+      //   };
+
+      //   // Simulate login validation
+      //   if (credentials.password !== "Hell@123") {
+      //     // ❌ invalid password
+      //     return rejectWithValue({
+      //       message: "Invalid credentials. Use password: Hell@123",
+      //       error: "Unauthorized",
+      //     });
+      //   }
+
+      //   // ✅ Successful login
+      //   return dummyUser;
+      // }
+        const payload = {
         email: credentials.email,
         password: credentials.password
       };

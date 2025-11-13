@@ -4,18 +4,7 @@ import { Navigate, useLocation } from 'react-router-dom';
 
 const ProtectedRoute = ({ children, requiredRole }) => {
     const { user, isAuthenticated, isProfileComplete, role, isHydrating } = useSelector(state => state.auth);
-    const location = useLocation();
-    
-
-    // console.log("ProtectedRoute Debug:", { 
-    //     isAuthenticated, 
-    //     isProfileComplete, 
-    //     role, 
-    //     requiredRole, 
-    //     isHydrating,
-    //     currentPath: location.pathname 
-    // });
-    
+    const location = useLocation(); 
     if (isHydrating) {
         return (
             <div className="min-h-screen flex items-center justify-center bg-gray-50">

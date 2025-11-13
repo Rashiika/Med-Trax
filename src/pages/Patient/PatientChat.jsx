@@ -9,13 +9,19 @@ import {
   sendLiveMessage,
 } from "../../redux/features/socketSlice";
 import { fetchChatDoctors, fetchChatHistory } from "../../redux/features/chatSlice";
+import homeIcon from '../../assets/dashboard.svg';
+import appointmentIcon from '../../assets/appointment.svg';
+import chatsIcon from '../../assets/chat.svg';
+import profileIcon from '../../assets/profile.svg';
+import blogIcon from '../../assets/blog.svg';
+
 //import AiChatModal from "../shared/AiChatModal";
 
 const PatientChat = () => {
   const dispatch = useDispatch();
   const { user } = useSelector((state) => state.auth);
   const { chatDoctors, currentChat } = useSelector((state) => state.chat);
-  const [showAiModal, setShowAiModal] = useState(false);
+  //const [showAiModal, setShowAiModal] = useState(false);
 
   useEffect(() => {
     if (user?.id) {
@@ -38,12 +44,13 @@ const PatientChat = () => {
   };
 
   const sidebarItems = [
-    { label: "Dashboard", to: "/patient/dashboard", icon: "🏠" },
-    { label: "Appointment", to: "/patient/appointments", icon: "📅" },
-    { label: "Chat", to: "/patient/chats", icon: "💬" },
-    { label: "Blogs", to: "/patient/community", icon: "📝" },
-    { label: "Profile", to: "/patient/profile", icon: "👤" },
+      { label: "Dashboard", to: "/patient/dashboard", icon: homeIcon },
+      { label: "Appointments", to: "/patient/appointments", icon: appointmentIcon },
+      { label: "Chats", to: "/patient/chats", icon: chatsIcon },
+      { label: "Blogs", to: "/patient/blogs", icon: blogIcon },
+      { label: "Profile", to: "/patient/profile", icon: profileIcon },
   ];
+  
 
   return (
     <DashboardLayout sidebarItems={sidebarItems} role="patient">
@@ -55,9 +62,9 @@ const PatientChat = () => {
         currentChat={currentChat}
         onSelectChat={handleSelectChat}
         onSendMessage={handleSendMessage}
-        onOpenAiChat={() => setShowAiModal(true)}
+        //onOpenAiChat={() => setShowAiModal(true)}
       />
-      {showAiModal && <AiChatModal onClose={() => setShowAiModal(false)} />}
+      {/* {showAiModal && <AiChatModal onClose={() => setShowAiModal(false)} />} */}
     </DashboardLayout>
   );
 };

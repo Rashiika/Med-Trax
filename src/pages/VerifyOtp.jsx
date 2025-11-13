@@ -22,6 +22,9 @@ const VerifyOtp = () => {
   const [isLoading, setLoading] = useState(false);
   const roleFromRedux = useSelector((state) => state.auth.role);
 
+  // Check if OTP is valid (6 digits, only numbers)
+  const isOtpValid = formData.otp && formData.otp.length === 6 && /^\d{6}$/.test(formData.otp);
+
   useEffect(() => {
     if (initialEmail) {
       localStorage.setItem("signupEmail", initialEmail);
@@ -47,12 +50,23 @@ const VerifyOtp = () => {
 
   const handleChange = (e) => {
     const { value } = e.target;
-    setFormData((prev) => ({ ...prev, otp: value }));
+    
+    // Only allow numeric characters
+    const numericValue = value.replace(/[^0-9]/g, '');
+    
+    // Check if the original value had non-numeric characters
+    const hasInvalidChars = value !== numericValue;
+    
+    setFormData((prev) => ({ ...prev, otp: numericValue }));
 
-    if (!value) {
+    if (!numericValue) {
       setErrors({ otp: "OTP is required" });
-    } else if (value.length !== 6) {
+    } else if (hasInvalidChars) {
+      setErrors({ otp: "OTP can only contain numbers" });
+    } else if (numericValue.length < 6) {
       setErrors({ otp: "OTP must be 6 digits" });
+    } else if (numericValue.length > 6) {
+      setErrors({ otp: "OTP must be exactly 6 digits" });
     } else {
       setErrors({ otp: "" });
     }
@@ -60,8 +74,8 @@ const VerifyOtp = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!formData.otp || formData.otp.length !== 6) {
-      setErrors({ otp: "Please enter a valid 6-digit OTP" });
+    if (!formData.otp || formData.otp.length !== 6 || !/^\d{6}$/.test(formData.otp)) {
+      setErrors({ otp: "Please enter a valid 6-digit numeric OTP" });
       return;
     }
 
@@ -169,7 +183,7 @@ const VerifyOtp = () => {
             {isResending ? "Sending..." : "Resend OTP"}
           </button>
         </div>
-        <Button type="submit" fullWidth disabled={isLoading}>
+        <Button type="submit" fullWidth disabled={isLoading || !isOtpValid}>
           {isLoading ? "Verifying..." : "Proceed"}
         </Button>
         <p className="text-center text-gray-600 text-sm mt-8">

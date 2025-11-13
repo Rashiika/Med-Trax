@@ -1,18 +1,14 @@
-import React, { useEffect } from "react";
-import DashboardLayout from '../../components/Layout/DashboardLayout';
-import { useDispatch, useSelector } from 'react-redux';
-import { 
-    fetchDoctorRecentReviews,
-    fetchDoctorStats, 
-    fetchDoctorWeeklyStats
-} from '../../redux/features/appointmentSlice'; 
-import { ArrowUp, Star, Users, Calendar, BarChart, MessageSquare } from 'lucide-react';
-
-const homeIcon = '🏠';
-const appointmentIcon = '📅';
-const chatsIcon = '💬';
-const profileIcon = '⚙';
-const blogIcon = '📝'; 
+import React, { useState, useEffect } from "react";
+import { Calendar, Clock, CheckCircle, XCircle, User, AlertTriangle, MessageSquare, Users, LogOut, Menu, X, Loader2, ArrowUp, Star, BarChart } from "lucide-react";
+import { useSelector, useDispatch } from "react-redux";
+import { fetchDoctorRequests, fetchDoctorConfirmedAppointments, acceptAppointmentRequest, rejectAppointmentRequest, fetchDoctorStats, fetchDoctorWeeklyStats, fetchDoctorRecentReviews } from "../../redux/features/appointmentSlice";
+import { showToast } from "../../components/Toast"; 
+import DashboardLayout from '../../components/Layout/DashboardLayout'; 
+import homeIcon from '../../assets/dashboard.svg';
+import appointmentIcon from '../../assets/appointment.svg';
+import chatsIcon from '../../assets/chat.svg';
+import profileIcon from '../../assets/profile.svg';
+import blogIcon from '../../assets/blog.svg';
 
 const doctorSidebarItems = [
     { label: 'Dashboard', to: '/doctor/dashboard', icon: homeIcon },

@@ -6,21 +6,19 @@ import {
     fetchPatientAppointments,
     fetchPatientRecentAppointments,
 } from "../../redux/features/appointmentSlice"; 
-
-const DashboardIcon = '🏠';
-const AppointmentsIcon = '📅';
-const ChatsIcon = '💬';
-const BlogsIcon = '📝';
-const ProfileIcon = '👤';
+import homeIcon from '../../assets/dashboard.svg';
+import appointmentIcon from '../../assets/appointment.svg';
+import chatsIcon from '../../assets/chat.svg';
+import profileIcon from '../../assets/profile.svg';
+import blogIcon from '../../assets/blog.svg';
 
 const patientSidebarItems = [
-    { label: "Dashboard", to: "/patient/dashboard", icon: DashboardIcon },
-    { label: "Appointments", to: "/patient/appointments", icon: AppointmentsIcon },
-    { label: "Chats", to: "/patient/chats", icon: ChatsIcon },
-    { label: "Blogs", to: "/patient/blogs", icon: BlogsIcon },
-    { label: "Profile", to: "/patient/profile", icon: ProfileIcon },
+    { label: "Dashboard", to: "/patient/dashboard", icon: homeIcon },
+    { label: "Appointments", to: "/patient/appointments", icon: appointmentIcon },
+    { label: "Chats", to: "/patient/chats", icon: chatsIcon },
+    { label: "Blogs", to: "/patient/blogs", icon: blogIcon },
+    { label: "Profile", to: "/patient/profile", icon: profileIcon },
 ];
-
 
 const PatientDashboard = () => {
     const dispatch = useDispatch();

@@ -4,12 +4,11 @@ import { useSelector, useDispatch } from "react-redux";
 import { fetchDoctorRequests, fetchDoctorConfirmedAppointments, acceptAppointmentRequest, rejectAppointmentRequest } from "../../redux/features/appointmentSlice";
 import { showToast } from "../../components/Toast"; 
 import DashboardLayout from '../../components/Layout/DashboardLayout'; 
-
-const homeIcon = '🏠';
-const appointmentIcon = '📅';
-const chatsIcon = '💬';
-const profileIcon = '⚙';
-const blogIcon = '📝'; 
+import homeIcon from '../../assets/dashboard.svg';
+import appointmentIcon from '../../assets/appointment.svg';
+import chatsIcon from '../../assets/chat.svg';
+import profileIcon from '../../assets/profile.svg';
+import blogIcon from '../../assets/blog.svg';
 
 const doctorSidebarItems = [
     { label: 'Dashboard', to: '/doctor/dashboard', icon: homeIcon },
@@ -123,12 +122,41 @@ const DoctorAppointment = () => {
         dispatch(fetchDoctorConfirmedAppointments()); 
     }, [dispatch]);
 
-    const handleAcceptAppointment = async (appointmentId) => { 
-        dispatch(acceptAppointmentRequest(appointmentId));
-     };
-    const handleRejectAppointment = async (appointmentId) => { 
-        dispatch(rejectAppointmentRequest(appointmentId));
-    };
+   const handleAcceptAppointment = async (appointmentId) => {
+    setActionLoading(appointmentId);
+    try {
+        await dispatch(acceptAppointmentRequest(appointmentId)).unwrap();
+        showToast.success("Appointment accepted successfully!");
+        
+        // Refresh both lists
+        dispatch(fetchDoctorRequests());
+        dispatch(fetchDoctorConfirmedAppointments());
+    } catch (error) {
+        console.error("Error accepting appointment:", error);
+        showToast.error(error.message || "Failed to accept appointment");
+    } finally {
+        setActionLoading(null);
+    }
+};
+    const handleRejectAppointment = async (appointmentId) => {
+    if (!window.confirm("Are you sure you want to reject this appointment?")) {
+        return;
+    }
+
+    setActionLoading(appointmentId);
+    try {
+        await dispatch(rejectAppointmentRequest(appointmentId)).unwrap();
+        showToast.success("Appointment rejected successfully!");
+        
+        // Refresh requests list
+        dispatch(fetchDoctorRequests());
+    } catch (error) {
+        console.error("Error rejecting appointment:", error);
+        showToast.error(error.message || "Failed to reject appointment");
+    } finally {
+        setActionLoading(null);
+    }
+};
 
     if (reduxError) {
         return (

@@ -1,6 +1,6 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import hospitalImg from "../../assets/hospital.png";
+import hospitalImg from "../../assets/hospital.svg";
 import logo from "../../assets/logo.png";
 
 const FormLayout = ({ children }) => {
@@ -43,7 +43,6 @@ const FormLayout = ({ children }) => {
         </div>
       </div>
 
-
       <div className="md:hidden relative w-full h-screen overflow-hidden bg-white">
         <div
           className="absolute top-0 left-0 w-full"
@@ -61,15 +60,21 @@ const FormLayout = ({ children }) => {
         </div>
 
         <div
-          className="absolute left-1/2 transform -translate-x-1/2 z-10"
-          style={{ top: "49vh", width: "320px" }}
+          className="absolute left-1/2 z-10"
+          style={{ 
+            top: "45vh", 
+            width: "320px",
+            transform: "translate(-50%, 0)",
+            maxHeight: "calc(100vh - 45vh - 40px)"
+          }}
         >
           <div
-            className="bg-white shadow-lg overflow-y-auto"
+            className="bg-white shadow-lg relative"
             style={{
-              borderRadius: "5.76px",
+              borderRadius: "0px",
               padding: "14px 18px",
-              maxHeight: "48vh",
+              transform: "translateY(min(0px, calc(100vh - 45vh - 100% - 40px)))",
+              transition: "transform 0.2s ease-out"
             }}
           >
             {children}

@@ -4,12 +4,11 @@ import { fetchDoctorProfile } from '../../redux/features/userSlice';
 import DashboardLayout from '../../components/Layout/DashboardLayout';
 import { User, Stethoscope, Mail, Phone, MapPin, Calendar, Heart, Clock, Loader2, Award } from 'lucide-react';
 import { format } from 'date-fns';
-
-const homeIcon = '🏠';
-const appointmentIcon = '📅';
-const chatsIcon = '💬';
-const profileIcon = '⚙';
-const blogIcon = '📝'; 
+import homeIcon from '../../assets/dashboard.svg';
+import appointmentIcon from '../../assets/appointment.svg';
+import chatsIcon from '../../assets/chat.svg';
+import profileIcon from '../../assets/profile.svg';
+import blogIcon from '../../assets/blog.svg';
 
 const doctorSidebarItems = [
     { label: 'Dashboard', to: '/doctor/dashboard', icon: homeIcon },

@@ -73,12 +73,10 @@ const LoginPage = () => {
      
       showToast.dismiss(loadingToast);
       
-      // ✅ Check if login was rejected due to incomplete profile
       if (loginUser.rejected.match(resultAction)) {
         const error = resultAction.payload;
         
         if (error?.isIncompleteProfile || error?.is_profile_complete === false) {
-          // Handle incomplete profile case
           showToast.success("Login successful! Please complete your profile.");
           
           const userRole = error?.role;
@@ -95,7 +93,6 @@ const LoginPage = () => {
           }, 1500);
           return;
         } else {
-          // Handle other login errors
           const errorMessage = 
             error?.error || 
             error?.errors?.email?.[0] || 
@@ -108,8 +105,7 @@ const LoginPage = () => {
           return;
         }
       }
-      
-      // ✅ Login successful with complete profile
+
       if (loginUser.fulfilled.match(resultAction)) {
         const payload = resultAction.payload;
         const userRole = payload.user?.role || payload.role;
