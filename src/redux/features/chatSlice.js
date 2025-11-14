@@ -1,158 +1,240 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import axiosInstance from "../../api/axiosInstance";
 
-
-export const fetchConversations = createAsyncThunk(
-  "chat/fetchConversations",
+// ==================== PATIENT ENDPOINTS ====================
+export const fetchPatientChats = createAsyncThunk(
+  "chat/fetchPatientChats",
   async (_, { rejectWithValue }) => {
     try {
-      const response = await axiosInstance.get(`/chat/conversations/`);
+      const response = await axiosInstance.get(`/chat/patient/doctors/`);
       return response.data;
     } catch (error) {
-      return rejectWithValue(error.response?.data || "Failed to fetch conversations");
+      return rejectWithValue(error.response?.data || "Failed to fetch patient chats");
     }
   }
 );
 
-export const fetchChatDoctors = createAsyncThunk(
-  "chat/fetchChatDoctors",
+// ==================== DOCTOR ENDPOINTS ====================
+export const fetchDoctorPatients = createAsyncThunk(
+  "chat/fetchDoctorPatients",
   async (_, { rejectWithValue }) => {
     try {
-      const response = await axiosInstance.get(`/chat/doctors/`);
+      const response = await axiosInstance.get(`/chat/doctor/patients/`);
       return response.data;
     } catch (error) {
-      return rejectWithValue(error.response?.data || "Failed to fetch doctors list");
+      return rejectWithValue(error.response?.data || "Failed to fetch doctor patients");
     }
   }
 );
 
-export const fetchChatPatients = createAsyncThunk(
-  "chat/fetchChatPatients",
+export const fetchDoctorDoctors = createAsyncThunk(
+  "chat/fetchDoctorDoctors",
   async (_, { rejectWithValue }) => {
     try {
-      const response = await axiosInstance.get(`/chat/patients/`);
+      const response = await axiosInstance.get(`/chat/doctor/doctors/`);
       return response.data;
     } catch (error) {
-      return rejectWithValue(error.response?.data || "Failed to fetch patients list");
+      return rejectWithValue(error.response?.data || "Failed to fetch doctor chats");
     }
   }
 );
 
-export const fetchChatHistory = createAsyncThunk(
-  "chat/fetchChatHistory",
-  async (userId, { rejectWithValue }) => {
-    try {
-      const response = await axiosInstance.get(`/chat/history/${userId}/`);
-      return response.data;
-    } catch (error) {
-      return rejectWithValue(error.response?.data || "Failed to fetch chat history");
-    }
-  }
-);
-
-export const deleteChatMessage = createAsyncThunk(
-  "chat/deleteChatMessage",
-  async (messageId, { rejectWithValue }) => {
-    try {
-      await axiosInstance.delete(`/chat/messages/${messageId}/delete/`);
-      return messageId;
-    } catch (error) {
-      return rejectWithValue(error.response?.data || "Failed to delete message");
-    }
-  }
-);
-
-export const searchChatUsers = createAsyncThunk(
-  "chat/searchChatUsers",
+export const searchDoctors = createAsyncThunk(
+  "chat/searchDoctors",
   async (query, { rejectWithValue }) => {
     try {
-      const response = await axiosInstance.get(`/chat/search/?q=${query}`);
+      const response = await axiosInstance.get(`/chat/doctor/search/?q=${query}`);
       return response.data;
     } catch (error) {
-      return rejectWithValue(error.response?.data || "Failed to search chat users");
+      return rejectWithValue(error.response?.data || "Failed to search doctors");
     }
   }
 );
 
-export const fetchUnreadByConversation = createAsyncThunk(
-  "chat/fetchUnreadByConversation",
+export const sendConnectionRequest = createAsyncThunk(
+  "chat/sendConnectionRequest",
+  async (toDoctorId, { rejectWithValue }) => {
+    try {
+      const response = await axiosInstance.post(`/chat/doctor/connection/send/`, {
+        to_doctor_id: toDoctorId,
+      });
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(error.response?.data || "Failed to send connection request");
+    }
+  }
+);
+
+export const fetchPendingRequests = createAsyncThunk(
+  "chat/fetchPendingRequests",
   async (_, { rejectWithValue }) => {
     try {
-      const response = await axiosInstance.get(`/chat/unread-by-conversation/`);
+      const response = await axiosInstance.get(`/chat/doctor/connection/pending/`);
       return response.data;
     } catch (error) {
-      return rejectWithValue(error.response?.data || "Failed to fetch unread data");
+      return rejectWithValue(error.response?.data || "Failed to fetch pending requests");
     }
   }
 );
 
-export const fetchUnreadCount = createAsyncThunk(
-  "chat/fetchUnreadCount",
-  async (_, { rejectWithValue }) => {
+export const acceptConnectionRequest = createAsyncThunk(
+  "chat/acceptConnectionRequest",
+  async (requestId, { rejectWithValue }) => {
     try {
-      const response = await axiosInstance.get(`/chat/unread-count/`);
+      const response = await axiosInstance.post(`/chat/doctor/connection/${requestId}/accept/`);
       return response.data;
     } catch (error) {
-      return rejectWithValue(error.response?.data || "Failed to fetch unread count");
+      return rejectWithValue(error.response?.data || "Failed to accept request");
     }
   }
 );
 
+export const rejectConnectionRequest = createAsyncThunk(
+  "chat/rejectConnectionRequest",
+  async (requestId, { rejectWithValue }) => {
+    try {
+      const response = await axiosInstance.post(`/chat/doctor/connection/${requestId}/reject/`);
+      return { requestId };
+    } catch (error) {
+      return rejectWithValue(error.response?.data || "Failed to reject request");
+    }
+  }
+);
+
+// ==================== CHAT ROOM ENDPOINTS ====================
+export const fetchChatRoomDetails = createAsyncThunk(
+  "chat/fetchChatRoomDetails",
+  async (roomId, { rejectWithValue }) => {
+    try {
+      const response = await axiosInstance.get(`/chat/rooms/${roomId}/`);
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(error.response?.data || "Failed to fetch chat room details");
+    }
+  }
+);
+
+export const sendMessage = createAsyncThunk(
+  "chat/sendMessage",
+  async ({ roomId, content }, { rejectWithValue }) => {
+    try {
+      const response = await axiosInstance.post(
+        `/chat/rooms/${roomId}/messages/`,
+        { content }
+      );
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(
+        error.response?.data || "Failed to send message"
+      );
+    }
+  }
+);
+
+
+export const markAsRead = createAsyncThunk(
+  "chat/markAsRead",
+  async (roomId, { rejectWithValue }) => {
+    try {
+      const response = await axiosInstance.post(`/chat/rooms/${roomId}/read/`);
+      return { roomId };
+    } catch (error) {
+      return rejectWithValue(error.response?.data || "Failed to mark as read");
+    }
+  }
+);
+
+// ==================== SLICE ====================
 const chatSlice = createSlice({
   name: "chat",
   initialState: {
-    conversations: [],
-    chatDoctors: [],
-    chatPatients: [],
-    currentChat: [],
-    unreadByConversation: [],
-    unreadCount: 0,
+    patientChats: [],
+    doctorPatients: [],
+    doctorDoctors: [],
+    currentChatRoom: null,
+    currentMessages: [],
     searchResults: [],
+    pendingRequests: [],
     loading: false,
     error: null,
   },
   reducers: {
-    clearChatHistory: (state) => {
-      state.currentChat = [];
+    clearCurrentChat: (state) => {
+      state.currentChatRoom = null;
+      state.currentMessages = [];
+    },
+    addMessageToCurrentChat: (state, action) => {
+      if (state.currentMessages) {
+        state.currentMessages.push(action.payload);
+      }
+    },
+    clearSearchResults: (state) => {
+      state.searchResults = [];
     },
   },
   extraReducers: (builder) => {
     builder
-      .addCase(fetchConversations.fulfilled, (state, action) => {
+      // Patient chats
+      .addCase(fetchPatientChats.fulfilled, (state, action) => {
         state.loading = false;
-        state.conversations = action.payload;
+        state.patientChats = action.payload;
       })
-      .addCase(fetchChatDoctors.fulfilled, (state, action) => {
+      // Doctor patients
+      .addCase(fetchDoctorPatients.fulfilled, (state, action) => {
         state.loading = false;
-        state.chatDoctors = action.payload;
+        state.doctorPatients = action.payload;
       })
-      .addCase(fetchChatPatients.fulfilled, (state, action) => {
+      // Doctor doctors
+      .addCase(fetchDoctorDoctors.fulfilled, (state, action) => {
         state.loading = false;
-        state.chatPatients = action.payload;
+        state.doctorDoctors = action.payload;
       })
-      .addCase(fetchChatHistory.fulfilled, (state, action) => {
-        state.loading = false;
-        state.currentChat = action.payload;
-      })
-      .addCase(deleteChatMessage.fulfilled, (state, action) => {
-        state.loading = false;
-        state.currentChat = state.currentChat.filter(
-          (msg) => msg.id !== action.payload
-        );
-      })
-      .addCase(searchChatUsers.fulfilled, (state, action) => {
+      // Search doctors
+      .addCase(searchDoctors.fulfilled, (state, action) => {
         state.loading = false;
         state.searchResults = action.payload;
       })
-      .addCase(fetchUnreadByConversation.fulfilled, (state, action) => {
+      // Send connection request
+      .addCase(sendConnectionRequest.fulfilled, (state) => {
         state.loading = false;
-        state.unreadByConversation = action.payload;
       })
-      .addCase(fetchUnreadCount.fulfilled, (state, action) => {
+      // Fetch pending requests
+      .addCase(fetchPendingRequests.fulfilled, (state, action) => {
         state.loading = false;
-        state.unreadCount = action.payload.count || 0;
+        state.pendingRequests = action.payload;
       })
-
+      // Accept connection
+      .addCase(acceptConnectionRequest.fulfilled, (state, action) => {
+        state.loading = false;
+        state.pendingRequests = state.pendingRequests.filter(
+          (req) => req.id !== action.payload.id
+        );
+      })
+      // Reject connection
+      .addCase(rejectConnectionRequest.fulfilled, (state, action) => {
+        state.loading = false;
+        state.pendingRequests = state.pendingRequests.filter(
+          (req) => req.id !== action.payload.requestId
+        );
+      })
+      // Fetch chat room details
+      .addCase(fetchChatRoomDetails.fulfilled, (state, action) => {
+        state.loading = false;
+        state.currentChatRoom = action.payload;
+        state.currentMessages = action.payload.messages || [];
+      })
+      // Send message
+      .addCase(sendMessage.fulfilled, (state, action) => {
+        state.loading = false;
+        if (state.currentMessages) {
+          state.currentMessages.push(action.payload);
+        }
+      })
+      // Mark as read
+      .addCase(markAsRead.fulfilled, (state) => {
+        state.loading = false;
+      })
+      // Loading states
       .addMatcher(
         (action) => action.type.startsWith("chat/") && action.type.endsWith("/pending"),
         (state) => {
@@ -160,6 +242,7 @@ const chatSlice = createSlice({
           state.error = null;
         }
       )
+      // Error states
       .addMatcher(
         (action) => action.type.startsWith("chat/") && action.type.endsWith("/rejected"),
         (state, action) => {
@@ -170,5 +253,5 @@ const chatSlice = createSlice({
   },
 });
 
-export const { clearChatHistory } = chatSlice.actions;
+export const { clearCurrentChat, addMessageToCurrentChat, clearSearchResults } = chatSlice.actions;
 export default chatSlice.reducer;

@@ -11,6 +11,8 @@ import appointmentIcon from '../../assets/appointment.svg';
 import chatsIcon from '../../assets/chat.svg';
 import profileIcon from '../../assets/profile.svg';
 import blogIcon from '../../assets/blog.svg';
+import { fetchPatientChats } from "../../redux/features/chatSlice";
+
 
 const patientSidebarItems = [
     { label: "Dashboard", to: "/patient/dashboard", icon: homeIcon },
@@ -33,9 +35,13 @@ const PatientDashboard = () => {
     } = useSelector((state) => state.appointment);
 
     useEffect(() => {
+         const interval = setInterval(() => {
         dispatch(fetchPatientStats());
         dispatch(fetchPatientAppointments());
-        dispatch(fetchPatientRecentAppointments());
+         dispatch(fetchPatientRecentAppointments());
+        dispatch(fetchPatientChats()); // ✅ Refresh chat list
+    }, 30000); // 30 seconds
+        return () => clearInterval(interval);
     }, [dispatch]);
 
     const isLoading = appointmentLoading || stats === null; 
@@ -74,6 +80,22 @@ const PatientDashboard = () => {
                         <p className="text-gray-600 text-lg mb-8">
                             You're all set! Start by booking your first appointment with our doctors.
                         </p>
+
+                        // Add this button to PatientDashboard.jsx (after the welcome section):
+
+<div className="mb-4">
+    <button
+        onClick={() => {
+            dispatch(fetchPatientStats());
+            dispatch(fetchPatientAppointments());
+            dispatch(fetchPatientChats());
+            showToast.success("Dashboard refreshed!");
+        }}
+        className="bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700"
+    >
+        🔄 Refresh Dashboard
+    </button>
+</div>
                         
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8">
                             <div className="bg-teal-50 p-6 rounded-lg border border-teal-200">

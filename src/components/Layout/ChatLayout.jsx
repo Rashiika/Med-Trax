@@ -1,6 +1,5 @@
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useEffect, useRef } from "react";
 import { generateContent } from "../../api/gemini";
-import { useEffect, useRef } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import msgIcon from "../../assets/msg.svg";
@@ -11,12 +10,12 @@ const ChatLayout = ({
   userName = "",
   doctors = [],
   patients = [],
-  currentChat = [],
+  currentMessages = [],
   onSelectChat = () => {},
   onSendMessage = () => {},
-  showAiChat = false, // ✅ new prop
+  showAiChat = false,
   onCloseAiChat = () => {},
-  onOpenAiChat = () => {}, // ✅ new prop to open AI chat
+  onOpenAiChat = () => {},
 }) => {
   const [activeTab, setActiveTab] = useState(
     role === "doctor" ? "patients" : "doctors"
@@ -24,12 +23,13 @@ const ChatLayout = ({
   const [search, setSearch] = useState("");
   const [selected, setSelected] = useState(null);
   const [messageText, setMessageText] = useState("");
-  const [aiMessages, setAiMessages] = useState([]); // ✅ store AI messages
+  const [aiMessages, setAiMessages] = useState([]);
 
   const chatEndRef = useRef(null);
+  
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [aiMessages]);
+  }, [currentMessages, aiMessages]);
 
   const list = useMemo(
     () => (activeTab === "patients" ? patients : doctors),
@@ -38,9 +38,10 @@ const ChatLayout = ({
 
   const filtered = useMemo(() => {
     if (!search.trim()) return list;
-    return list.filter((l) =>
-      (l.full_name || l.name || "").toLowerCase().includes(search.toLowerCase())
-    );
+    return list.filter((l) => {
+      const name = l.other_participant?.full_name || l.name || "";
+      return name.toLowerCase().includes(search.toLowerCase());
+    });
   }, [list, search]);
 
   const handleSelect = (item) => {
@@ -62,44 +63,45 @@ const ChatLayout = ({
       setMessageText("");
 
       try {
-        // 🔥 Call Gemini API
         const aiResponse = await generateContent(query);
-
         setAiMessages((prev) => {
           const updated = [...prev];
-          updated.pop(); // remove "..." placeholder
+          updated.pop();
           return [...updated, { sender: "ai", text: aiResponse }];
         });
       } catch (err) {
         console.error("AI Chat Error:", err);
         setAiMessages((prev) => {
           const updated = [...prev];
-          updated.pop(); // remove "..." placeholder
+          updated.pop();
           return [
             ...updated,
             {
               sender: "ai",
-              text: "⚠️ Sorry, I couldn’t process that. Please try again.",
+              text: "⚠️ Sorry, I couldn't process that. Please try again.",
             },
           ];
         });
       }
     } else {
-      // Handle normal chat
       if (!messageText.trim() || !selected) return;
-      onSendMessage(messageText.trim(), selected);
+      onSendMessage(messageText.trim(), selected.id);
       setMessageText("");
     }
+  };
+
+  const formatTime = (timestamp) => {
+    const date = new Date(timestamp);
+    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   };
 
   return (
     <div className="flex h-full bg-white overflow-hidden">
       {/* LEFT PANEL */}
-      <div className="w-98 border-r border-gray-200 flex flex-col bg-white h-full">
-        {/* Doctor Name Header */}
+      <div className="w-96 border-r border-gray-200 flex flex-col bg-white h-full">
         <div className="p-4 pb-2">
           <h3 className="text-lg font-semibold text-gray-800">
-            {userName || "Doctor"}
+            {userName || "User"}
           </h3>
         </div>
         
@@ -127,8 +129,8 @@ const ChatLayout = ({
           </div>
         </div>
 
-        <div className="flex bg-gray-100 mx-4 rounded-lg p-1">
-          {role === "doctor" && (
+        {role === "doctor" && (
+          <div className="flex bg-gray-100 mx-4 rounded-lg p-1">
             <button
               className={`flex-1 py-2 text-sm font-medium rounded-md ${
                 activeTab === "patients"
@@ -139,58 +141,86 @@ const ChatLayout = ({
             >
               Patients
             </button>
-          )}
-          <button
-            className={`flex-1 py-2 text-sm font-medium rounded-md ${
-              activeTab === "doctors"
-                ? "bg-blue-500 text-white"
-                : "text-gray-600 hover:text-gray-800"
-            }`}
-            onClick={() => setActiveTab("doctors")}
-          >
-            Doctors
-          </button>
-        </div>
+            <button
+              className={`flex-1 py-2 text-sm font-medium rounded-md ${
+                activeTab === "doctors"
+                  ? "bg-blue-500 text-white"
+                  : "text-gray-600 hover:text-gray-800"
+              }`}
+              onClick={() => setActiveTab("doctors")}
+            >
+              Doctors
+            </button>
+          </div>
+        )}
 
         <div className="flex-1 overflow-y-auto px-4 pt-4">
-          {filtered.map((item) => (
-            <div
-              key={item.id}
-              onClick={() => handleSelect(item)}
-              className={`flex items-center p-3 cursor-pointer mb-2 rounded-lg transition-colors ${
-                selected?.id === item.id ? "bg-blue-50" : "hover:bg-gray-50"
-              }`}
-            >
-              <div className="flex items-center justify-center w-10 h-10 rounded-full bg-gray-200 mr-3">
-                <span className="text-gray-600 font-medium text-sm">
-                  {(item.full_name || item.name || "?").charAt(0).toUpperCase()}
-                </span>
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="font-medium text-sm text-gray-900 truncate">
-                  {item.full_name || item.name}
-                </p>
-                <p className="text-xs text-gray-500 truncate">
-                  {item.last_message || "No messages yet"}
-                </p>
-              </div>
-            </div>
-          ))}
+          {filtered.map((item) => {
+            // Safe extraction of name
+// const rawName =
+//   item.other_participant?.full_name ||
+//   item.doctor?.full_name || 
+//   item.other_participant?.name ||
+//   item.name ||
+//   "Unknown";
+
+// Convert to safe string
+const displayName =
+  item.other_participant?.full_name ||
+  item.name ||
+  "Unknown";
+
+
+
+// Extract last message safely
+const lastMessage =
+  item.last_message?.content ||
+  item.last_message ||
+  "No messages yet";
+
+            return (
+      <div
+        key={item.id}
+        onClick={() => handleSelect(item)}
+        className={`flex items-center p-3 cursor-pointer mb-2 rounded-lg transition-colors ${
+          selected?.id === item.id ? "bg-blue-50" : "hover:bg-gray-50"
+        }`}
+      >
+        <div className="flex items-center justify-center w-10 h-10 rounded-full bg-gray-200 mr-3">
+          <span className="text-gray-600 font-medium text-sm">
+           {displayName[0]?.toUpperCase() || "U"}
+          </span>
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="font-medium text-sm text-gray-900 truncate">
+            {displayName}
+          </p>
+          <p className="text-xs text-gray-500 truncate">
+            {lastMessage}
+          </p>
+        </div>
+        {item.unread_count > 0 && (
+          <span className="bg-blue-500 text-white text-xs rounded-full px-2 py-1">
+            {item.unread_count}
+          </span>
+        )}
+      </div>
+    );
+})}
         </div>
 
-        {/* Chat with AI Button at Bottom */}
-        <div className="px-35 py-4">
+        <div className="px-4 py-4 border-t">
           {!showAiChat ? (
             <button
               onClick={onOpenAiChat}
-              className="w-40 bg-blue-600 hover:bg-blue-700 text-white px-4 py-3 rounded-lg flex items-center justify-center gap-2 font-medium transition-all duration-200"
+              className="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-3 rounded-lg flex items-center justify-center gap-2 font-medium transition-all duration-200"
             >
               🤖 Chat with AI
             </button>
           ) : (
             <button
               onClick={onCloseAiChat}
-              className="w-40 bg-gray-600 hover:bg-gray-700 text-white px-4 py-3 rounded-lg flex items-center justify-center gap-2 font-medium transition-all duration-200"
+              className="w-full bg-gray-600 hover:bg-gray-700 text-white px-4 py-3 rounded-lg flex items-center justify-center gap-2 font-medium transition-all duration-200"
             >
               ← Back to Chats
             </button>
@@ -200,11 +230,10 @@ const ChatLayout = ({
 
       {/* RIGHT PANEL */}
       <div className="flex-1 flex flex-col bg-gray-50 h-full overflow-hidden">
-        {/* ✅ IF AI CHAT ENABLED */}
         {showAiChat ? (
           <>
-            <div className="p-4 bg-white">
-              <h2 className="font-semibold text-gray-800 text-lg">Medbot</h2>
+            <div className="p-4 bg-white border-b">
+              <h2 className="font-semibold text-gray-800 text-lg">MedBot AI Assistant</h2>
             </div>
 
             <div className="flex-1 flex flex-col bg-white overflow-hidden">
@@ -212,7 +241,7 @@ const ChatLayout = ({
                 <div className="flex-1 flex items-center justify-center text-center">
                   <div>
                     <h3 className="text-2xl font-semibold text-blue-600 mb-2">
-                      Good evening, {userName || "Doctor"}
+                      Hello, {userName || "User"}
                     </h3>
                     <p className="text-gray-600 text-lg">How may I help you?</p>
                   </div>
@@ -246,7 +275,6 @@ const ChatLayout = ({
               )}
             </div>
 
-            {/* Input */}
             <div className="bg-white border-t border-gray-200 p-3">
               <div className="flex items-center gap-3">
                 <input
@@ -254,7 +282,7 @@ const ChatLayout = ({
                   value={messageText}
                   onChange={(e) => setMessageText(e.target.value)}
                   onKeyDown={(e) => e.key === "Enter" && handleSend()}
-                  placeholder="Message"
+                  placeholder="Ask me anything..."
                   className="flex-1 px-4 py-2 border border-gray-300 rounded-full focus:ring-2 focus:ring-blue-500 outline-none"
                 />
                 <button
@@ -262,53 +290,59 @@ const ChatLayout = ({
                   disabled={!messageText.trim()}
                   className="p-2 rounded-full hover:bg-gray-100 disabled:opacity-50 transition-colors"
                 >
-                  <img
-                    src={sendBtn}
-                    alt="Send"
-                    className="w-6 h-6 opacity-750"
-                  />
+                  <img src={sendBtn} alt="Send" className="w-6 h-6 opacity-75" />
                 </button>
               </div>
             </div>
           </>
         ) : (
-          // Normal doctor-patient chat (your existing code here)
           <>
             {selected ? (
               <>
-                {/* Chat header and messages */}
                 <div className="p-4 border-b bg-white">
                   <h2 className="font-semibold text-gray-800">
-                    {selected.full_name || selected.name}
+                    {selected.other_participant?.full_name || selected.name}
+
                   </h2>
                 </div>
                 <div className="flex-1 overflow-y-auto p-4 space-y-3">
-                  {currentChat.length > 0 ? (
-                    currentChat.map((m, i) => (
-                      <div
-                        key={i}
-                        className={`flex ${
-                          m.sender_id !== selected.id
-                            ? "justify-end"
-                            : "justify-start"
-                        }`}
-                      >
+                  {currentMessages.length > 0 ? (
+                    currentMessages.map((msg) => {
+                      const currentUserId = JSON.parse(localStorage.getItem("user"))?.id;
+
+const isCurrentUser =
+  msg.sender_id === currentUserId;
+
+                      return (
                         <div
-                          className={`px-4 py-2 rounded-2xl text-sm max-w-xs ${
-                            m.sender_id !== selected.id
-                              ? "bg-blue-500 text-white"
-                              : "bg-white border border-gray-200 text-gray-800"
+                          key={msg.id}
+                          className={`flex ${
+                            isCurrentUser ? "justify-end" : "justify-start"
                           }`}
                         >
-                          {m.content || m.text}
+                          <div className="max-w-xs">
+                            <div
+                              className={`px-4 py-2 rounded-2xl text-sm ${
+                                isCurrentUser
+                                  ? "bg-blue-500 text-white"
+                                  : "bg-white border border-gray-200 text-gray-800"
+                              }`}
+                            >
+                              {msg.content}
+                            </div>
+                            <div className="text-xs text-gray-500 mt-1 px-2">
+                              {formatTime(msg.timestamp)}
+                            </div>
+                          </div>
                         </div>
-                      </div>
-                    ))
+                      );
+                    })
                   ) : (
                     <p className="text-center text-gray-500 mt-6">
-                      No messages yet.
+                      No messages yet. Start the conversation!
                     </p>
                   )}
+                  <div ref={chatEndRef} />
                 </div>
 
                 <div className="bg-white border-t p-3">
@@ -352,7 +386,7 @@ const ChatLayout = ({
                     className="w-20 h-20 mb-4 opacity-100"
                   />
                   <p className="text-gray-600 text-lg">
-                    Your messages will be displayed here
+                    Select a chat to start messaging
                   </p>
                 </div>
               </div>

@@ -9,6 +9,7 @@ import appointmentIcon from '../../assets/appointment.svg';
 import chatsIcon from '../../assets/chat.svg';
 import profileIcon from '../../assets/profile.svg';
 import blogIcon from '../../assets/blog.svg';
+import { fetchDoctorPatients } from "../../redux/features/chatSlice";
 
 const doctorSidebarItems = [
     { label: 'Dashboard', to: '/doctor/dashboard', icon: homeIcon },
@@ -126,11 +127,17 @@ const DoctorAppointment = () => {
     setActionLoading(appointmentId);
     try {
         await dispatch(acceptAppointmentRequest(appointmentId)).unwrap();
-        showToast.success("Appointment accepted successfully!");
+        showToast.success("Appointment accepted! Chat enabled with patient.");
         
-        // Refresh both lists
+        // Refresh appointment lists
         dispatch(fetchDoctorRequests());
         dispatch(fetchDoctorConfirmedAppointments());
+        
+        // ✅ Refresh chat lists
+        console.log("🔄 Refreshing doctor's patient chat list...");
+        await dispatch(fetchDoctorPatients()).unwrap();
+        console.log("✅ Chat list refreshed");
+        
     } catch (error) {
         console.error("Error accepting appointment:", error);
         showToast.error(error.message || "Failed to accept appointment");

@@ -1,45 +1,46 @@
 import { createSlice } from "@reduxjs/toolkit";
-import { connectSocket, disconnectSocket, getSocket } from "../../utils/socket";
+import { connectSocket, disconnectSocket } from "../../utils/socket";
 
 const socketSlice = createSlice({
   name: "socket",
   initialState: {
-    socket: null,
     isConnected: false,
-    liveMessages: [],
+    currentRoomId: null,
+    error: null,
   },
   reducers: {
-    connectSocketAction: (state, action) => {
-      const userId = action.payload;
-      state.socket = connectSocket(userId);
+    setSocketConnected: (state, action) => {
       state.isConnected = true;
+      state.currentRoomId = action.payload;
+      state.error = null;
     },
-    disconnectSocketAction: (state) => {
-      disconnectSocket();
-      state.socket = null;
+    setSocketDisconnected: (state) => {
       state.isConnected = false;
+      state.currentRoomId = null;
+      state.error = null;
     },
-    receiveLiveMessage: (state, action) => {
-      state.liveMessages.push(action.payload);
-    },
-    sendLiveMessage: (state, action) => {
-      const socket = getSocket();
-      if (socket && socket.readyState === WebSocket.OPEN) {
-        socket.send(JSON.stringify(action.payload));
-        state.liveMessages.push(action.payload); 
-      }
-    },
-    clearLiveMessages: (state) => {
-      state.liveMessages = [];
+    setSocketError: (state, action) => {
+      state.error = action.payload;
+      state.isConnected = false;
     },
   },
 });
 
-export const {
-  connectSocketAction,
-  disconnectSocketAction,
-  receiveLiveMessage,
-  sendLiveMessage,
-  clearLiveMessages,
-} = socketSlice.actions;
+export const { setSocketConnected, setSocketDisconnected, setSocketError } = socketSlice.actions;
+
+// Thunk actions for socket operations
+export const connectSocketAction = (roomId) => (dispatch) => {
+  try {
+    connectSocket(roomId, dispatch);
+    dispatch(setSocketConnected(roomId));
+  } catch (error) {
+    dispatch(setSocketError(error.message));
+  }
+};
+
+export const disconnectSocketAction = () => (dispatch) => {
+  disconnectSocket();
+  dispatch(setSocketDisconnected());
+};
+
 export default socketSlice.reducer;

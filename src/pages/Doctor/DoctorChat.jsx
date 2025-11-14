@@ -2,52 +2,73 @@ import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import ChatLayout from "../../components/Layout/ChatLayout";
 import DashboardLayout from "../../components/Layout/DashboardLayout";
-import homeIcon from '../../assets/dashboard.svg';
-import appointmentIcon from '../../assets/appointment.svg';
-import chatsIcon from '../../assets/chat.svg';
-import profileIcon from '../../assets/profile.svg';
-import blogIcon from '../../assets/blog.svg';
+import DoctorConnectionManager from "../../components/shared/DoctorConnectionManager";
+import homeIcon from "../../assets/dashboard.svg";
+import appointmentIcon from "../../assets/appointment.svg";
+import chatsIcon from "../../assets/chat.svg";
+import profileIcon from "../../assets/profile.svg";
+import blogIcon from "../../assets/blog.svg";
 import {
   connectSocketAction,
   disconnectSocketAction,
-  sendLiveMessage,
 } from "../../redux/features/socketSlice";
 import {
-  fetchChatDoctors,
-  fetchChatPatients,
-  fetchChatHistory,
+  fetchDoctorPatients,
+  fetchDoctorDoctors,
+  fetchChatRoomDetails,
+  clearCurrentChat,
 } from "../../redux/features/chatSlice";
-import axiosInstance from "../../api/axiosInstance";
+import { sendSocketMessage } from "../../utils/socket";
 
 const DoctorChat = () => {
   const dispatch = useDispatch();
   const { user } = useSelector((state) => state.auth);
-  const { chatDoctors, chatPatients, currentChat } = useSelector((state) => state.chat);
+  const { doctorPatients, doctorDoctors, currentMessages } = useSelector(
+    (state) => state.chat
+  );
+  const [showAiChat, setShowAiChat] = useState(false);
+  const [selectedChatRoom, setSelectedChatRoom] = useState(null);
 
-  const [showAiChat, setShowAiChat] = useState(false); // ✅ AI Chat state
+  // In DoctorChat.jsx, update useEffect:
 
-  useEffect(() => {
+useEffect(() => {
     if (user?.id) {
-      dispatch(connectSocketAction(user.id));
-      dispatch(fetchChatDoctors());
-      dispatch(fetchChatPatients());
+      console.log("🔄 Fetching doctor's chat lists...");
+      dispatch(fetchDoctorPatients()).then((result) => {
+        console.log("✅ Doctor's patients:", result.payload);
+      });
+      dispatch(fetchDoctorDoctors()).then((result) => {
+        console.log("✅ Doctor's doctor chats:", result.payload);
+      });
     }
-    return () => dispatch(disconnectSocketAction());
   }, [dispatch, user?.id]);
 
-  // When selecting any patient/doctor → close AI Chat
-  const handleSelectChat = (chat) => {
+  useEffect(() => {
+    return () => {
+      dispatch(disconnectSocketAction());
+      dispatch(clearCurrentChat());
+    };
+  }, [dispatch]);
+
+  const handleSelectChat = async (chatRoom) => {
     setShowAiChat(false);
-    if (chat.id) dispatch(fetchChatHistory(chat.id));
+    setSelectedChatRoom(chatRoom);
+
+    // Disconnect from previous room
+    dispatch(disconnectSocketAction());
+
+    // Fetch chat room details (includes messages)
+    await dispatch(fetchChatRoomDetails(chatRoom.id));
+
+    // Connect to WebSocket for this room
+    dispatch(connectSocketAction(chatRoom.id));
   };
 
-  // Send normal message
-  const handleSendMessage = async (text, receiverId) => {
-    dispatch(sendLiveMessage({ sender: user.id, receiver: receiverId, text }));
-    if (receiverId)
-      await axiosInstance.post(`/chat/rooms/${receiverId}/messages/`, {
-        content: text,
-      });
+  const handleSendMessage = (text, roomId) => {
+    if (!text.trim() || !roomId) return;
+    
+    // Send via WebSocket
+    sendSocketMessage(text);
   };
 
   const sidebarItems = [
@@ -63,17 +84,20 @@ const DoctorChat = () => {
       <ChatLayout
         role="doctor"
         userName={`Dr. ${user?.first_name || ""}`}
-        doctors={chatDoctors}
-        patients={chatPatients}
-        currentChat={currentChat}
+        doctors={doctorDoctors}
+        patients={doctorPatients}
+        currentMessages={currentMessages}
         onSelectChat={handleSelectChat}
         onSendMessage={handleSendMessage}
-        showAiChat={showAiChat}           // ✅ pass AI chat flag
+        showAiChat={showAiChat}
         onCloseAiChat={() => setShowAiChat(false)}
-        onOpenAiChat={() => setShowAiChat(true)}  // ✅ pass function to open AI chat
+        onOpenAiChat={() => {
+          setShowAiChat(true);
+          setSelected(null);
+          dispatch(disconnectSocketAction());
+          dispatch(clearCurrentChat());
+        }}
       />
-
-
     </DashboardLayout>
   );
 };
