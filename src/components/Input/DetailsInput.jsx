@@ -1,6 +1,5 @@
 import React from "react";
 
-// CSS to prevent autofill styling while preserving focus ring
 const autofillStyles = `
   input:-webkit-autofill,
   input:-webkit-autofill:hover,

@@ -10,11 +10,13 @@ import chatsIcon from '../../assets/chat.svg';
 import profileIcon from '../../assets/profile.svg';
 import blogIcon from '../../assets/blog.svg';
 import { fetchDoctorPatients } from "../../redux/features/chatSlice";
+import { FileText } from "lucide-react";
 
 const doctorSidebarItems = [
     { label: 'Dashboard', to: '/doctor/dashboard', icon: homeIcon },
     { label: 'Appointments', to: '/doctor/appointments', icon: appointmentIcon },
     { label: 'Chats', to: '/doctor/chats', icon: chatsIcon },
+    { label: 'Prescriptions', to: '/doctor/prescriptions', icon: <FileText className="w-5 h-5" /> },
     { label: 'Blogs', to: '/doctor/blogs', icon: blogIcon },
     { label: 'Profile', to: '/doctor/profile', icon: profileIcon },
 ];

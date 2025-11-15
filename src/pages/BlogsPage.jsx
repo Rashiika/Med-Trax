@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom'; 
 import { useDispatch, useSelector } from 'react-redux';
+import { FileText } from 'lucide-react';
 import DashboardLayout from '../components/Layout/DashboardLayout'; 
 import { fetchPosts, toggleLikePost } from '../redux/features/communitySlice';
 import { showToast } from '../components/Toast'; 
@@ -81,6 +82,7 @@ const BlogsPage = () => {
             { label: 'Dashboard', to: `${rolePrefix}/dashboard`, icon: homeIcon },
             { label: 'Appointments', to: `${rolePrefix}/appointments`, icon: appointmentIcon },
             { label: 'Chats', to: `${rolePrefix}/chats`, icon: chatsIcon },
+            { label: 'Prescriptions', to: '/doctor/prescriptions', icon: <FileText className="w-5 h-5" /> },
             { label: 'Blogs', to: `${rolePrefix}/blogs`, icon: blogIcon },
             { label: 'Profile', to: `${rolePrefix}/profile`, icon: profileIcon },
         ];

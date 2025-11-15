@@ -46,11 +46,10 @@ const DashboardLayout = ({ sidebarItems = [], children, role = "patient" }) => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
-  const handleLogoutConfirm = () => {
-    dispatch(logout());
-    localStorage.clear();
-    navigate("/login");
-  };
+const handleLogoutConfirm = () => {
+  dispatch(logout());
+  navigate("/login");
+};
 
   return (
     <div className="flex h-screen bg-gray-50">

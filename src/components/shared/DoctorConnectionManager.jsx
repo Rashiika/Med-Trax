@@ -9,7 +9,7 @@ import {
   clearSearchResults,
 } from "../../redux/features/chatSlice";
 
-const DoctorConnectionManager = ({ onClose }) => {
+const DoctorConnectionManager = ({ onClose, onConnectionAccepted }) => {
   const dispatch = useDispatch();
   const { searchResults, pendingRequests, loading } = useSelector(
     (state) => state.chat
@@ -27,19 +27,45 @@ const DoctorConnectionManager = ({ onClose }) => {
     }
   };
 
-  const handleSendRequest = async (doctorId) => {
-    await dispatch(sendConnectionRequest(doctorId));
-    alert("Connection request sent!");
-  };
+const handleSendRequest = async (doctorId) => {
+  try {
+    await dispatch(sendConnectionRequest(doctorId)).unwrap();
+    setSearchResults(prev => 
+      prev.map(doc => 
+        doc.id === doctorId 
+          ? { ...doc, requestSent: true } 
+          : doc
+      )
+    );
+    alert("✅ Connection request sent successfully!");
+  } catch (error) {
+    const errorMsg = error?.error || error?.message || "Failed to send request";
+    alert(`❌ ${errorMsg}`);
+  }
+};
+
 
   const handleAccept = async (requestId) => {
-    await dispatch(acceptConnectionRequest(requestId));
-    alert("Connection accepted!");
+    try {
+      await dispatch(acceptConnectionRequest(requestId)).unwrap();
+      alert("Connection accepted!");
+      
+      // ✅ Notify parent to reload doctor list
+      if (onConnectionAccepted) {
+        onConnectionAccepted();
+      }
+    } catch (error) {
+      alert("Failed to accept connection");
+    }
   };
 
   const handleReject = async (requestId) => {
-    await dispatch(rejectConnectionRequest(requestId));
-    alert("Connection rejected!");
+    try {
+      await dispatch(rejectConnectionRequest(requestId)).unwrap();
+      alert("Connection rejected!");
+    } catch (error) {
+      alert("Failed to reject connection");
+    }
   };
 
   return (
@@ -112,12 +138,26 @@ const DoctorConnectionManager = ({ onClose }) => {
                           {doctor.specialization}
                         </p>
                       </div>
-                      <button
-                        onClick={() => handleSendRequest(doctor.id)}
-                        className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-sm"
-                      >
-                        Connect
-                      </button>
+<button
+  onClick={() => handleSendRequest(doctor.id)}
+  disabled={doctor.requestSent}
+  className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+    doctor.requestSent 
+      ? 'bg-gray-300 text-gray-600 cursor-not-allowed'
+      : 'bg-blue-600 text-white hover:bg-blue-700'
+  }`}
+>
+  {doctor.requestSent ? (
+    <span className="flex items-center gap-1">
+      <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"/>
+      </svg>
+      Request Sent
+    </span>
+  ) : (
+    'Connect'
+  )}
+</button>
                     </div>
                   ))}
                 </div>

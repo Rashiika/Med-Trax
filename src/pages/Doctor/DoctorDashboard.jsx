@@ -9,14 +9,15 @@ import appointmentIcon from '../../assets/appointment.svg';
 import chatsIcon from '../../assets/chat.svg';
 import profileIcon from '../../assets/profile.svg';
 import blogIcon from '../../assets/blog.svg';
-import prescriptionIcon from '../../assets/Prescription.svg';
+import { FileText } from "lucide-react";
+
 
 const doctorSidebarItems = [
     { label: 'Dashboard', to: '/doctor/dashboard', icon: homeIcon },
     { label: 'Appointments', to: '/doctor/appointments', icon: appointmentIcon },
     { label: 'Chats', to: '/doctor/chats', icon: chatsIcon },
+    { label: 'Prescriptions', to: '/doctor/prescriptions', icon: <FileText className="w-5 h-5" /> },
     { label: 'Blogs', to: '/doctor/blogs', icon: blogIcon },
-    { label: 'Prescription', to: '/doctor/prescription', icon: prescriptionIcon },
     { label: 'Profile', to: '/doctor/profile', icon: profileIcon },
 ];
 
@@ -79,7 +80,7 @@ const DoctorDashboard = () => {
     const statsData = {
         today: doctorStats?.total_appointments_today || 0,
         pending: doctorStats?.pending_appointments || 0,
-        patients: doctorStats?.total_patients || 0,
+        upcoming: doctorStats?.upcoming_appointments || 0,
         completed: doctorStats?.completed_appointments || 0,
         rating: doctorStats?.average_rating?.toFixed(1) || 'N/A',
         reviews: doctorStats?.total_reviews || 0,
@@ -135,12 +136,12 @@ const DoctorDashboard = () => {
                         <p className="text-4xl font-extrabold text-gray-800 mt-2">{statsData.pending}</p>
                     </div>
                  
-                    <div className="bg-white p-6 rounded-xl shadow-md border-b-4 border-purple-500">
-                        <p className="text-sm text-gray-600 font-medium flex items-center gap-1">
-                            <Users className="w-4 h-4 text-purple-500" /> Total Patients
-                        </p>
-                        <p className="text-4xl font-extrabold text-gray-800 mt-2">{statsData.patients}</p>
-                    </div>
+<div className="bg-white p-6 rounded-xl shadow-md border-b-4 border-purple-500">
+    <p className="text-sm text-gray-600 font-medium flex items-center gap-1">
+        <Users className="w-4 h-4 text-purple-500" /> Upcoming Appointments
+    </p>
+    <p className="text-4xl font-extrabold text-gray-800 mt-2">{statsData.upcoming}</p>
+</div>
 
                     <div className="bg-white p-6 rounded-xl shadow-md border-b-4 border-blue-500">
                         <p className="text-sm text-gray-600 font-medium">Completed Appointments</p>

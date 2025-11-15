@@ -43,6 +43,34 @@ export const fetchDoctorProfile = createAsyncThunk(
     }
 );
 
+export const updatePatientProfile = createAsyncThunk(
+    "user/updatePatientProfile",
+    async (formData, { rejectWithValue }) => {
+        try {
+            const response = await axiosInstance.put(`/patient/dashboard/profile/update/`, formData);
+            console.log(response)
+            return response.data;
+        } catch (error) {
+            console.log(error)
+            return rejectWithValue(error.response?.data || "Failed to update patient profile");
+        }
+    }
+);
+
+export const updateDoctorProfile = createAsyncThunk(
+    "user/updateDoctorProfile",
+    async (formData, { rejectWithValue }) => {
+        try {
+            const response = await axiosInstance.put(`/doctor/dashboard/profile/update/`, formData);
+            console.log(response)
+            return response.data;
+        } catch (error) {
+            console.log(error)
+            return rejectWithValue(error.response?.data || "Failed to update doctor profile");
+        }
+    }
+);
+
 const userSlice = createSlice({
   name: "user",
   initialState: {
@@ -58,10 +86,14 @@ const userSlice = createSlice({
             .addCase(fetchPatientProfile.pending, (state) => { state.loading = true; state.error = null; })
             .addCase(fetchRecentReviews.pending, (state) => { state.loading = true; state.error = null; })
             .addCase(fetchDoctorProfile.pending, (state) => { state.loading = true; state.error = null; })
+            .addCase(updatePatientProfile.pending, (state) => { state.loading = true; state.error = null; })
+            .addCase(updateDoctorProfile.pending, (state) => { state.loading = true; state.error = null; })
 
             .addCase(fetchPatientProfile.rejected, (state, action) => { state.loading = false; state.error = action.payload; })
             .addCase(fetchRecentReviews.rejected, (state, action) => { state.loading = false; state.error = action.payload; })
             .addCase(fetchDoctorProfile.rejected, (state, action) => { state.loading = false; state.error = action.payload; })
+            .addCase(updatePatientProfile.rejected, (state, action) => { state.loading = false; state.error = action.payload; })
+            .addCase(updateDoctorProfile.rejected, (state, action) => { state.loading = false; state.error = action.payload; })
 
             .addCase(fetchPatientProfile.fulfilled, (state, action) => {
                 state.loading = false;
@@ -76,6 +108,16 @@ const userSlice = createSlice({
             .addCase(fetchRecentReviews.fulfilled, (state, action) => {
                 state.loading = false;
                 state.recentReviews = action.payload;
+            })
+
+            .addCase(updatePatientProfile.fulfilled, (state, action) => {
+                state.loading = false;
+                state.patientProfile = action.payload;
+            })
+
+            .addCase(updateDoctorProfile.fulfilled, (state, action) => {
+                state.loading = false;
+                state.doctorProfile = action.payload;
             });
     }
 });

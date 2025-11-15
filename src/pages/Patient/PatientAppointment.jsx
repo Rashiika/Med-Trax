@@ -3,7 +3,7 @@ import { Calendar, User, X } from "lucide-react";
 import { useSelector, useDispatch } from "react-redux";
 import axiosInstance from "../../api/axiosInstance"; 
 import { useNavigate } from "react-router-dom";
-import { fetchAvailableDoctors ,bookAppointment} from "../../redux/features/appointmentSlice";
+import { fetchAvailableDoctors, bookAppointment } from "../../redux/features/appointmentSlice";
 import DashboardLayout from "../../components/Layout/DashboardLayout";
 import { showToast } from "../../components/Toast"; 
 import homeIcon from '../../assets/dashboard.svg';
@@ -11,16 +11,17 @@ import appointmentIcon from '../../assets/appointment.svg';
 import chatsIcon from '../../assets/chat.svg';
 import profileIcon from '../../assets/profile.svg';
 import blogIcon from '../../assets/blog.svg';
+import { FileText } from "lucide-react"; 
 
 
 const patientSidebarItems = [
     { label: "Dashboard", to: "/patient/dashboard", icon: homeIcon },
     { label: "Appointments", to: "/patient/appointments", icon: appointmentIcon },
     { label: "Chats", to: "/patient/chats", icon: chatsIcon },
+    { label: "Prescriptions", to: "/patient/prescriptions", icon: <FileText className="w-5 h-5" /> },
     { label: "Blogs", to: "/patient/blogs", icon: blogIcon },
     { label: "Profile", to: "/patient/profile", icon: profileIcon },
 ];
-
 
 const PatientAppointment = () => {
     const dispatch = useDispatch();
@@ -83,22 +84,31 @@ const PatientAppointment = () => {
             const resultAction = await dispatch(bookAppointment(appointmentData)).unwrap(); 
 
             console.log("Booking success:", resultAction);
-            showToast.success(resultAction.message || "Appointment request sent successfully! The doctor will review your request.");
+            showToast.success(
+                "Appointment request sent! Once the doctor accepts, you'll be able to chat with them."
+            );
             setShowBookingModal(false);
             resetBookingForm();
         } catch (error) {
-            console.error("Booking error:", error);
+    console.error("Booking error:", error);
 
-            const errorMessage = error.detail 
-                || error.message 
-                || "Failed to book appointment. Please try again.";
+    let errorMessage = "Failed to book appointment. Please try again.";
 
-            showToast.error(errorMessage);
-        } finally {
-            setBookingLoading(false);
-        }
-    };
+    if (error.doctor && Array.isArray(error.doctor)) {
+        errorMessage = error.doctor[0];
+    } else if (error.doctor) {
+        errorMessage = error.doctor;
+    } else if (error.detail) {
+        errorMessage = error.detail;
+    } else if (error.message) {
+        errorMessage = error.message;
+    }
 
+    showToast.error(errorMessage);
+} finally {
+    setBookingLoading(false);
+}
+};
     const resetBookingForm = () => {
         setSelectedDoctor(null);
         setSelectedDate("");
@@ -106,7 +116,6 @@ const PatientAppointment = () => {
         setSelectedSlot(null);
         setReason("");
     };
-
 
     const openBookingModal = (doctor) => {
         setSelectedDoctor(doctor);
@@ -155,12 +164,8 @@ const PatientAppointment = () => {
         );
     }
 
-
-
     return (
-        // 4. Wrap the entire component's content in the shared DashboardLayout
         <DashboardLayout sidebarItems={patientSidebarItems} role="patient">
-            {/* Main Content (formerly the entire body of the function) */}
             <div className="max-w-7xl mx-auto">
                 {/* Header */}
                 <div className="mb-8">
@@ -194,7 +199,7 @@ const PatientAppointment = () => {
                                         Dr. {doctor.full_name}
                                     </h3>
                                     <div className="flex items-center gap-2 mb-4">
-                                        <Calendar className="w-4 h-4 text-teal-600" /> {/* Using Calendar as a generic icon placeholder */}
+                                        <Calendar className="w-4 h-4 text-teal-600" />
                                         <p className="text-teal-600 font-semibold">
                                             {doctor.specialization || "General Physician"}
                                         </p>
@@ -202,7 +207,7 @@ const PatientAppointment = () => {
 
                                     {doctor.years_of_experience && (
                                         <div className="flex items-center gap-2 text-gray-600 mb-2">
-                                            <Calendar className="w-4 h-4" /> {/* Using Calendar as a generic icon placeholder */}
+                                            <Calendar className="w-4 h-4" />
                                             <span className="text-sm">
                                                 {doctor.years_of_experience} years experience
                                             </span>
@@ -232,7 +237,7 @@ const PatientAppointment = () => {
                 )}
             </div>
 
-            {/* Booking Modal (remains outside the main content wrapper, but inside the component) */}
+            {/* Booking Modal */}
             {showBookingModal && selectedDoctor && (
                 <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
                     <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
@@ -324,7 +329,6 @@ const PatientAppointment = () => {
                                     )}
                                 </div>
                             )}
-
 
                             <div>
                                 <label className="block text-gray-700 font-semibold mb-2">
