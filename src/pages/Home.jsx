@@ -381,9 +381,6 @@ const Home = () => {
               >
                 Get Started Free
               </button>
-              <button className="px-8 py-3 border-2 border-white text-white rounded-full font-semibold hover:bg-white hover:text-blue-600 transition-colors duration-300">
-                Watch Demo
-              </button>
             </div>
           </div>
         </div>
