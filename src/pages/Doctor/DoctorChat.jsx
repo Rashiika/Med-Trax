@@ -8,6 +8,7 @@ import appointmentIcon from "../../assets/appointment.svg";
 import chatsIcon from "../../assets/chat.svg";
 import profileIcon from "../../assets/profile.svg";
 import blogIcon from "../../assets/blog.svg";
+import prescriptionIcon from "../../assets/Prescription.svg";
 import {
   connectSocketAction,
   disconnectSocketAction,
@@ -76,6 +77,7 @@ useEffect(() => {
     { label: "Appointments", to: "/doctor/appointments", icon: appointmentIcon },
     { label: "Chats", to: "/doctor/chats", icon: chatsIcon },
     { label: "Blogs", to: "/doctor/blogs", icon: blogIcon },
+    { label: "Prescription", to: "/doctor/prescription", icon: prescriptionIcon },
     { label: "Profile", to: "/doctor/profile", icon: profileIcon },
   ];
 
@@ -93,7 +95,7 @@ useEffect(() => {
         onCloseAiChat={() => setShowAiChat(false)}
         onOpenAiChat={() => {
           setShowAiChat(true);
-          setSelected(null);
+          setSelectedChatRoom(null);
           dispatch(disconnectSocketAction());
           dispatch(clearCurrentChat());
         }}

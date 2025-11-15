@@ -199,18 +199,46 @@ export const completeProfile = createAsyncThunk(
   }
 );
 
+export const checkAuth = createAsyncThunk(
+  "auth/checkAuth",
+  async (_, { rejectWithValue }) => {
+    try {
+      console.log('🔍 Verifying authentication token...');
+      const response = await axiosInstance.get("/auth/verify-token/");
+      
+      if (response.data && response.data.success && response.data.user) {
+        console.log('✅ Authentication verified successfully:', response.data.user);
+        return response.data.user; // backend returns user object inside "user"
+      } else {
+        console.log('❌ Invalid response structure from verify-token');
+        return rejectWithValue(null);
+      }
+    } catch (error) {
+      console.log('❌ Authentication verification failed:', error.response?.status);
+      // Clear tokens if verification fails
+      if (error.response?.status === 401) {
+        localStorage.removeItem('access');
+        localStorage.removeItem('refresh');
+      }
+      return rejectWithValue(null);
+    }
+  }
+);
+
+
+
 const authSlice = createSlice({
   name: "auth",
   initialState: {
-  user: null,
-  role: null,
-  isAuthenticated: false,
-  isProfileComplete: false,
-  isAuthReady: false,
-  loading: false,
-  error: null,
-  message: "",
-},
+    user: null,
+    role: null,
+    isAuthenticated: false,
+    isProfileComplete: false,
+    isAuthReady: false,
+    loading: false,
+    error: null,
+    message: "",
+  },
 
  reducers: {
   logout: (state) => {
@@ -285,16 +313,26 @@ const authSlice = createSlice({
         state.error = null;
       })
       .addCase(loginUser.fulfilled, (state, action) => {
-        state.loading = false;
-        state.role = action.payload.role;
-        state.isAuthenticated = true;
-        state.isProfileComplete = action.payload.is_profile_complete !== false; 
-        state.user = action.payload.user || {
-          email: action.payload.email,
-          role: action.payload.role
-        };
-        state.message = action.payload.message || "Login successful";
-      })
+  state.loading = false;
+
+  // ⭐ STORE TOKEN FOR WEBSOCKET & FUTURE AUTH
+  if (action.payload.access) {
+    localStorage.setItem("access", action.payload.access);
+  }
+  if (action.payload.refresh) {
+    localStorage.setItem("refresh", action.payload.refresh);
+  }
+
+  state.role = action.payload.role;
+  state.isAuthenticated = true;
+  state.isProfileComplete = action.payload.is_profile_complete !== false;
+  state.user = action.payload.user || {
+    email: action.payload.email,
+    role: action.payload.role
+  };
+  state.message = action.payload.message || "Login successful";
+})
+
      .addCase(loginUser.rejected, (state, action) => {
         state.loading = false;
         if (action.payload?.isIncompleteProfile === true || 
@@ -382,7 +420,33 @@ const authSlice = createSlice({
 .addCase(resetPassword.rejected, (state, action) => {
   state.loading = false;
   state.error = action.payload;
+})
+
+// 🔹 START: Check Auth (Auto Login)
+.addCase(checkAuth.pending, (state) => {
+  state.isAuthReady = false;
+})
+.addCase(checkAuth.fulfilled, (state, action) => {
+  console.log('🎉 User authenticated via persistence:', action.payload);
+  state.isAuthenticated = true;
+  state.user = action.payload;
+  state.role = action.payload.role;
+  state.isProfileComplete = action.payload.is_profile_complete;
+  state.isAuthReady = true;
+  state.loading = false;
+  state.error = null;
+})
+.addCase(checkAuth.rejected, (state) => {
+  console.log('❌ Authentication persistence failed - user needs to login');
+  state.isAuthenticated = false;
+  state.user = null;
+  state.role = null;
+  state.isProfileComplete = false;
+  state.isAuthReady = true;
+  state.loading = false;
 });
+// 🔹 END: Check Auth
+
 
   },
 });

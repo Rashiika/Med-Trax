@@ -11,6 +11,7 @@ import appointmentIcon from '../../assets/appointment.svg';
 import chatsIcon from '../../assets/chat.svg';
 import profileIcon from '../../assets/profile.svg';
 import blogIcon from '../../assets/blog.svg';
+import prescriptionIcon from '../../assets/Prescription.svg';
 import { fetchPatientChats } from "../../redux/features/chatSlice";
 
 
@@ -19,6 +20,7 @@ const patientSidebarItems = [
     { label: "Appointments", to: "/patient/appointments", icon: appointmentIcon },
     { label: "Chats", to: "/patient/chats", icon: chatsIcon },
     { label: "Blogs", to: "/patient/blogs", icon: blogIcon },
+    { label: "Prescription", to: "/patient/prescription", icon: prescriptionIcon },
     { label: "Profile", to: "/patient/profile", icon: profileIcon },
 ];
 

@@ -9,48 +9,26 @@ export const connectSocket = (roomId, dispatch) => {
     disconnectSocket();
   }
 
-  // const token = localStorage.getItem("access");
-  // if (!token) {
-  //   console.error("❌ No access token found");
-  //   return;
-  // }
+  const token = localStorage.getItem("access") || "";
 
-   const wsUrl = `wss://medtrax.me/ws/chat/${roomId}/`;
+  const wsUrl = `wss://medtrax.me/ws/chat/${roomId}/?token=${token}`;
   console.log(`🔵 Connecting to room ${roomId}...`);
+
   socket = new WebSocket(wsUrl);
   currentRoomId = roomId;
 
   socket.onopen = () => {
     console.log(`✅ WebSocket connected to room ${roomId}`);
-    console.log(`📡 WebSocket state: ${socket.readyState}`);
   };
 
   socket.onmessage = (event) => {
     try {
       const data = JSON.parse(event.data);
-      console.log("📩 Message received:", data);
 
       if (data.type === "connection_established") {
-        console.log("🎉 Connection established:", data.message);
-        // Messages are already loaded via REST API
+        console.log("🎉 Connection established");
       } else if (data.type === "chat_message") {
-        // Add new message to Redux store
-        dispatch(addMessageToCurrentChat({
-          id: data.message_id,
-          sender_id: data.sender_id,
-          sender: {
-            id: data.sender_id,
-            username: data.sender_username,
-            full_name: data.sender_full_name
-          },
-          sender_role: data.sender_role,
-          content: data.message,
-          timestamp: data.timestamp,
-          is_read: false,
-        }));
-      } else if (data.type === "typing") {
-        console.log(`⌨️ ${data.username} is typing...`);
-        // Handle typing indicator if needed
+        dispatch(addMessageToCurrentChat(data.message));
       }
     } catch (error) {
       console.error("❌ Error parsing WebSocket message:", error);
@@ -62,7 +40,7 @@ export const connectSocket = (roomId, dispatch) => {
   };
 
   socket.onclose = (event) => {
-    console.log(`🔴 WebSocket disconnected. Code: ${event.code}, Reason: ${event.reason}`);
+    console.log(`🔴 WebSocket disconnected. Code: ${event.code}`);
     socket = null;
     currentRoomId = null;
   };
@@ -70,7 +48,6 @@ export const connectSocket = (roomId, dispatch) => {
 
 export const disconnectSocket = () => {
   if (socket) {
-    console.log(`🚪 Closing WebSocket connection to room ${currentRoomId}`);
     socket.close();
     socket = null;
     currentRoomId = null;
@@ -80,9 +57,8 @@ export const disconnectSocket = () => {
 export const sendSocketMessage = (message) => {
   if (socket && socket.readyState === WebSocket.OPEN) {
     socket.send(JSON.stringify({ message }));
-    console.log("📤 Message sent via WebSocket:", message);
   } else {
-    console.error("❌ WebSocket is not connected. Cannot send message.");
+    console.error("❌ WebSocket not connected");
   }
 };
 

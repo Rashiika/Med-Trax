@@ -1,10 +1,11 @@
-import React, { useState, forwardRef } from "react";
+import React, {  useEffect ,useState, forwardRef } from "react";
 import { useNavigate } from "react-router-dom";
 import DetailFormLayout from "../../components/Layout/DetailFormLayout"; 
 import DetailsInput from "../../components/Input/DetailsInput";
 import { useDispatch , useSelector} from "react-redux";
 import { completeProfile } from "../../redux/features/authSlice";
 import { showToast } from "../../components/Toast";
+import useDebounce from "../../hooks/useDebounce";
 
 const Section = forwardRef(({ title, children }, ref) => (
   <section ref={ref} className="mb-16 scroll-mt-20">
@@ -17,6 +18,9 @@ const DoctorForm = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const userEmail = useSelector((state) => state.auth.user?.email) || localStorage.getItem("signupEmail") || "";
+  const debouncedDOB = useDebounce(formData.dob, 600);
+const debouncedExperience = useDebounce(formData.experience, 600);
+
   
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
@@ -60,6 +64,13 @@ const DoctorForm = () => {
     const error = validateField(name, value);
     setErrors({ ...errors, [name]: error });
   };
+  useEffect(() => {
+  if (!debouncedDOB) return;
+  console.log("DOB validated:", debouncedDOB);
+
+  // call API here if needed
+}, [debouncedDOB]);
+
 
   const validateField = (name, value) => {
     if (emojiRegex.test(value)) {

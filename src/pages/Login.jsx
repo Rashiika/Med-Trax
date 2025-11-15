@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import FormLayout from "../components/Layout/FormLayout";
@@ -6,12 +6,30 @@ import Input from "../components/Input/Input";
 import emailIcon from "../assets/email.png";
 import lockIcon from "../assets/lock.png";
 import { loginUser } from "../redux/features/authSlice";
-import { showToast } from "../components/Toast"; 
-
+import { showToast } from "../components/Toast";
 const LoginPage = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate(); 
   const role = useSelector((state) => state.auth.role) || "patient";
+  const { isAuthenticated, isAuthReady, role: currentRole } = useSelector(
+  (state) => state.auth
+);
+
+// Login persistence is now handled by App.jsx AuthPersistenceWrapper
+// No need for redirect logic here
+
+  // Don't show loading for login page - let users see the form
+  // if (!isAuthReady) {
+  //   return (
+  //     <div className="min-h-screen flex items-center justify-center bg-gray-50">
+  //       <div className="text-center">
+  //         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+  //         <p className="text-gray-600">Loading...</p>
+  //       </div>
+  //     </div>
+  //   );
+  // }
+
   
   const [formData, setFormData] = useState({ email: "", password: "" });
   const [errors, setErrors] = useState({});
@@ -19,6 +37,7 @@ const LoginPage = () => {
   const [loading, setLoading] = useState(false);
 
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -50,86 +69,52 @@ const LoginPage = () => {
     }
   };
 
-  const handleSubmit = async(e) => {
-    e.preventDefault();
-    
-    if (Object.values(errors).some((error) => error)) {
-      showToast.error("Please fix the errors before submitting.");
+  const handleSubmit = async (e) => {
+  e.preventDefault();
+
+  if (Object.values(errors).some((e) => e)) {
+    showToast.error("Please fix errors before submitting.");
+    return;
+  }
+
+  if (!formData.email || !formData.password) {
+    showToast.error("Fill all fields.");
+    return;
+  }
+
+  if (loading) return; // Prevent double submit
+  setLoading(true);
+  const loadingToast = showToast.loading("Logging in...");
+
+  try {
+    const result = await dispatch(
+      loginUser({ credentials: formData, role })
+    );
+
+    showToast.dismiss(loadingToast);
+
+    if (loginUser.rejected.match(result)) {
+      const err = result.payload;
+      showToast.error(err?.message || "Invalid credentials");
+      release();
       return;
     }
-    if (!formData.email || !formData.password) {
-      showToast.error("Please fill in all fields.");
-      return;
-    }
 
-    setLoading(true);
-    const loadingToast = showToast.loading("Logging in...");
-    
-    try {
-      const resultAction = await dispatch(loginUser({ 
-        credentials: formData, 
-        role 
-      }));
-     
-      showToast.dismiss(loadingToast);
-      
-      if (loginUser.rejected.match(resultAction)) {
-        const error = resultAction.payload;
-        
-        if (error?.isIncompleteProfile || error?.is_profile_complete === false) {
-          showToast.success("Login successful! Please complete your profile.");
-          
-          const userRole = error?.role;
-          if (error?.email) {
-            localStorage.setItem("signupEmail", error.email);
-          }
-          
-          setTimeout(() => {
-            if (userRole === "doctor") {
-              navigate("/doctor");
-            } else {
-              navigate("/patient");
-            }
-          }, 1500);
-          return;
-        } else {
-          const errorMessage = 
-            error?.error || 
-            error?.errors?.email?.[0] || 
-            error?.errors?.password?.[0] ||
-            error?.errors?.non_field_errors?.[0] ||
-            error?.message ||  
-            "Invalid email or password. Please try again.";
-          
-          showToast.error(errorMessage);
-          return;
-        }
-      }
+    showToast.success("Login successful!");
 
-      if (loginUser.fulfilled.match(resultAction)) {
-        const payload = resultAction.payload;
-        const userRole = payload.user?.role || payload.role;
-        
-        showToast.success("Login successful! Redirecting...");
-        
-        setTimeout(() => {
-          if (userRole === "doctor") {
-            navigate("/doctor/dashboard");
-          } else {
-            navigate("/patient/dashboard");
-          }
-        }, 1000);
-      }
-      
-    } catch (err) {
-      showToast.dismiss(loadingToast);
-      console.error("Unexpected login error:", err);
-      showToast.error("An unexpected error occurred. Please try again.");
-    } finally {
-      setLoading(false);
-    }
-  };
+    setTimeout(() => {
+      navigate(result.payload.role === "doctor" 
+        ? "/doctor/dashboard"
+        : "/patient/dashboard");
+    }, 800);
 
+  } catch (err) {
+    showToast.error("Login failed.");
+  } finally {
+    setLoading(false);
+    release();  // 🔓 allow user to click again
+  }
+};
   return (
     <FormLayout>
       <h2 className="text-3xl font-semibold text-center mb-8 text-gray-800">

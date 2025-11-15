@@ -6,223 +6,230 @@ import Button from "../components/Button/Button";
 import userIcon from "../assets/user.png";
 import emailIcon from "../assets/email.png";
 import lockIcon from "../assets/lock.png";
-import { useDispatch , useSelector} from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { registerUser } from "../redux/features/authSlice";
 import { PasswordRuleLine } from "../components/PasswordRuleLine";
 import { showToast } from "../components/Toast";
-
 const Signup = () => {
-    const dispatch = useDispatch();
-    const navigate = useNavigate();
-    const role = useSelector((state) => state.auth.role);
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
+  const role = useSelector((state) => state.auth.role);
+  
 
-    const [formData, setFormData] = useState({
-        email: "",
-        password1: "",
-        password2: ""
-    });
+  useEffect(() => {
+    if (!role) {
+      navigate('/select-role', { replace: true });
+    }
+  }, [role, navigate]);
 
-    const [errors, setErrors] = useState({});
-    const [loading, setLoading] = useState(false);
-    const [showPassword, setShowPassword] = useState(false);
-    const [showConfirm, setShowConfirm] = useState(false);
-    const [passwordFocused, setPasswordFocused] = useState(false);
+  const [formData, setFormData] = useState({
+    email: "",
+    password1: "",
+    password2: "",
+  });
 
-    const uppercaseRegex = /[A-Z]/;
-    const numberRegex = /[0-9]/;
-    const specialCharRegex = /[!@#$%^&*(),.?":{}|<>]/;
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  const [errors, setErrors] = useState({});
+  const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [passwordFocused, setPasswordFocused] = useState(false);
 
-    const checkPasswordRules = (password) => ({
-        hasLength: password.length >= 8,
-        hasUppercase: uppercaseRegex.test(password),
-        hasNumber: numberRegex.test(password),
-        hasSpecialChar: specialCharRegex.test(password),
-    });
+  const uppercaseRegex = /[A-Z]/;
+  const numberRegex = /[0-9]/;
+  const specialCharRegex = /[!@#$%^&*(),.?":{}|<>]/;
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-    const [passwordRules, setPasswordRules] = useState(checkPasswordRules(formData.password1));
+  const checkPasswordRules = (password) => ({
+    hasLength: password.length >= 8,
+    hasUppercase: uppercaseRegex.test(password),
+    hasNumber: numberRegex.test(password),
+    hasSpecialChar: specialCharRegex.test(password),
+  });
 
-    const validateField = (name, value, allFormData) => {
-        let error = '';
+  const [passwordRules, setPasswordRules] = useState(
+    checkPasswordRules(formData.password1)
+  );
 
-        if (name === 'email') {
-            if (!value) {
-                error = 'Email address is required';
-            } else if (!emailRegex.test(value)) {
-                error = 'Please enter a valid email address';
-            }
-        } else if (name === 'password1') {
-            const rules = checkPasswordRules(value);
-            setPasswordRules(rules);
+  const validateField = (name, value, allFormData) => {
+    let error = "";
 
-            if (!value) {
-                error = 'Password is required';
-            } 
-        } else if (name === 'password2') {
-            if (!value) {
-                error = 'Confirmation is required';
-            } else if (value !== allFormData.password1) {
-                error = 'Passwords do not match';
-            }
-        }
-        return error;
-    };
+    if (name === "email") {
+      if (!value) error = "Email address is required";
+      else if (!emailRegex.test(value)) error = "Invalid email address";
+    }
 
-    const validateForm = (data) => {
-        let newErrors = {};
-        let isValid = true;
-        
-        ['email', 'password1', 'password2'].forEach(name => {
-            const error = validateField(name, data[name], data);
-            if (error) {
-                newErrors[name] = error;
-                isValid = false;
-            }
-        });
+    if (name === "password1") {
+      const rules = checkPasswordRules(value);
+      setPasswordRules(rules);
+      if (!value) error = "Password is required";
+    }
 
-        setErrors(newErrors);
-        return isValid;
-    };
+    if (name === "password2") {
+      if (!value) error = "Please confirm password";
+      else if (value !== allFormData.password1)
+        error = "Passwords do not match";
+    }
 
-    const handleChange = (e) => {
-        const { name, value } = e.target;
-        
-        const newFormData = { ...formData, [name]: value };
-        setFormData(newFormData);
+    return error;
+  };
 
-        const error = validateField(name, value, newFormData);
-        setErrors(prev => ({ ...prev, [name]: error }));
+  const handleChange = (e) => {
+    const { name, value } = e.target;
 
-        if (name === 'password1') {
-            setPasswordRules(checkPasswordRules(value));
-            if (newFormData.password2 !== undefined) {
-                const confirmError = validateField('password2', newFormData.password2, newFormData);
-                setErrors(prev => ({ ...prev, password2: confirmError }));
-            }
-        }
-    };
+    const newFormData = { ...formData, [name]: value };
+    setFormData(newFormData);
 
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        
-        if (!role) {
-            showToast.error("Please select a role from the home page first.");
-            setTimeout(() => navigate("/"), 1500);
-            return;
-        }
-        
-        if (!validateForm(formData)) {
-            showToast.error("Please review the form. Not all required fields are valid.");
-            return;
-        }
+    const error = validateField(name, value, newFormData);
+    setErrors((prev) => ({ ...prev, [name]: error }));
 
-        setLoading(true);
-        try {
-            const payload = {
-                ...formData,
-                role: role  
-            };
-            
-            const userData = await dispatch(registerUser(payload)).unwrap();
-            
-            localStorage.setItem("signupEmail", formData.email);
-            showToast.success("Success! Check your email for verification.");
-            setTimeout(() => {
-                navigate("/verifyOtp", { state: { email: formData.email, role: role } });
-            }, 1000);
+    if (name === "password1") {
+      const confirmError = validateField(
+        "password2",
+        newFormData.password2,
+        newFormData
+      );
+      setErrors((prev) => ({ ...prev, password2: confirmError }));
+    }
+  };
 
-        } catch (error) {
-            console.error("Registration failed:", error);
-            showToast.error(`Registration Failed: ${error.message || 'Unknown error'}`);
-        } finally {
-            setLoading(false);
-        }
-    };
-    
-    const isFormValid = useMemo(() => {
-        const { email, password1, password2 } = formData;
-        
-        if (!email || !password1 || !password2 || password1 !== password2) return false;
-        
-        const rulesMet = Object.values(checkPasswordRules(password1)).every(rule => rule);
-        const hasNoFieldErrors = Object.values(errors).every(err => !err);
-        
-        return rulesMet && hasNoFieldErrors;
-    }, [formData, errors]);
+  const isFormValid = useMemo(() => {
+    const { email, password1, password2 } = formData;
 
-    return (
-        <FormLayout>
-            <h2 className="text-2xl md:text-3xl font-bold text-center mb-4 md:mb-8 text-gray-900">
-                Sign Up
-            </h2>
+    if (!email || !password1 || !password2) return false;
+    if (password1 !== password2) return false;
 
-            <form onSubmit={handleSubmit} className="space-y-3 md:space-y-4 w-full max-w-md mx-auto px-0 md:px-4 sm:md:px-0">
-                <Input
-                    label="Email"
-                    type="email"
-                    name="email"
-                    placeholder="Enter your email"
-                    value={formData.email}
-                    onChange={handleChange}
-                    icon={emailIcon}
-                    error={errors.email}
-                />
-
-                <Input
-                    label="Password"
-                    type={showPassword ? "text" : "password"}
-                    name="password1"
-                    placeholder="Enter password"
-                    value={formData.password1}
-                    onChange={handleChange}
-                    icon={lockIcon}
-                    showPasswordToggle
-                    showPassword={showPassword}
-                    onTogglePassword={() => setShowPassword(!showPassword)}
-                    error={errors.password1}
-                    onFocus={() => setPasswordFocused(true)} 
-                    onBlur={() => setPasswordFocused(false)}
-                />
-
-                {passwordFocused && (
-                    <div className="text-xs mt-1 space-y-1 p-3 bg-blue-50 rounded-xl border border-blue-200 transition-all duration-300">
-                        <p className="font-semibold text-gray-700 mb-1">Password must include:</p>
-                        <PasswordRuleLine isValid={passwordRules.hasLength} text="At least 8 characters" />
-                        <PasswordRuleLine isValid={passwordRules.hasUppercase} text="An uppercase letter (A-Z)" />
-                        <PasswordRuleLine isValid={passwordRules.hasNumber} text="A number (0-9)" />
-                        <PasswordRuleLine isValid={passwordRules.hasSpecialChar} text="A special symbol (!@#$...)" />
-                    </div>
-                )}
-                
-                <Input
-                    label="Confirm Password"
-                    type={showConfirm ? "text" : "password"}
-                    name="password2"
-                    placeholder="Confirm password"
-                    value={formData.password2}
-                    onChange={handleChange}
-                    icon={lockIcon}
-                    showPasswordToggle
-                    showPassword={showConfirm}
-                    onTogglePassword={() => setShowConfirm(!showConfirm)}
-                    error={errors.password2}
-                />
-
-                <div className="pt-2 md:pt-4">
-                    <Button type="submit" fullWidth loading={loading} disabled={!isFormValid || loading}>
-                        Sign Up
-                    </Button>
-                </div>
-            </form>
-
-            <p className="text-center text-gray-600 text-sm mt-2 md:mt-8">
-                Already have an account?
-                <a href="#login" onClick={(e) => { e.preventDefault(); navigate('/login'); }} className="text-blue-600 hover:underline font-medium">
-                    Login
-                </a>
-            </p>
-        </FormLayout>
+    const rulesMet = Object.values(checkPasswordRules(password1)).every(
+      (x) => x === true
     );
+    const noErrors = Object.values(errors).every((e) => !e);
+
+    return rulesMet && noErrors;
+  }, [formData, errors]);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    if (!role) {
+      showToast.error("Please select a role from the home page first.");
+      return navigate("/select-role");
+    }
+
+    if (!isFormValid) {
+      showToast.error("Fix errors before submitting.");
+      return;
+    }
+
+    if (loading) return; 
+
+    setLoading(true);
+
+    try {
+      const userData = {
+        email: formData.email,
+        password1: formData.password1,
+        password2: formData.password2,
+      };
+
+      await dispatch(registerUser(userData)).unwrap();
+
+      localStorage.setItem("signupEmail", formData.email);
+
+      showToast.success("OTP sent! Check your email.");
+
+      setTimeout(() => {
+        navigate("/verifyOtp", {
+          state: { email: formData.email, role: role },
+        });
+      }, 1000);
+    } catch (error) {
+      showToast.error(error.message || "Signup failed");
+    } finally {
+      setLoading(false);
+      release(); 
+    }
+  };
+
+  return (
+    <FormLayout>
+      <h2 className="text-2xl font-bold text-center mb-6">Sign Up</h2>
+
+      <form onSubmit={handleSubmit} className="space-y-4 max-w-md mx-auto">
+        <Input
+          label="Email"
+          type="email"
+          name="email"
+          placeholder="Enter email"
+          icon={emailIcon}
+          value={formData.email}
+          onChange={handleChange}
+          error={errors.email}
+        />
+
+        <Input
+          label="Password"
+          type={showPassword ? "text" : "password"}
+          name="password1"
+          placeholder="Enter password"
+          icon={lockIcon}
+          showPasswordToggle
+          showPassword={showPassword}
+          onTogglePassword={() => setShowPassword(!showPassword)}
+          value={formData.password1}
+          onChange={handleChange}
+          onFocus={() => setPasswordFocused(true)}
+          onBlur={() => setPasswordFocused(false)}
+          error={errors.password1}
+        />
+
+        {passwordFocused && (
+          <div className="text-xs mt-1 p-3 bg-blue-50 rounded-xl border">
+            <p className="font-semibold">Password must include:</p>
+            <PasswordRuleLine
+              isValid={passwordRules.hasLength}
+              text="At least 8 characters"
+            />
+            <PasswordRuleLine
+              isValid={passwordRules.hasUppercase}
+              text="Uppercase letter"
+            />
+            <PasswordRuleLine
+              isValid={passwordRules.hasNumber}
+              text="A number"
+            />
+            <PasswordRuleLine
+              isValid={passwordRules.hasSpecialChar}
+              text="Special character"
+            />
+          </div>
+        )}
+
+        <Input
+          label="Confirm Password"
+          type={showConfirm ? "text" : "password"}
+          name="password2"
+          placeholder="Confirm password"
+          icon={lockIcon}
+          showPasswordToggle
+          showPassword={showConfirm}
+          onTogglePassword={() => setShowConfirm(!showConfirm)}
+          value={formData.password2}
+          onChange={handleChange}
+          error={errors.password2}
+        />
+
+        <Button fullWidth type="submit" disabled={!isFormValid || loading} loading={loading}>
+          Sign Up
+        </Button>
+
+        <p className="text-center text-gray-600 text-sm mt-3">
+          Already have an account?{" "}
+          <Link to="/login" className="text-blue-600 font-medium">
+            Login
+          </Link>
+        </p>
+      </form>
+    </FormLayout>
+  );
 };
 
 export default Signup;
