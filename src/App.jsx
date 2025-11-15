@@ -1,7 +1,7 @@
 import React, { useEffect } from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-import { hydrateAuth } from "./redux/features/authSlice";
+import { checkAuth } from "./redux/features/authSlice";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import EmailOtp from "./pages/EmailOtp";
@@ -30,16 +30,16 @@ import PatientPrescriptions from "./pages/Patient/PatientPrescriptions";
 
 function App() {
   const dispatch = useDispatch();
-  const { loading } = useSelector(state => state.auth);
+  const { loading, isAuthReady } = useSelector(state => state.auth);
 
   useEffect(() => {
-    dispatch(hydrateAuth());
+    dispatch(checkAuth());
   }, [dispatch]);
 
   return (
     <Router>
       <div className="App">
-        {loading ? (
+        {loading || !isAuthReady ? (
           <div className="flex items-center justify-center min-h-screen bg-gray-50">
             <div className="text-center">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>

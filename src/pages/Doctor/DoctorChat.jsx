@@ -135,12 +135,13 @@ useEffect(() => {
       <div className="relative h-full">
         <ChatLayout
           role="doctor"
-          userName={`Dr. ${user?.first_name || ""}`}
+          userName={`Dr. ${user?.username || user?.email || "Doctor"}`}
           doctors={doctorDoctors}
           patients={doctorPatients}
           currentMessages={currentMessages}
           onSelectChat={handleSelectChat}
           onSendMessage={handleSendMessage}
+          onFetchDoctorPatients={() => dispatch(fetchDoctorPatients())}
           showAiChat={showAiChat}
           onCloseAiChat={() => setShowAiChat(false)}
           onOpenAiChat={() => {

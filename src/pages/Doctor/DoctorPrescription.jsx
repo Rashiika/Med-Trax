@@ -24,10 +24,6 @@ import chatsIcon from "../../assets/chat.svg";
 import profileIcon from "../../assets/profile.svg";
 import blogIcon from "../../assets/blog.svg";
 
-
-
-
-
 const doctorSidebarItems = [
   { label: "Dashboard", to: "/doctor/dashboard", icon: homeIcon },
   { label: "Appointments", to: "/doctor/appointments", icon: appointmentIcon },
