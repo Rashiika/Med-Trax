@@ -376,7 +376,7 @@ const Home = () => {
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <button 
-                onClick={() => navigate("/signup")}
+                onClick={() => navigate("/login")}
                 className="px-8 py-3 bg-white text-blue-600 rounded-full font-semibold hover:bg-gray-100 transition-colors duration-300 shadow-lg"
               >
                 Get Started Free
